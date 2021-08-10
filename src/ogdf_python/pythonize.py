@@ -126,9 +126,9 @@ def replace_GraphAttributes(klass, name):
 
 
 generate_GA_setters()
+# TODO use pythonization for this so that classes are loaded lazily
 replace_GraphAttributes(cppyy.gbl.ogdf.GraphAttributes, "GraphAttributes")
 replace_GraphAttributes(cppyy.gbl.ogdf.ClusterGraphAttributes, "ClusterGraphAttributes")
-
 cppyy.gbl.ogdf.Graph._repr_html_ = GraphAttributes_to_html  # TODO layout
 cppyy.gbl.ogdf.ClusterGraph._repr_html_ = GraphAttributes_to_html
 

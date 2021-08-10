@@ -28,8 +28,8 @@ cppyy.include("ogdf/fileformats/GraphIO.h")
 
 cppyy.load_library("libOGDF.so")
 
-import ogdf_python.pythonize
 import ogdf_python.doxygen
+import ogdf_python.pythonize
 from cppyy.gbl import ogdf
 
 __all__ = ["ogdf", "cppinclude", "cppdef", "nullptr"]

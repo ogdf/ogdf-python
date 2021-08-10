@@ -3,6 +3,9 @@ import os
 from collections import defaultdict
 
 
+# doxygen XML parsing #################################################################################################
+
+
 def parse_index_xml():
     root = etree.parse(os.path.join(DOXYGEN_XML_DIR, 'index.xml'))
     compounds = defaultdict(dict)
@@ -35,6 +38,26 @@ def parse_index_xml():
     return compounds
 
 
+def find_all_includes():
+    for ctype in ("class", "struct", "namespace"):
+        for compound in DOXYGEN_DATA[ctype].values():
+            compound_xml = etree.parse(os.path.join(DOXYGEN_XML_DIR, compound["refid"] + '.xml'))
+            for location in compound_xml.findall(".//*[@id]/location"):
+                parent = location.getparent()
+                if parent.get("id") == compound["refid"]:
+                    member = compound
+                else:
+                    name = parent.find("name")
+                    if name.text not in compound["members"]:
+                        print("got location for unknown object", compound["refid"], parent.get("id"), name.text)
+                        continue
+                    else:
+                        member = compound["members"][name.text][parent.get("id")]
+                member["file"] = location.get("declfile", location.get("file"))
+
+
+# doc strings / help messages##########################################################################################
+
 def pythonize_docstrings(klass, name):
     data = DOXYGEN_DATA["class"][klass.__cpp_name__]  # TODO do the same for namespace members
     url = DOXYGEN_URL % (data["refid"], "")
@@ -61,23 +84,7 @@ def pythonize_docstrings(klass, name):
             pass
 
 
-def find_all_includes():
-    for ctype in ("class", "struct", "namespace"):
-        for compound in DOXYGEN_DATA[ctype].values():
-            compound_xml = etree.parse(os.path.join(DOXYGEN_XML_DIR, compound["refid"] + '.xml'))
-            for location in compound_xml.findall(".//*[@id]/location"):
-                parent = location.getparent()
-                if parent.get("id") == compound["refid"]:
-                    member = compound
-                else:
-                    name = parent.find("name")
-                    if name.text not in compound["members"]:
-                        print("got location for unknown object", compound["refid"], parent.get("id"), name.text)
-                        continue
-                    else:
-                        member = compound["members"][name.text][parent.get("id")]
-                member["file"] = location.get("declfile", location.get("file"))
-
+# helpful "attribute not found" errors ################################################################################
 
 def find_include(*names):
     if len(names) == 1:
@@ -140,6 +147,8 @@ def wrap_getattribute(ns):
 
     type(ns).__getattribute__ = helpful_getattribute
 
+
+# __main__ and imported use ###########################################################################################
 
 if "OGDF_DOC_DIR" in os.environ:
     from lxml import etree
