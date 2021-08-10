@@ -98,20 +98,27 @@ don't need to be garbage collected, but will be cleaned up from the C++ side.
     SL.setLayout(ohl)
 
 When you overwrite a python variable pointing to a C++ object (and it is the only
-python variable pointing to that object), the C++ will usually be immediately deleted.
-This might be a problem if another C++ objects depends ob that old object, e.g.
+python variable pointing to that object), the C++ object will usually be immediately deleted.
+This might be a problem if another C++ objects depends on that old object, e.g.
 a ``GraphAttributes`` instance depending on a ``Graph`` instance.
-Now the other C++ object has a pointer to a delted and now invalid location,
+Now the other C++ object has a pointer to a deleted and now invalid location,
 which will usually cause issues down the road (e.g. when the dependant object is
 deleted and wants to deregister from its no longer alive parent).
-This overwriting might easily happen if you run a Jupyter cell multiple times.
-Please ensure that you always overwrite or delete C++ dependent variables in
+This overwriting might easily happen if you run a Jupyter cell multiple times or some code in a ``for``-loop.
+Please ensure that you always overwrite or delete dependent C++ variables in
 the reverse order of their initialization.
 
 .. code-block:: python
 
-    CGA = CG = G = None
-    G = ogdf.Graph()
-    CG = ogdf.ClusterGraph(G)
-    CGA = ogdf.ClusterGraphAttributes(CG, ogdf.ClusterGraphAttributes.all)
+    for i in range(5):
+        # clean-up all variables
+        CGA = CG = G = None # note that order is different from C++, CGA will be deleted first, G last
+        # now we can re-use them
+        G = ogdf.Graph()
+        CG = ogdf.ClusterGraph(G)
+        CGA = ogdf.ClusterGraphAttributes(CG, ogdf.ClusterGraphAttributes.all)
 
+        # alternatively manually clean up in the right order
+        del CGA
+        del CG
+        del G

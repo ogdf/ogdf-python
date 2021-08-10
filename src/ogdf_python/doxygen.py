@@ -36,8 +36,16 @@ def parse_index_xml():
 
 
 def pythonize_docstrings(klass, name):
-    data = DOXYGEN_DATA["class"][klass.__cpp_name__]
-    klass.__doc__ += "\n" + DOXYGEN_URL % (data["refid"], "")
+    data = DOXYGEN_DATA["class"][klass.__cpp_name__]  # TODO do the same for namespace members
+    url = DOXYGEN_URL % (data["refid"], "")
+    try:
+        if klass.__doc__:
+            klass.__doc__ = "%s\n%s" % (klass.__doc__, url)
+        else:
+            klass.__doc__ = url
+    except AttributeError as e:
+        print(klass.__cpp_name__, e)  # TODO remove once we can overwrite the __doc__ of CPPOverload etc.
+
     for mem, val in klass.__dict__.items():
         if mem not in data["members"]:
             print(klass.__cpp_name__, "has no member", mem)
@@ -45,10 +53,11 @@ def pythonize_docstrings(klass, name):
         try:
             for override in data["members"][mem].values():
                 val.__doc__ += "\n" + DOXYGEN_URL % (data["refid"], override["refid"][len(data["refid"]) + 2:])
-        except:
-            import traceback  # TODO remove once we can overwrite the __doc__ of CPPOverload etc.
-            traceback.print_exc()
-            print(val.__doc__)
+        except AttributeError as e:
+            print(klass.__cpp_name__, e)  # TODO remove once we can overwrite the __doc__ of CPPOverload etc.
+            # import traceback
+            # traceback.print_exc()
+            # print(val.__doc__)
             pass
 
 
@@ -157,7 +166,7 @@ else:
     except FileNotFoundError:
         import importlib_resources
 
-        with importlib_resources.files(__name__).joinpath("doxygen.json").open("rt") as f:
+        with importlib_resources.files("ogdf_python").joinpath("doxygen.json").open("rt") as f:
             DOXYGEN_DATA = json.load(f)
 
 if "OGDF_DOC_URL" in os.environ:
@@ -167,5 +176,5 @@ else:
 
 import cppyy
 
-cppyy.py.add_pythonization(pythonize_docstrings, "ogdf")
+# cppyy.py.add_pythonization(pythonize_docstrings, "ogdf") # TODO needs to be added *before* any classes are loaded
 wrap_getattribute(cppyy.gbl.ogdf)
