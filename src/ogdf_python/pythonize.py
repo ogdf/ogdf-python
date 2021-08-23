@@ -2,6 +2,7 @@ import functools
 import re
 import tempfile
 import os
+import json
 
 import cppyy
 
@@ -101,40 +102,57 @@ SVGConf = None
 
 
 def GraphAttributes_to_html(self):
+
     # global SVGConf
     # if SVGConf == None:
     #     SVGConf = cppyy.gbl.ogdf.GraphIO.SVGSettings()
     #     SVGConf.margin(50)
     #     SVGConf.bezierInterpolation(True)
     #     SVGConf.curviness(0.3)
-
+    #
     # with tempfile.NamedTemporaryFile("w+t", suffix=".svg", prefix="ogdf-python-") as f:
     #     cppyy.gbl.ogdf.GraphIO.drawSVG(self, f.name, SVGConf)
     #     return f.read()
 
-    #Starting creation of Json String which will be used by d3Js
+    respect_graph_attributes = False
+    json_string = construct_json_string(self, respect_graph_attributes)
+
+    __location__ = os.path.realpath(
+        os.path.join(os.getcwd(), os.path.dirname(__file__)))
+
+    if respect_graph_attributes:
+        filename = 'graphVisualizationWithGraphAttributes.html'
+    else:
+        filename = 'graphVisualization.html'
+
+    with open(os.path.join(__location__, filename), 'r') as file:
+        data = file.read()
+        data = data.replace("var data = {}", json_string)
+        return data
+
+def construct_json_string(self, respect_graph_attributes):
+    #TODO: use import json
+
+    # Starting creation of Json String which will be used by d3Js
     json_string = "var data = { \n\"nodes\":["
 
     for x in self.constGraph().nodes:
-        json_string += ",\n{\n\"id\":" + str(x.index()) + ",\n\"name\":" + str(x.index()) + "\n}"
+        json_string += ",\n{\n\"id\":" + str(x.index()) + ",\n\"name\":" + str(x.index())
+        if respect_graph_attributes:
+            json_string += ",\n\"x\":" + str(int(self.x(x) + 0.5)) + ",\n\"y\":" + str(int(self.y(x) + 0.5))
+        json_string += "\n}"
 
     json_string += "\n],\n\"links\":["
 
     for x in self.constGraph().edges:
-        json_string += ",\n{\n\"source\":" + str(x.source().index()) + ",\n\"target\":" + str(x.target().index()) +"\n}"
+        json_string += ",\n{\n\"source\":" + str(x.source().index()) + ",\n\"target\":" + str(
+            x.target().index()) + "\n}"
 
     json_string += "\n]\n};"
     json_string = json_string.replace("\"links\":[,", "\"links\":[")
     json_string = json_string.replace("\"nodes\":[,", "\"nodes\":[")
 
-    __location__ = os.path.realpath(
-        os.path.join(os.getcwd(), os.path.dirname(__file__)))
-
-    with open(os.path.join(__location__, 'graphVisualization.html'), 'r') as file:
-        data = file.read()
-        data = data.replace("var data = {}", json_string)
-        return data
-
+    return json_string
 
 def replace_GraphAttributes(klass, name):
     if not name.endswith("GraphAttributes"): return
@@ -210,6 +228,5 @@ def pythonize_ogdf(klass, name):
     if re.match("S?List(Pure)?", name):
         klass.__getitem__ = generic_getitem
         # TODO setitem?
-
 
 cppyy.py.add_pythonization(pythonize_ogdf, "ogdf")
