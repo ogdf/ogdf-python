@@ -30,12 +30,14 @@ cppyy.load_library("libOGDF.so")
 
 import ogdf_python.pythonize
 import ogdf_python.doxygen
+import ogdf_python.widget
 from cppyy.gbl import ogdf
 
-__all__ = ["ogdf", "cppinclude", "cppdef", "nullptr"]
+__all__ = ["ogdf", "cppinclude", "cppdef", "nullptr", "HelloWorld"]
 __keep_imports = [cppyy,
                   ogdf_python.doxygen,
                   ogdf_python.pythonize,
+                  ogdf_python.widget,
                   ogdf, cppinclude, cppdef, nullptr]
 
 from ._version import version_info, __version__

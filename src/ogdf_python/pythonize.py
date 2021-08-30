@@ -102,7 +102,6 @@ SVGConf = None
 
 
 def GraphAttributes_to_html(self):
-
     # global SVGConf
     # if SVGConf == None:
     #     SVGConf = cppyy.gbl.ogdf.GraphIO.SVGSettings()
