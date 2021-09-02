@@ -4,6 +4,8 @@ dist/
 build/
 *.py[cod]
 node_modules/
+.venv/
+js/yarn.lock
 
 # Compiled javascript
 ogdf_python_widget/nbextension/

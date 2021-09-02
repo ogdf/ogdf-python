@@ -1,0 +1,15 @@
+.main-div {
+    border: 1px solid #BACACA;
+    background : #D3D3D3;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
+
+.sub-div {
+    border: 1px solid #BACACA;
+    background : #76ade5;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
