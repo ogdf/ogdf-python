@@ -13,3 +13,6 @@ ogdf_python_widget/labextension/
 
 # OS X
 .DS_Store
+
+# IntelliJ
+.idea
