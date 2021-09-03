@@ -29,7 +29,8 @@ var HelloModel = widgets.DOMWidgetModel.extend({
         _model_module_version : '0.1.0',
         _view_module_version : '0.1.0',
         value: 'Hello Test!',
-        value2: 'Hello World!'
+        value2: 'Hello World!',
+        refresh: false,
     })
 });
 
@@ -69,6 +70,7 @@ var HelloView = widgets.DOMWidgetView.extend({
         this.model.on('change:value2', this.value_changed, this);
         this.model.on('change:nodes', this.draw_graph, this);
         this.model.on('change:edges', this.draw_graph, this);
+        this.model.on('change:refresh', this.draw_graph, this);
     },
 
     value_changed: function () {
@@ -76,20 +78,20 @@ var HelloView = widgets.DOMWidgetView.extend({
     },
 
     draw_graph: function () {
-        console.log('drawing graph')
-        const edges = this.model.get('edges');
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        let edges = this.model.get('edges');
         for (let i = 0; i < edges.length; i++) {
             const edge = edges[i];
             this.draw_line(edge[0], edge[1], edge[2], edge[3], this.context)
         }
 
-        const nodes = this.model.get('nodes');
+        let nodes = this.model.get('nodes');
         for (let i = 0; i < nodes.length; i++) {
             const node = nodes[i];
             this.draw_circle(node[0], node[1], 20, this.context)
             this.draw_text(node[0], node[1], node[2], this.context)
         }
-        console.log(nodes.length)
     },
 
     draw_circle: function (centerX, centerY, radius, context) {
