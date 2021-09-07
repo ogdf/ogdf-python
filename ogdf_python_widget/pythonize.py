@@ -113,45 +113,61 @@ def GraphAttributes_to_html(self):
     #     cppyy.gbl.ogdf.GraphIO.drawSVG(self, f.name, SVGConf)
     #     return f.read()
 
-    respect_graph_attributes = False
-    json_string = construct_json_string(self, respect_graph_attributes)
-
     __location__ = os.path.realpath(
         os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-    if respect_graph_attributes:
-        filename = 'graphVisualizationWithGraphAttributes.html'
-    else:
-        filename = 'graphVisualization.html'
+    if isinstance(self, cppyy.gbl.ogdf.Graph):
+        nodes_data = []
+        for node in self.nodes:
+            nodes_data.append({"id": str(node.index()), "name": str(node.index())})
 
-    with open(os.path.join(__location__, filename), 'r') as file:
-        data = file.read()
-        data = data.replace("var data = {}", json_string)
-        return data
+        links_data = []
+        for edge in self.edges:
+            links_data.append({"source": str(edge.source().index()), "target": str(edge.target().index())})
 
-def construct_json_string(self, respect_graph_attributes):
-    #TODO: use import json
+        with open(os.path.join(__location__, 'basicGraphRepresentation.html'), 'r') as file:
+            data = file.read()
+            data = data.replace("var nodes_data = []", "var nodes_data = " + json.dumps(nodes_data))
+            data = data.replace("var links_data = []", "var links_data = " + json.dumps(links_data))
+            return data
 
-    # Starting creation of Json String which will be used by d3Js
-    json_string = "var data = { \n\"nodes\":["
+    if isinstance(self, cppyy.gbl.ogdf.GraphAttributes):
+        nodes_data = []
+        for node in self.constGraph().nodes:
+            nodes_data.append(
+                {"id": str(node.index()), "name": str(node.index()), "x": int(self.x(node) + 0.5),
+                 "y": int(self.y(node) + 0.5)})
 
-    for x in self.constGraph().nodes:
-        json_string += ",\n{\n\"id\":" + str(x.index()) + ",\n\"name\":" + str(x.index())
-        if respect_graph_attributes:
-            json_string += ",\n\"x\":" + str(int(self.x(x) + 0.5)) + ",\n\"y\":" + str(int(self.y(x) + 0.5))
-        json_string += "\n}"
+        links_data = []
+        for edge in self.constGraph().edges:
+            links_data.append({"source": str(edge.source().index()), "target": str(edge.target().index())})
 
-    json_string += "\n],\n\"links\":["
+        for edge in self.constGraph().edges:
+            edge_id = str(edge.source().index()) + "_" + str(edge.target().index())
+            prev_x = int(self.x(edge.source()) + 0.5)
+            prev_y = int(self.y(edge.source()) + 0.5)
 
-    for x in self.constGraph().edges:
-        json_string += ",\n{\n\"source\":" + str(x.source().index()) + ",\n\"target\":" + str(
-            x.target().index()) + "\n}"
+            for point in self.bends(edge):
+                links_data.append(
+                    {"id": edge_id, "sx": prev_x, "sy": prev_y, "tx": int(point.m_x + 0.5), "ty": int(point.m_y + 0.5)})
+                prev_x = int(point.m_x + 0.5)
+                prev_y = int(point.m_y + 0.5)
 
-    json_string += "\n]\n};"
-    json_string = json_string.replace("\"links\":[,", "\"links\":[")
-    json_string = json_string.replace("\"nodes\":[,", "\"nodes\":[")
+            links_data.append({"id": edge_id, "sx": prev_x, "sy": prev_y, "tx": int(self.x(edge.target()) + 0.5),
+                               "ty": int(self.y(edge.target()) + 0.5)})
 
-    return json_string
+        with open(os.path.join(__location__, 'basicGraphAttributesRepresentation.html'), 'r') as file:
+            data = file.read()
+            data = data.replace("var nodes_data = []", "var nodes_data = " + json.dumps(nodes_data))
+            data = data.replace("var links_data = []", "var links_data = " + json.dumps(links_data))
+            return data
+
+
+cppyy.gbl.ogdf.Graph._repr_html_ = GraphAttributes_to_html
+cppyy.gbl.ogdf.GraphAttributes._repr_html_ = GraphAttributes_to_html
+cppyy.gbl.ogdf.ClusterGraph._repr_html_ = GraphAttributes_to_html
+cppyy.gbl.ogdf.ClusterGraphAttributes._repr_html_ = GraphAttributes_to_html
+
 
 def replace_GraphAttributes(klass, name):
     if not name.endswith("GraphAttributes"): return
@@ -161,15 +177,11 @@ def replace_GraphAttributes(klass, name):
             getattr(klass, field),
             getattr(cppyy.gbl.ogdf_pythonization, "GraphAttributes_set_%s" % field)
         ))
-    klass._repr_html_ = GraphAttributes_to_html
 
 
 generate_GA_setters()
 replace_GraphAttributes(cppyy.gbl.ogdf.GraphAttributes, "GraphAttributes")
 replace_GraphAttributes(cppyy.gbl.ogdf.ClusterGraphAttributes, "ClusterGraphAttributes")
-
-cppyy.gbl.ogdf.Graph._repr_html_ = GraphAttributes_to_html  # TODO layout
-cppyy.gbl.ogdf.ClusterGraph._repr_html_ = GraphAttributes_to_html
 
 
 def GraphObjectContainer_getitem(self, idx):
@@ -227,5 +239,6 @@ def pythonize_ogdf(klass, name):
     if re.match("S?List(Pure)?", name):
         klass.__getitem__ = generic_getitem
         # TODO setitem?
+
 
 cppyy.py.add_pythonization(pythonize_ogdf, "ogdf")
