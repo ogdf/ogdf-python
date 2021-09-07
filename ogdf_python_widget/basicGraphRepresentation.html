@@ -12,6 +12,11 @@
         stroke-width: 0px;
     }
 
+    .texts text {
+        stroke: black;
+        stroke-width: 0px;
+    }
+
 </style>
 <svg width="800" height="500"></svg>
 <script src="https://d3js.org/d3.v4.min.js"></script>
@@ -69,6 +74,18 @@
         .attr("r", radius)
         .attr("fill", "black");
 
+    var text = g.append("g")
+        .attr("class", "texts")
+        .selectAll("text")
+        .data(nodes_data)
+        .enter()
+        .append("text")
+        .attr("fill", "white")
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "central")
+        .text(function (d) {
+            return d.name;
+        });
 
     //add drag capabilities
     var drag_handler = d3.drag()
@@ -77,6 +94,7 @@
         .on("end", drag_end);
 
     drag_handler(node);
+    drag_handler(text);
 
     //add zoom capabilities
     var zoom_handler = d3.zoom().on("zoom", zoom_actions);
@@ -132,6 +150,12 @@
             })
             .attr("y2", function (d) {
                 return d.target.y;
+            });
+
+        //update text positions
+        text
+            .attr("transform", function (d) { //<-- use transform it's not a g
+                return "translate(" + d.x + "," + d.y + ")";
             });
     }
 </script>

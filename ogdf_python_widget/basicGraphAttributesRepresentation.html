@@ -66,6 +66,22 @@
         .attr("r", radius)
         .attr("fill", "black")
 
+    var text = g.append("g")
+        .attr("class", "texts")
+        .selectAll("text")
+        .data(nodes_data)
+        .enter()
+        .append("text")
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "central")
+        .attr("fill", "white")
+        .text(function (d) {
+            return d.name;
+        })
+        .attr("transform", function (d) { //<-- use transform it's not a g
+            return "translate(" + d.x + "," + d.y + ")";
+        });
+
 
     //add zoom capabilities
     var zoom_handler = d3.zoom().on("zoom", zoom_actions);
