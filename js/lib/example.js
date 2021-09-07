@@ -22,18 +22,20 @@ require("./style.css");
 // differ from the defaults will be specified.
 var HelloModel = widgets.DOMWidgetModel.extend({
     defaults: _.extend(widgets.DOMWidgetModel.prototype.defaults(), {
-        _model_name : 'HelloModel',
-        _view_name : 'HelloView',
-        _model_module : 'ogdf-python-widget',
-        _view_module : 'ogdf-python-widget',
-        _model_module_version : '0.1.0',
-        _view_module_version : '0.1.0',
+        _model_name: 'HelloModel',
+        _view_name: 'HelloView',
+        _model_module: 'ogdf-python-widget',
+        _view_module: 'ogdf-python-widget',
+        _model_module_version: '0.1.0',
+        _view_module_version: '0.1.0',
         value: 'Hello Test!',
         value2: 'Hello World!',
         refresh: false,
-    })
-});
 
+
+    })
+
+});
 
 // Custom View. Renders the widget model.
 var HelloView = widgets.DOMWidgetView.extend({
@@ -59,6 +61,8 @@ var HelloView = widgets.DOMWidgetView.extend({
         this.context.canvas.width = 2000
         this.context.canvas.height = 1000
 
+        this.canvas.addEventListener('click', this.send({event: 'click'}), false);
+
         this.sketch.appendChild(this.canvas);
         this.mainDiv.appendChild(this.sketch);
         this.el.appendChild(this.mainDiv);
@@ -70,11 +74,29 @@ var HelloView = widgets.DOMWidgetView.extend({
         this.model.on('change:value2', this.value_changed, this);
         this.model.on('change:nodes', this.draw_graph, this);
         this.model.on('change:edges', this.draw_graph, this);
-        this.model.on('change:refresh', this.draw_graph, this);
+        this.model.on('change:refresh', this.send_click, this);
     },
 
     value_changed: function () {
         this.subDiv.textContent = this.model.get('value') + ' : ' + this.model.get('value2');
+    },
+
+    send_click: function () {
+        console.log("test click")
+        this.send({event: 'click'})
+    },
+
+    send: function (content) {
+        console.log('try sending')
+        this.comm = this.options.comm
+        console.log(this.comm)
+
+        if (this.comm !== undefined) {
+            console.log("sending")
+            const data = {method: 'custom', content: content};
+            this.comm.send(data, {}, {}, null)
+        }
+        return undefined
     },
 
     draw_graph: function () {

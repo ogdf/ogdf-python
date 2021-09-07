@@ -5,8 +5,8 @@ from .example import HelloWorld
 class GraphWidget(VBox):
     def __init__(self, graph_attributes):
         self.graph_attributes = graph_attributes
-        drawing_pad = HelloWorld()
-        self.drawing_pad = drawing_pad
+        self.drawing_pad = HelloWorld()
+        self.drawing_pad.on_click(lambda b: print('test'))
         add_button = Button(description="Add", tooltip="Click me")
         clear_button = Button(description="Clear", tooltip="Click me")
         refresh_button = Button(description="Refresh", tooltip="Click me")
