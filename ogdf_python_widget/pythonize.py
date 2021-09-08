@@ -153,8 +153,11 @@ def GraphAttributes_to_html(self):
                 prev_x = int(point.m_x + 0.5)
                 prev_y = int(point.m_y + 0.5)
 
-            links_data.append({"id": edge_id, "sx": prev_x, "sy": prev_y, "tx": int(self.x(edge.target()) + 0.5),
-                               "ty": int(self.y(edge.target()) + 0.5)})
+            link_dict = {"id": edge_id, "sx": prev_x, "sy": prev_y, "tx": int(self.x(edge.target()) + 0.5),
+                         "ty": int(self.y(edge.target()) + 0.5)}
+            if self.arrowType(edge) == 1:
+                link_dict['arrow'] = True
+            links_data.append(link_dict)
 
         with open(os.path.join(__location__, 'basicGraphAttributesRepresentation.html'), 'r') as file:
             data = file.read()

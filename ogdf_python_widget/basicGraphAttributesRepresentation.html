@@ -24,6 +24,21 @@
 
     var radius = 15;
 
+    //construct arrow
+    svg.append("svg:defs").selectAll("marker")
+        .data(["end"])
+        .enter().append("svg:marker")
+        .attr("id", String)
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", 28)
+        .attr("refY", 0)
+        .attr("markerWidth", 8)
+        .attr("markerHeight", 8)
+        .attr("orient", "auto")
+        .attr("fill", "green")
+        .append("svg:path")
+        .attr("d", "M0,-5L10,0L0,5");
+
     var nodes_data = []
     var links_data = []
 
@@ -36,6 +51,13 @@
         .data(links_data)
         .enter()
         .append("line")
+        .attr("marker-end", function (d) {
+            if (d.arrow) {
+                return "url(#end)";
+            } else {
+                return null;
+            }
+        })
         .attr("x1", function (l) {
             return l.sx
         })
@@ -49,7 +71,10 @@
             return l.ty
         })
         .attr("fill", "none")
-        .attr("stroke", "black");
+        .attr("stroke", "green")
+        .on("click", function (d) {
+            console.log("on click " + d.id);
+        });
 
     var nodes = g.append("g")
         .attr("class", "node")
@@ -64,7 +89,10 @@
             return d.y
         })
         .attr("r", radius)
-        .attr("fill", "black")
+        .attr("fill", "green")
+        .on("click", function (d) {
+            console.log("on click " + d.name);
+        });
 
     var text = g.append("g")
         .attr("class", "texts")
@@ -80,6 +108,9 @@
         })
         .attr("transform", function (d) { //<-- use transform it's not a g
             return "translate(" + d.x + "," + d.y + ")";
+        })
+        .on("click", function (d) {
+            console.log("on click " + d.name);
         });
 
 

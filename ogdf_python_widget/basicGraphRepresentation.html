@@ -29,6 +29,21 @@
 
     var radius = 15;
 
+    //construct arrow
+    svg.append("svg:defs").selectAll("marker")
+        .data(["end"])
+        .enter().append("svg:marker")
+        .attr("id", String)
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", 21)
+        .attr("refY", 0)
+        .attr("markerWidth", 6)
+        .attr("markerHeight", 6)
+        .attr("orient", "auto")
+        .attr("fill", "#999")
+        .append("svg:path")
+        .attr("d", "M0,-5L10,0L0,5");
+
     //data will get filled from the python code
     var nodes_data = []
     var links_data = []
@@ -60,7 +75,9 @@
         .attr("class", "links")
         .selectAll("line")
         .data(links_data)
-        .enter().append("line")
+        .enter()
+        .append("line")
+        .attr("marker-end", "url(#end)")
         .attr("stroke-width", 2)
         .style("stroke", "black");
 
