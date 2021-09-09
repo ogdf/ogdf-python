@@ -58,17 +58,17 @@
                 return null;
             }
         })
-        .attr("x1", function (l) {
-            return l.sx
+        .attr("x1", function (d) {
+            return d.sx
         })
-        .attr("y1", function (l) {
-            return l.sy
+        .attr("y1", function (d) {
+            return d.sy
         })
-        .attr("x2", function (l) {
-            return l.tx
+        .attr("x2", function (d) {
+            return d.tx
         })
-        .attr("y2", function (l) {
-            return l.ty
+        .attr("y2", function (d) {
+            return d.ty
         })
         .attr("fill", "none")
         .attr("stroke", "green")

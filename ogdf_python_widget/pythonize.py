@@ -111,7 +111,9 @@ def GraphAttributes_to_html(self):
     #
     # with tempfile.NamedTemporaryFile("w+t", suffix=".svg", prefix="ogdf-python-") as f:
     #     cppyy.gbl.ogdf.GraphIO.drawSVG(self, f.name, SVGConf)
-    #     return f.read()
+    #     data = f.read()
+    #     data = data.replace('<?xml version="1.0"?>', '')
+    #     return data
 
     __location__ = os.path.realpath(
         os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -139,8 +141,6 @@ def GraphAttributes_to_html(self):
                  "y": int(self.y(node) + 0.5)})
 
         links_data = []
-        for edge in self.constGraph().edges:
-            links_data.append({"source": str(edge.source().index()), "target": str(edge.target().index())})
 
         for edge in self.constGraph().edges:
             edge_id = str(edge.source().index()) + "_" + str(edge.target().index())
