@@ -19,7 +19,7 @@ class GraphWidget(VBox):
         self.test()
         self.export_graph()
 
-        buttons = VBox([add_button, clear_button, refresh_button, load_button])
+        buttons = VBox([self.drawing_pad, add_button, clear_button, refresh_button, load_button])
         super().__init__([buttons])
 
     def export_graph(self):

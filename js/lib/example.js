@@ -42,13 +42,23 @@ var HelloView = widgets.DOMWidgetView.extend({
     // Defines how the widget gets rendered into the DOM
     render: function () {
         this.svg = document.createElement("svg");
+        this.main_div = document.createElement("div")
+        // this.main_div.setAttribute("style", "display:block")
+        // this.main_div.setAttribute("class","output_subarea output_html rendered_html output_result")
 
-        this.svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-        this.svg.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
-        this.svg.setAttribute("xmlns:ev", "http://www.w3.org/2001/xml-events");
-        this.svg.setAttribute("baseProfile", "full");
-        this.svg.setAttribute("version", "1.1");
-        this.svg.setAttribute("viewBox", "28.5 28.5 413 924.667");
+        // this.svg.style.width = "800px"
+        // this.svg.style.height = "500px"
+        this.svg.setAttribute("width", "800");
+        this.svg.setAttribute("height", "500");
+        // this.svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+        // this.svg.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
+        // this.svg.setAttribute("xmlns:ev", "http://www.w3.org/2001/xml-events");
+        // this.svg.setAttribute("baseProfile", "full");
+        // this.svg.setAttribute("version", "1.1");
+        // this.svg.setAttribute("viewBox", "0 0 2287 1276")
+
+        this.main_div.append(this.svg);
+        this.el.appendChild(this.main_div);
 
         var svg = d3.select(this.svg);
 
@@ -443,7 +453,11 @@ var HelloView = widgets.DOMWidgetView.extend({
             g.attr("transform", d3.event.transform)
         }
 
-        this.el.appendChild(this.svg);
+        // this.img= document.createElement("img")
+        // this.img.setAttribute("src", "url(https://de.wikipedia.org/wiki/Scalable_Vector_Graphics#/media/Datei:SVG_logo.svg)")
+        //
+        // this.setElement(this.img)
+
 
         // this.model.on('change:value', this.value_changed, this);
         // this.model.on('change:value2', this.value_changed, this);
