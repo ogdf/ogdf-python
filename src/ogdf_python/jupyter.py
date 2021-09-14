@@ -3,7 +3,10 @@ import sys
 import cppyy
 
 try:
+    from IPython import get_ipython
     from IPython.core.magic import register_cell_magic
+    if not get_ipython():
+        raise ImportError("cell magic can only be used in context where `get_ipython` exists")
 except ImportError:
     pass
 else:
