@@ -2,7 +2,7 @@ import os
 import warnings
 
 import cppyy.ll
-from cppyy import include as cppinclude, cppdef, nullptr
+from cppyy import include as cppinclude, cppdef, cppexec, nullptr
 
 cppyy.ll.set_signals_as_exception(True)
 cppyy.add_include_path(os.path.dirname(os.path.realpath(__file__)))
@@ -14,7 +14,7 @@ if "OGDF_INSTALL_DIR" in os.environ:
 elif "OGDF_BUILD_DIR" in os.environ:
     BUILD_DIR = os.path.expanduser(os.getenv("OGDF_BUILD_DIR"))
     cppyy.add_include_path(os.path.join(BUILD_DIR, "include"))
-    cppyy.add_include_path(os.path.join(os.path.dirname(BUILD_DIR), "include"))
+    cppyy.add_include_path(os.path.join(BUILD_DIR, "..", "include"))
     cppyy.add_library_path(BUILD_DIR)
 else:
     warnings.warn("ogdf-python couldn't find OGDF. "
@@ -30,10 +30,12 @@ cppyy.load_library("libOGDF.so")
 
 import ogdf_python.doxygen
 import ogdf_python.pythonize
+import ogdf_python.jupyter
 from cppyy.gbl import ogdf
 
-__all__ = ["ogdf", "cppinclude", "cppdef", "nullptr"]
+__all__ = ["ogdf", "cppinclude", "cppdef", "cppexec", "nullptr"]
 __keep_imports = [cppyy,
                   ogdf_python.doxygen,
                   ogdf_python.pythonize,
-                  ogdf, cppinclude, cppdef, nullptr]
+                  ogdf_python.jupyter,
+                  ogdf, cppinclude, cppdef, cppexec, nullptr]

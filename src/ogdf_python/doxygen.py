@@ -59,7 +59,7 @@ def find_all_includes():
 # doc strings / help messages##########################################################################################
 
 def pythonize_docstrings(klass, name):
-    data = DOXYGEN_DATA["class"][klass.__cpp_name__]  # TODO do the same for namespace members
+    data = DOXYGEN_DATA["class"][klass.__cpp_name__.partition("<")[0]]  # TODO do the same for namespace members
     url = DOXYGEN_URL % (data["refid"], "")
     try:
         if klass.__doc__:
@@ -67,17 +67,18 @@ def pythonize_docstrings(klass, name):
         else:
             klass.__doc__ = url
     except AttributeError as e:
-        print(klass.__cpp_name__, e)  # TODO remove once we can overwrite the __doc__ of CPPOverload etc.
+        pass
+        # print(klass.__cpp_name__, e)  # TODO remove once we can overwrite the __doc__ of CPPOverload etc.
 
     for mem, val in klass.__dict__.items():
         if mem not in data["members"]:
-            print(klass.__cpp_name__, "has no member", mem)
+            # print(klass.__cpp_name__, "has no member", mem)
             continue
         try:
             for override in data["members"][mem].values():
                 val.__doc__ += "\n" + DOXYGEN_URL % (data["refid"], override["refid"][len(data["refid"]) + 2:])
         except AttributeError as e:
-            print(klass.__cpp_name__, e)  # TODO remove once we can overwrite the __doc__ of CPPOverload etc.
+            # print(klass.__cpp_name__, e)  # TODO remove once we can overwrite the __doc__ of CPPOverload etc.
             # import traceback
             # traceback.print_exc()
             # print(val.__doc__)
@@ -178,12 +179,4 @@ else:
         with importlib_resources.files("ogdf_python").joinpath("doxygen.json").open("rt") as f:
             DOXYGEN_DATA = json.load(f)
 
-if "OGDF_DOC_URL" in os.environ:
-    DOXYGEN_URL = os.environ["OGDF_DOC_URL"]
-else:
-    DOXYGEN_URL = "https://ogdf.github.io/doc/ogdf/%s.html#%s"
-
-import cppyy
-
-# cppyy.py.add_pythonization(pythonize_docstrings, "ogdf") # TODO needs to be added *before* any classes are loaded
-wrap_getattribute(cppyy.gbl.ogdf)
+DOXYGEN_URL = os.environ.get("OGDF_DOC_URL", "https://ogdf.github.io/doc/ogdf/%s.html#%s")
