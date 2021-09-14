@@ -33,7 +33,8 @@ import ogdf_python.pythonize
 import ogdf_python.jupyter
 from cppyy.gbl import ogdf
 
-__all__ = ["ogdf", "cppinclude", "cppdef", "cppexec", "nullptr"]
+__version__ = "0.1.2-dev"
+__all__ = ["ogdf", "cppinclude", "cppdef", "cppexec", "nullptr", "__version__"]
 __keep_imports = [cppyy,
                   ogdf_python.doxygen,
                   ogdf_python.pythonize,
