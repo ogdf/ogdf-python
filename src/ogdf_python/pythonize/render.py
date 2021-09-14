@@ -13,8 +13,7 @@ def GraphAttributes_to_html(self):
         SVGConf.bezierInterpolation(True)
         SVGConf.curviness(0.3)
     with tempfile.NamedTemporaryFile("w+t", suffix=".svg", prefix="ogdf-python-") as f:
-        # os = cppyy.gbl.std.ofstream(f.name)
-        # cppyy.bind_object(cppyy.addressof(os), "std::basic_ostream<char>")
-        cppyy.gbl.ogdf.GraphIO.drawSVG(self, f.name, SVGConf)
-        # os.close()
+        os = cppyy.gbl.std.ofstream(f.name)
+        cppyy.gbl.ogdf.GraphIO.drawSVG(self, os, SVGConf)
+        os.close()
         return f.read()
