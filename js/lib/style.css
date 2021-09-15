@@ -1,6 +1,6 @@
 .main-div {
     border: 1px solid #BACACA;
-    background : #D3D3D3;
+    background: #D3D3D3;
     margin-left: auto;
     margin-right: auto;
     display: block;
@@ -8,8 +8,18 @@
 
 .sub-div {
     border: 1px solid #BACACA;
-    background : #76ade5;
+    background: #76ade5;
     margin-left: auto;
     margin-right: auto;
     display: block;
+}
+
+.link line {
+    stroke: #999;
+    stroke-opacity: 0.6;
+}
+
+.node circle {
+    stroke: black;
+    stroke-width: 0px;
 }

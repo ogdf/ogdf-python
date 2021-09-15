@@ -1,5 +1,6 @@
 var widgets = require('@jupyter-widgets/base');
 var _ = require('lodash');
+var d3 = require("d3");
 require("./style.css");
 
 // See example.py for the kernel counterpart to this file.
