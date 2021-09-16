@@ -19,7 +19,7 @@ require("./style.css");
 //
 //  when different from the base class.
 
-// When serialiazing the entire widget state for embedding, only values that
+// When serializing the entire widget state for embedding, only values that
 // differ from the defaults will be specified.
 var HelloModel = widgets.DOMWidgetModel.extend({
     defaults: _.extend(widgets.DOMWidgetModel.prototype.defaults(), {
@@ -42,37 +42,20 @@ var HelloModel = widgets.DOMWidgetModel.extend({
 var HelloView = widgets.DOMWidgetView.extend({
     // Defines how the widget gets rendered into the DOM
     render: function () {
-        this.svg = document.createElement("svg");
-        this.main_div = document.createElement("div")
-
-        this.meta = document.createElement("meta")
-        this.meta.setAttribute('http-equiv', 'Content-Type')
-        this.meta.setAttribute('content', 'text/html; charset=utf-8')
-        this.main_div.append(this.meta)
-
-        // this.main_div.setAttribute("style", "display:block")
-        // this.main_div.setAttribute("class","output_subarea output_html rendered_html output_result")
-
+        this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
 
         this.svg.setAttribute("width", "960");
         this.svg.setAttribute("height", "540");
-        // this.svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-        // this.svg.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
-        // this.svg.setAttribute("xmlns:ev", "http://www.w3.org/2001/xml-events");
-        // this.svg.setAttribute("baseProfile", "full");
-        // this.svg.setAttribute("version", "1.1");
-        // this.svg.setAttribute("viewBox", "0 0 2287 1276")
 
-        this.main_div.append(this.svg);
-        this.el.appendChild(this.main_div);
-
-        var svg = d3.select(this.svg);
+        var svg = d3.select(this.svg),
+            width = +svg.attr("width"),
+            height = +svg.attr("height");
 
         var radius = 15;
 
         //construct arrow
         svg.append("svg:defs").selectAll("marker")
-            .data(["end"])
+            .data(["endGA"])
             .enter().append("svg:marker")
             .attr("id", String)
             .attr("viewBox", "0 -5 10 10")
@@ -390,7 +373,7 @@ var HelloView = widgets.DOMWidgetView.extend({
             .append("line")
             .attr("marker-end", function (d) {
                 if (d.arrow) {
-                    return "url(#end)";
+                    return "url(#endGA)";
                 } else {
                     return null;
                 }
@@ -409,8 +392,8 @@ var HelloView = widgets.DOMWidgetView.extend({
             })
             .attr("fill", "none")
             .attr("stroke", "green")
-            .on("click", function (d) {
-                console.log("on click " + d.id);
+            .on("click", function (event) {
+                console.log("on click " + event.target.__data__.id);
             });
 
         var nodes = g.append("g")
@@ -427,8 +410,8 @@ var HelloView = widgets.DOMWidgetView.extend({
             })
             .attr("r", radius)
             .attr("fill", "green")
-            .on("click", function (d) {
-                console.log("on click " + d.name);
+            .on("click", function (event) {
+                console.log("on click " + event.target.__data__.name);
             });
 
         var text = g.append("g")
@@ -446,96 +429,23 @@ var HelloView = widgets.DOMWidgetView.extend({
             .attr("transform", function (d) { //<-- use transform it's not a g
                 return "translate(" + d.x + "," + d.y + ")";
             })
-            .on("click", function (d) {
-                console.log("on click " + d.name);
+            .on("click", function (event) {
+                console.log("on click " + event.target.__data__.name);
             });
 
 
         //add zoom capabilities
-        var zoom_handler = d3.zoom().on("zoom", zoom_actions);
-        zoom_handler(svg);
+        svg.call(d3.zoom()
+            .extent([[0, 0], [width, height]])
+            .on("zoom", zoomed));
 
-        function zoom_actions() {
-            g.attr("transform", d3.event.transform)
+        function zoomed({transform}) {
+            g.attr("transform", transform);
         }
 
-        // this.img= document.createElement("img")
-        // this.img.setAttribute("src", "url(https://de.wikipedia.org/wiki/Scalable_Vector_Graphics#/media/Datei:SVG_logo.svg)")
-        //
-        // this.setElement(this.img)
-
+        this.el.appendChild(this.svg);
 
         // this.model.on('change:value', this.value_changed, this);
-        // this.model.on('change:value2', this.value_changed, this);
-        // this.model.on('change:nodes', this.draw_graph, this);
-        // this.model.on('change:edges', this.draw_graph, this);
-        // this.model.on('change:refresh', this.send_click, this);
-    },
-
-
-    value_changed: function () {
-        this.subDiv.textContent = this.model.get('value') + ' : ' + this.model.get('value2');
-    },
-
-    send_click: function () {
-        console.log("test click")
-        this.send({event: 'click'})
-    },
-
-    send: function (content) {
-        console.log('try sending')
-        this.comm = this.options.comm
-        console.log(this.comm)
-
-        if (this.comm !== undefined) {
-            console.log("sending")
-            const data = {method: 'custom', content: content};
-            this.comm.send(data, {}, {}, null)
-        }
-        return undefined
-    },
-
-    draw_graph: function () {
-        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-        let edges = this.model.get('edges');
-        for (let i = 0; i < edges.length; i++) {
-            const edge = edges[i];
-            this.draw_line(edge[0], edge[1], edge[2], edge[3], this.context)
-        }
-
-        let nodes = this.model.get('nodes');
-        for (let i = 0; i < nodes.length; i++) {
-            const node = nodes[i];
-            this.draw_circle(node[0], node[1], 20, this.context)
-            this.draw_text(node[0], node[1], node[2], this.context)
-        }
-    },
-
-    draw_circle: function (centerX, centerY, radius, context) {
-        context.beginPath();
-        context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-        context.fillStyle = 'green';
-        context.fill();
-        context.lineWidth = 1;
-        context.strokeStyle = '#003300';
-        context.stroke();
-    },
-
-    draw_line: function (sourceX, sourceY, targetX, targetY, context) {
-        context.strokeStyle = 'green';
-        context.lineWidth = 2;
-        context.beginPath();
-        context.moveTo(sourceX, sourceY);
-        context.lineTo(targetX, targetY);
-        context.stroke();
-    },
-
-    draw_text: function (x, y, text, context) {
-        context.fillStyle = 'black';
-        context.font = "20px Arial";
-        context.textAlign = "center";
-        context.fillText(text, x, y);
     },
 });
 
