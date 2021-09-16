@@ -3,6 +3,7 @@ import re
 import tempfile
 import os
 import json
+import uuid
 
 import cppyy
 
@@ -115,9 +116,6 @@ def GraphAttributes_to_html(self):
     #     data = data.replace('<?xml version="1.0"?>', '')
     #     return data
 
-    __location__ = os.path.realpath(
-        os.path.join(os.getcwd(), os.path.dirname(__file__)))
-
     if isinstance(self, cppyy.gbl.ogdf.Graph):
         nodes_data = []
         for node in self.nodes:
@@ -127,11 +125,7 @@ def GraphAttributes_to_html(self):
         for edge in self.edges:
             links_data.append({"source": str(edge.source().index()), "target": str(edge.target().index())})
 
-        with open(os.path.join(__location__, 'basicGraphRepresentation.html'), 'r') as file:
-            data = file.read()
-            data = data.replace("var nodes_data = []", "var nodes_data = " + json.dumps(nodes_data))
-            data = data.replace("var links_data = []", "var links_data = " + json.dumps(links_data))
-            return data
+        return export_html('basicGraphRepresentation.html', nodes_data, links_data)
 
     if isinstance(self, cppyy.gbl.ogdf.GraphAttributes):
         nodes_data = []
@@ -159,17 +153,26 @@ def GraphAttributes_to_html(self):
                 link_dict['arrow'] = True
             links_data.append(link_dict)
 
-        with open(os.path.join(__location__, 'basicGraphAttributesRepresentation.html'), 'r') as file:
-            data = file.read()
-            data = data.replace("var nodes_data = []", "var nodes_data = " + json.dumps(nodes_data))
-            data = data.replace("var links_data = []", "var links_data = " + json.dumps(links_data))
-            return data
+        return export_html('basicGraphAttributesRepresentation.html', nodes_data, links_data)
 
 
 cppyy.gbl.ogdf.Graph._repr_html_ = GraphAttributes_to_html
 cppyy.gbl.ogdf.GraphAttributes._repr_html_ = GraphAttributes_to_html
 cppyy.gbl.ogdf.ClusterGraph._repr_html_ = GraphAttributes_to_html
 cppyy.gbl.ogdf.ClusterGraphAttributes._repr_html_ = GraphAttributes_to_html
+
+
+def export_html(filename, nodes_data, links_data):
+    __location__ = os.path.realpath(
+        os.path.join(os.getcwd(), os.path.dirname(__file__)))
+
+    with open(os.path.join(__location__, filename), 'r') as file:
+        data = file.read()
+        data = data.replace("var nodes_data = []", "var nodes_data = " + json.dumps(nodes_data))
+        data = data.replace("var links_data = []", "var links_data = " + json.dumps(links_data))
+        # the G is needed because CSS3 selector doesnt support ID selectors that start with a digit
+        data = data.replace("placeholderId", 'G' + uuid.uuid4().hex)
+        return data
 
 
 def replace_GraphAttributes(klass, name):

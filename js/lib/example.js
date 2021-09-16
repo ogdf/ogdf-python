@@ -44,13 +44,18 @@ var HelloView = widgets.DOMWidgetView.extend({
     render: function () {
         this.svg = document.createElement("svg");
         this.main_div = document.createElement("div")
+
+        this.meta = document.createElement("meta")
+        this.meta.setAttribute('http-equiv', 'Content-Type')
+        this.meta.setAttribute('content', 'text/html; charset=utf-8')
+        this.main_div.append(this.meta)
+
         // this.main_div.setAttribute("style", "display:block")
         // this.main_div.setAttribute("class","output_subarea output_html rendered_html output_result")
 
-        // this.svg.style.width = "800px"
-        // this.svg.style.height = "500px"
-        this.svg.setAttribute("width", "800");
-        this.svg.setAttribute("height", "500");
+
+        this.svg.setAttribute("width", "960");
+        this.svg.setAttribute("height", "540");
         // this.svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
         // this.svg.setAttribute("xmlns:xlink", "http://www.w3.org/1999/xlink");
         // this.svg.setAttribute("xmlns:ev", "http://www.w3.org/2001/xml-events");

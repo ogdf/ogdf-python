@@ -18,161 +18,160 @@
     }
 
 </style>
-<svg width="800" height="500"></svg>
-<script src="https://d3js.org/d3.v4.min.js"></script>
+<svg id="placeholderId" width="960" height="540"></svg>
 <script>
 
-    //create somewhere to put the force directed graph
-    var svg = d3.select("svg"),
-        width = +svg.attr("width"),
-        height = +svg.attr("height");
+    require.config({paths: {d3: "https://d3js.org/d3.v7.min.js"}});
 
-    var radius = 15;
+    require(["d3"], function (d3) {
 
-    //construct arrow
-    svg.append("svg:defs").selectAll("marker")
-        .data(["end"])
-        .enter().append("svg:marker")
-        .attr("id", String)
-        .attr("viewBox", "0 -5 10 10")
-        .attr("refX", 21)
-        .attr("refY", 0)
-        .attr("markerWidth", 6)
-        .attr("markerHeight", 6)
-        .attr("orient", "auto")
-        .attr("fill", "#999")
-        .append("svg:path")
-        .attr("d", "M0,-5L10,0L0,5");
+        var svg = d3.select("#placeholderId"),
+            width = +svg.attr("width"),
+            height = +svg.attr("height");
 
-    //data will get filled from the python code
-    var nodes_data = []
-    var links_data = []
+        var radius = 15;
 
-    //set up the simulation and add forces
-    var simulation = d3.forceSimulation().nodes(nodes_data);
+        //construct arrow
+        svg.append("svg:defs").selectAll("marker")
+            .data(["end"])
+            .enter().append("svg:marker")
+            .attr("id", String)
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 21)
+            .attr("refY", 0)
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto")
+            .attr("fill", "#999")
+            .append("svg:path")
+            .attr("d", "M0,-5L10,0L0,5");
 
-    var link_force = d3.forceLink(links_data).id(function (d) {
-        return d.name;
-    });
+        //data will get filled from the python code
+        var nodes_data = []
+        var links_data = []
 
-    var charge_force = d3.forceManyBody().strength(-100);
+        //set up the simulation and add forces
+        var simulation = d3.forceSimulation().nodes(nodes_data);
 
-    var center_force = d3.forceCenter(width / 2, height / 2);
-
-    simulation
-        .force("charge_force", charge_force)
-        .force("center_force", center_force)
-        .force("links", link_force);
-
-    //add tick instructions:
-    simulation.on("tick", tickActions);
-
-    //add encompassing group for the zoom
-    var g = svg.append("g").attr("class", "everything");
-
-    //draw lines for the links
-    var link = g.append("g")
-        .attr("class", "links")
-        .selectAll("line")
-        .data(links_data)
-        .enter()
-        .append("line")
-        .attr("marker-end", "url(#end)")
-        .attr("stroke-width", 2)
-        .style("stroke", "black");
-
-    //draw circles for the nodes
-    var node = g.append("g")
-        .attr("class", "nodes")
-        .selectAll("circle")
-        .data(nodes_data)
-        .enter()
-        .append("circle")
-        .attr("r", radius)
-        .attr("fill", "black");
-
-    var text = g.append("g")
-        .attr("class", "texts")
-        .selectAll("text")
-        .data(nodes_data)
-        .enter()
-        .append("text")
-        .attr("fill", "white")
-        .attr("text-anchor", "middle")
-        .attr("dominant-baseline", "central")
-        .text(function (d) {
+        var link_force = d3.forceLink(links_data).id(function (d) {
             return d.name;
         });
 
-    //add drag capabilities
-    var drag_handler = d3.drag()
-        .on("start", drag_start)
-        .on("drag", drag_drag)
-        .on("end", drag_end);
+        var charge_force = d3.forceManyBody().strength(-100);
 
-    drag_handler(node);
-    drag_handler(text);
+        var center_force = d3.forceCenter(width / 2, height / 2);
 
-    //add zoom capabilities
-    var zoom_handler = d3.zoom().on("zoom", zoom_actions);
+        simulation
+            .force("charge_force", charge_force)
+            .force("center_force", center_force)
+            .force("links", link_force);
 
-    zoom_handler(svg);
+        //add tick instructions:
+        simulation.on("tick", tickActions);
 
-    /** Functions **/
-    //Drag functions
-    //d is the node
-    function drag_start(d) {
-        if (!d3.event.active) simulation.alphaTarget(0.3).restart();
-        d.fx = d.x;
-        d.fy = d.y;
-    }
+        //add encompassing group for the zoom
+        var g = svg.append("g").attr("class", "everything");
 
-    //make sure you can't drag the circle outside the box
-    function drag_drag(d) {
-        d.fx = d3.event.x;
-        d.fy = d3.event.y;
-    }
+        //draw lines for the links
+        var link = g.append("g")
+            .attr("class", "links")
+            .selectAll("line")
+            .data(links_data)
+            .enter()
+            .append("line")
+            .attr("marker-end", "url(#end)")
+            .attr("stroke-width", 2)
+            .style("stroke", "black");
 
-    function drag_end(d) {
-        if (!d3.event.active) simulation.alphaTarget(0);
-        d.fx = null;
-        d.fy = null;
-    }
+        //draw circles for the nodes
+        var node = g.append("g")
+            .attr("class", "nodes")
+            .selectAll("circle")
+            .data(nodes_data)
+            .enter()
+            .append("circle")
+            .attr("r", radius)
+            .attr("fill", "black");
 
-    //Zoom functions
-    function zoom_actions() {
-        g.attr("transform", d3.event.transform)
-    }
-
-    function tickActions() {
-        //update circle positions each tick of the simulation
-        node
-            .attr("cx", function (d) {
-                return d.x;
-            })
-            .attr("cy", function (d) {
-                return d.y;
+        var text = g.append("g")
+            .attr("class", "texts")
+            .selectAll("text")
+            .data(nodes_data)
+            .enter()
+            .append("text")
+            .attr("fill", "white")
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "central")
+            .text(function (d) {
+                return d.name;
             });
 
-        //update link positions
-        link
-            .attr("x1", function (d) {
-                return d.source.x;
-            })
-            .attr("y1", function (d) {
-                return d.source.y;
-            })
-            .attr("x2", function (d) {
-                return d.target.x;
-            })
-            .attr("y2", function (d) {
-                return d.target.y;
-            });
+        //add drag capabilities
+        var drag_handler = d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended);
 
-        //update text positions
-        text
-            .attr("transform", function (d) { //<-- use transform it's not a g
-                return "translate(" + d.x + "," + d.y + ")";
-            });
-    }
+        node.call(drag_handler)
+        text.call(drag_handler)
+
+        //add zoom capabilities
+        svg.call(d3.zoom()
+            .extent([[0, 0], [width, height]])
+            .on("zoom", zoomed));
+
+        function zoomed({transform}) {
+            g.attr("transform", transform);
+        }
+
+        //Drag functions
+        function dragstarted(event) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            event.subject.fx = event.subject.x;
+            event.subject.fy = event.subject.y;
+        }
+
+        function dragged(event) {
+            event.subject.fx = event.x;
+            event.subject.fy = event.y;
+        }
+
+        function dragended(event) {
+            if (!event.active) simulation.alphaTarget(0);
+            event.subject.fx = null;
+            event.subject.fy = null;
+        }
+
+        function tickActions() {
+            //update circle positions each tick of the simulation
+            node
+                .attr("cx", function (d) {
+                    return d.x;
+                })
+                .attr("cy", function (d) {
+                    return d.y;
+                });
+
+            //update link positions
+            link
+                .attr("x1", function (d) {
+                    return d.source.x;
+                })
+                .attr("y1", function (d) {
+                    return d.source.y;
+                })
+                .attr("x2", function (d) {
+                    return d.target.x;
+                })
+                .attr("y2", function (d) {
+                    return d.target.y;
+                });
+
+            //update text positions
+            text
+                .attr("transform", function (d) { //<-- use transform it's not a g
+                    return "translate(" + d.x + "," + d.y + ")";
+                });
+        }
+    });
 </script>
