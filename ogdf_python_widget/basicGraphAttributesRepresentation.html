@@ -1,18 +1,5 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<style>
-
-    .links line {
-        stroke: #999;
-        stroke-opacity: 0.6;
-    }
-
-    .nodes circle {
-        stroke: black;
-        stroke-width: 0px;
-    }
-
-</style>
 <svg id="placeholderId" width="960" height="540"></svg>
 <script>
 
@@ -27,7 +14,7 @@
 
         //construct arrow
         svg.append("svg:defs").selectAll("marker")
-            .data(["end"])
+            .data(["endGA"])
             .enter().append("svg:marker")
             .attr("id", String)
             .attr("viewBox", "0 -5 10 10")
@@ -54,7 +41,7 @@
             .append("line")
             .attr("marker-end", function (d) {
                 if (d.arrow) {
-                    return "url(#end)";
+                    return "url(#endGA)";
                 } else {
                     return null;
                 }
