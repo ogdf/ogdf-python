@@ -30,41 +30,41 @@ var HelloModel = widgets.DOMWidgetModel.extend({
         _model_module_version: '0.1.0',
         _view_module_version: '0.1.0',
         value: 'Hello Test!',
-        value2: 'Hello World!',
-        refresh: false,
-
-
     })
-
 });
 
 // Custom View. Renders the widget model.
 var HelloView = widgets.DOMWidgetView.extend({
     // Defines how the widget gets rendered into the DOM
     render: function () {
-        let first_msg = true
-        var nodes
-        var links
-        var self = this
+        let nodes
+        let links
+        let self = this
 
+        console.log(this.el.childNodes.length)
+        let svgId = "G" + Math.random().toString(16).slice(2)
+        console.log("creating and appending svg: " + svgId)
         this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-
+        this.svg.setAttribute("id", svgId)
         this.svg.setAttribute("width", "960");
         this.svg.setAttribute("height", "540");
+        console.log(this.svg)
 
-        // this.el.appendChild(this.svg)
+        self.el.appendChild(self.svg)
 
-
-        var comm_manager = Jupyter.notebook.kernel.comm_manager
-        var handle_msg = function (msg) {
-            //use msg headers
-            if (first_msg) {
-                first_msg = false
-                nodes = JSON.parse(msg.content.data)
-            } else {
-                links = JSON.parse(msg.content.data)
+        let comm_manager = Jupyter.notebook.kernel.comm_manager
+        let handle_msg = function (msg) {
+            let code = msg.content.data.substring(0, 3)
+            if (code === 'N00') {
+                nodes = JSON.parse(msg.content.data.substr(3))
+            } else if (code === 'L00') {
+                links = JSON.parse(msg.content.data.substr(3))
+            } else if(code ==='C00'){
+                nodes = null
+                links = null
+            }
+            if (nodes != null && links != null) {
                 self.draw_graph.call(self, nodes, links, self.svg)
-                self.el.appendChild(self.svg)
             }
         }
 
@@ -77,16 +77,16 @@ var HelloView = widgets.DOMWidgetView.extend({
 
     draw_graph(nodes_data, links_data, bild) {
 
-        console.log(nodes_data)
-        console.log(links_data)
-        console.log("drawing graph")
+        console.log("drawing graph with svg:")
 
-
-        var svg = d3.select(bild),
+        let svg = d3.select(bild),
             width = +svg.attr("width"),
             height = +svg.attr("height");
 
-        var radius = 15;
+
+        console.log(bild)
+
+        let radius = 15;
 
         //construct arrow
         svg.append("svg:defs").selectAll("marker")
@@ -104,9 +104,9 @@ var HelloView = widgets.DOMWidgetView.extend({
             .attr("d", "M0,-5L10,0L0,5");
 
         //add encompassing group for the zoom
-        var g = svg.append("g").attr("class", "everything");
+        let g = svg.append("g").attr("class", "everything");
 
-        var links = g.append("g")
+        let links = g.append("g")
             .attr("class", "link")
             .selectAll("line")
             .data(links_data)
@@ -137,7 +137,7 @@ var HelloView = widgets.DOMWidgetView.extend({
                 console.log("on click " + event.target.__data__.id);
             });
 
-        var nodes = g.append("g")
+        let nodes = g.append("g")
             .attr("class", "node")
             .selectAll("circle")
             .data(nodes_data)
@@ -160,9 +160,7 @@ var HelloView = widgets.DOMWidgetView.extend({
             .on("mouseover", handleMouseOver)
             .on("mouseout", handleMouseOut);
 
-        console.log(nodes)
-
-        var text = g.append("g")
+        let text = g.append("g")
             .attr("class", "texts")
             .selectAll("text")
             .data(nodes_data)
