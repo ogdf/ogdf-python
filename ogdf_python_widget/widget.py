@@ -5,14 +5,14 @@ from traitlets import Unicode, List, Dict
 # See js/lib/ogdf-python-widget-view.js for the frontend counterpart to this file.
 
 @widgets.register
-class HelloWorld(widgets.DOMWidget):
+class Widget(widgets.DOMWidget):
     """An example widget."""
 
     # Name of the widget view class in front-end
-    _view_name = Unicode('HelloView').tag(sync=True)
+    _view_name = Unicode('WidgetView').tag(sync=True)
 
     # Name of the widget model class in front-end
-    _model_name = Unicode('HelloModel').tag(sync=True)
+    _model_name = Unicode('WidgetModel').tag(sync=True)
 
     # Name of the front-end module containing widget view
     _view_module = Unicode('ogdf-python-widget').tag(sync=True)
@@ -36,9 +36,12 @@ class HelloWorld(widgets.DOMWidget):
 
     def __init__(self, graph_attributes):
         self.graph_attributes = graph_attributes
-        self.on_msg(lambda *args: print(args[1]))
+        self.on_msg(lambda *args: self.handle_msg(args[1]))
         self.export_graph()
         super().__init__()
+
+    def handle_msg(self, msg):
+        print(msg)
 
     def export_graph(self):
         nodes_data = []

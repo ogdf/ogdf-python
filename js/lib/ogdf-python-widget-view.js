@@ -3,7 +3,7 @@ var _ = require('lodash');
 var d3 = require("d3");
 require("./style.css");
 
-// See model.py for the kernel counterpart to this file.
+// See widget.py for the kernel counterpart to this file.
 
 
 // Custom Model. Custom widgets models must at least provide default values
@@ -21,10 +21,10 @@ require("./style.css");
 
 // When serializing the entire widget state for embedding, only values that
 // differ from the defaults will be specified.
-var HelloModel = widgets.DOMWidgetModel.extend({
+var WidgetModel = widgets.DOMWidgetModel.extend({
     defaults: _.extend(widgets.DOMWidgetModel.prototype.defaults(), {
-        _model_name: 'HelloModel',
-        _view_name: 'HelloView',
+        _model_name: 'WidgetModel',
+        _view_name: 'WidgetView',
         _model_module: 'ogdf-python-widget',
         _view_module: 'ogdf-python-widget',
         _model_module_version: '0.1.0',
@@ -34,9 +34,9 @@ var HelloModel = widgets.DOMWidgetModel.extend({
 });
 
 // Custom View. Renders the widget model.
-var HelloView = widgets.DOMWidgetView.extend({
+var WidgetView = widgets.DOMWidgetView.extend({
     initialize: function (parameters) {
-        HelloView.__super__.initialize.call(this, parameters);
+        WidgetView.__super__.initialize.call(this, parameters);
         this.model.on('msg:custom', this.handle_msg.bind(this));
 
         this.model.on('change:nodes', this.render, this);
@@ -202,6 +202,6 @@ var HelloView = widgets.DOMWidgetView.extend({
 
 
 module.exports = {
-    HelloModel: HelloModel,
-    HelloView: HelloView
+    WidgetModel: WidgetModel,
+    WidgetView: WidgetView
 };
