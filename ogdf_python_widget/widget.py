@@ -1,25 +1,16 @@
-import json
-
-from ipywidgets import VBox, Button
+from ipywidgets import VBox
 from .example import HelloWorld
-from ipykernel.comm import Comm
 
 
 class GraphWidget(VBox):
     def __init__(self, graph_attributes):
         self.graph_attributes = graph_attributes
         self.drawing_pad = HelloWorld()
-        self.c = Comm(target_name='myTarget', data={})
-        load_button = Button(description="Load Graph", tooltip="Click me")
-        load_button.on_click(lambda b: self.load_graph())
+        self.drawing_pad.on_msg(lambda *args: print(args[1]))
         self.export_graph()
 
-        buttons = VBox([self.drawing_pad, load_button])
+        buttons = VBox([self.drawing_pad])
         super().__init__([buttons])
-
-    def load_graph(self):
-        self.c.send('C00')
-        self.export_graph()
 
     def export_graph(self):
         nodes_data = []
@@ -48,5 +39,6 @@ class GraphWidget(VBox):
                 link_dict['arrow'] = True
             links_data.append(link_dict)
 
-        self.c.send('N00' + json.dumps(nodes_data))
-        self.c.send('L00' + json.dumps(links_data))
+        self.drawing_pad.set_trait('nodes', nodes_data)
+        self.drawing_pad.set_trait('links', links_data)
+        # self.drawing_pad.send("init")

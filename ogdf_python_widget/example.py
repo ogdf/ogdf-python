@@ -1,5 +1,5 @@
 import ipywidgets as widgets
-from traitlets import Unicode, List, Bool
+from traitlets import Unicode, List, Bool, Dict
 
 
 # See js/lib/example.js for the frontend counterpart to this file.
@@ -30,3 +30,6 @@ class HelloWorld(widgets.DOMWidget):
     # is automatically synced to the frontend *any* time it changes in Python.
     # It is synced back to Python from the frontend *any* time the model is touched.
     # value = Unicode('Hello Test!').tag(sync=True)
+
+    nodes = List(Dict()).tag(sync=True)
+    links = List(Dict()).tag(sync=True)

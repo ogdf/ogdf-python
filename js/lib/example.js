@@ -35,56 +35,47 @@ var HelloModel = widgets.DOMWidgetModel.extend({
 
 // Custom View. Renders the widget model.
 var HelloView = widgets.DOMWidgetView.extend({
-    // Defines how the widget gets rendered into the DOM
-    render: function () {
-        let nodes
-        let links
-        let self = this
+    initialize: function (parameters) {
+        HelloView.__super__.initialize.call(this, parameters);
+        this.model.on('msg:custom', this.handle_msg.bind(this));
 
-        console.log(this.el.childNodes.length)
-        let svgId = "G" + Math.random().toString(16).slice(2)
-        console.log("creating and appending svg: " + svgId)
-        this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-        this.svg.setAttribute("id", svgId)
-        this.svg.setAttribute("width", "960");
-        this.svg.setAttribute("height", "540");
-        console.log(this.svg)
-
-        self.el.appendChild(self.svg)
-
-        let comm_manager = Jupyter.notebook.kernel.comm_manager
-        let handle_msg = function (msg) {
-            let code = msg.content.data.substring(0, 3)
-            if (code === 'N00') {
-                nodes = JSON.parse(msg.content.data.substr(3))
-            } else if (code === 'L00') {
-                links = JSON.parse(msg.content.data.substr(3))
-            } else if(code ==='C00'){
-                nodes = null
-                links = null
-            }
-            if (nodes != null && links != null) {
-                self.draw_graph.call(self, nodes, links, self.svg)
-            }
-        }
-
-        comm_manager.register_target('myTarget', function (comm, msg) {
-            comm.on_msg(handle_msg)
-        })
-
-        // this.model.on('change:value', this.value_changed, this);
+        this.model.on('change:nodes', this.render, this);
+        this.model.on('change:links', this.render, this);
     },
 
-    draw_graph(nodes_data, links_data, bild) {
+    handle_msg: function (msg) {
+        console.log(msg)
+    },
 
-        console.log("drawing graph with svg:")
+    // Defines how the widget gets rendered into the DOM
+    render: function () {
+        console.log("rendering")
 
-        let svg = d3.select(bild),
+        let nodes = this.model.get('nodes')
+        let links = this.model.get('links')
+
+        if (this.el.childNodes.length === 0) {
+            let svgId = "G" + Math.random().toString(16).slice(2)
+
+            this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+            this.svg.setAttribute("id", svgId)
+            this.svg.setAttribute("width", "960");
+            this.svg.setAttribute("height", "540");
+
+            this.el.appendChild(this.svg)
+            this.send(svgId)
+        }
+
+        if (nodes != null && links != null) {
+            this.draw_graph.call(this, nodes, links)
+        }
+    },
+
+    draw_graph(nodes_data, links_data) {
+
+        let svg = d3.select(this.svg),
             width = +svg.attr("width"),
             height = +svg.attr("height");
-
-
-        console.log(bild)
 
         let radius = 15;
 
