@@ -3,7 +3,7 @@ var _ = require('lodash');
 var d3 = require("d3");
 require("./style.css");
 
-// See example.py for the kernel counterpart to this file.
+// See model.py for the kernel counterpart to this file.
 
 
 // Custom Model. Custom widgets models must at least provide default values

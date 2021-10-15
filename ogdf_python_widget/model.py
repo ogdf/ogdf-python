@@ -2,7 +2,7 @@ import ipywidgets as widgets
 from traitlets import Unicode, List, Dict
 
 
-# See js/lib/example.js for the frontend counterpart to this file.
+# See js/lib/ogdf-python-widget-view.js for the frontend counterpart to this file.
 
 @widgets.register
 class HelloWorld(widgets.DOMWidget):
