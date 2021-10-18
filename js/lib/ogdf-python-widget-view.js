@@ -37,20 +37,82 @@ var WidgetModel = widgets.DOMWidgetModel.extend({
 var WidgetView = widgets.DOMWidgetView.extend({
     initialize: function (parameters) {
         WidgetView.__super__.initialize.call(this, parameters);
+        this.model.off('msg:custom')
         this.model.on('msg:custom', this.handle_msg.bind(this));
 
-        this.model.on('change:nodes', this.render, this);
-        this.model.on('change:links', this.render, this);
+        this.model.once('change:links', this.render, this);
     },
 
     handle_msg: function (msg) {
         console.log(msg)
+
+        if (msg.code === 'deleteNodeById') {
+            this.deleteNodeById(msg.data)
+        } else if (msg.code === 'deleteLinkById') {
+            this.deleteLinkById(msg.data)
+        }
+    },
+
+    deleteNodeById: function (nodeId) {
+        console.log("nodeDel " + nodeId)
+        let nodes = this.model.get('nodes')
+        let links = this.model.get('links')
+
+        for (let i = 0; i < nodes.length; i++) {
+            if (nodes[i].id === nodeId) {
+                nodes.splice(i, 1);
+                break
+            }
+        }
+
+        this.model.unset('nodes')
+        this.model.set('nodes', nodes)
+        this.model.save_changes()
+
+        //delete all links to and from this node
+        for (let i = links.length - 1; i >= 0; i--) {
+            if (links[i].s_id === nodeId || links[i].t_id === nodeId) {
+                this.deleteLinkById(links[i].id)
+            }
+        }
+
+        d3.select(this.svg)
+            .selectAll("circle")
+            .filter(function (d) {
+                return d.id === nodeId;
+            }).remove()
+
+        d3.select(this.svg)
+            .selectAll("text")
+            .filter(function (d) {
+                return d.id === nodeId;
+            }).remove()
+    },
+
+    deleteLinkById: function (linkId) {
+        console.log("linkDel " + linkId)
+        let links = this.model.get('links')
+
+
+        for (let i = links.length - 1 ; i >= 0; i--) {
+            if (links[i].id === linkId) {
+                links.splice(i, 1);
+            }
+        }
+
+        this.model.unset('links')
+        this.model.set('links', links)
+        this.model.save_changes()
+
+        d3.select(this.svg)
+            .selectAll("line")
+            .filter(function (d) {
+                return d.id === linkId;
+            }).remove()
     },
 
     // Defines how the widget gets rendered into the DOM
     render: function () {
-        console.log("rendering")
-
         let nodes = this.model.get('nodes')
         let links = this.model.get('links')
 
@@ -63,7 +125,6 @@ var WidgetView = widgets.DOMWidgetView.extend({
             this.svg.setAttribute("height", "540");
 
             this.el.appendChild(this.svg)
-            this.send(svgId)
         }
 
         if (nodes != null && links != null) {
@@ -103,6 +164,9 @@ var WidgetView = widgets.DOMWidgetView.extend({
             .data(links_data)
             .enter()
             .append("line")
+            .attr("id", function (d) {
+                return d.id
+            })
             .attr("marker-end", function (d) {
                 if (d.arrow) {
                     return "url(#endGA)";
@@ -159,7 +223,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
             .append("text")
             .attr("text-anchor", "middle")
             .attr("dominant-baseline", "central")
-            .attr("fill", "white")
+            .attr("fill", "#c2c0ba")
             .attr("id", function (d) {
                 return d.id
             })
@@ -179,22 +243,16 @@ var WidgetView = widgets.DOMWidgetView.extend({
             .extent([[0, 0], [width, height]])
             .on("zoom", zoomed));
 
-
-        // this.el.appendChild(this.svg);
-
-
         function zoomed({transform}) {
             g.attr("transform", transform);
         }
 
         // Create Event Handlers for mouse
-        function handleMouseOver(d, i) {  // Add interactivity
-            // Use D3 to select element, change color and size
+        function handleMouseOver() {
             d3.select(this).attr("fill", "orange").attr("r", radius * 1.5);
         }
 
-        function handleMouseOut(d, i) {
-            // Use D3 to select element, change color back to normal
+        function handleMouseOut() {
             d3.select(this).attr("fill", "green").attr("r", radius);
         }
     }
