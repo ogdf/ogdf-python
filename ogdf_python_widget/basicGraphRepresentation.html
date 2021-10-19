@@ -1,35 +1,18 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<style>
-
-    .links line {
-        stroke: #999;
-        stroke-opacity: 0.6;
-    }
-
-    .nodes circle {
-        stroke: black;
-        stroke-width: 0px;
-    }
-
-    .texts text {
-        stroke: black;
-        stroke-width: 0px;
-    }
-
-</style>
 <svg id="placeholderId" width="960" height="540"></svg>
 <script>
 
     require.config({paths: {d3: "https://d3js.org/d3.v7.min.js"}});
 
     require(["d3"], function (d3) {
-
         var svg = d3.select("#placeholderId"),
             width = +svg.attr("width"),
             height = +svg.attr("height");
 
         var radius = 15;
+        var forceDirected = true;
+        var color = forceDirected ? "black" : "green"
 
         //construct arrow
         svg.append("svg:defs").selectAll("marker")
@@ -42,7 +25,21 @@
             .attr("markerWidth", 6)
             .attr("markerHeight", 6)
             .attr("orient", "auto")
-            .attr("fill", "#999")
+            .attr("fill", "black")
+            .append("svg:path")
+            .attr("d", "M0,-5L10,0L0,5");
+
+        svg.append("svg:defs").selectAll("marker")
+            .data(["endGA"])
+            .enter().append("svg:marker")
+            .attr("id", String)
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 21)
+            .attr("refY", 0)
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto")
+            .attr("fill", "green")
             .append("svg:path")
             .attr("d", "M0,-5L10,0L0,5");
 
@@ -51,23 +48,26 @@
         var links_data = []
 
         //set up the simulation and add forces
-        var simulation = d3.forceSimulation().nodes(nodes_data);
+        if (forceDirected) {
 
-        var link_force = d3.forceLink(links_data).id(function (d) {
-            return d.name;
-        });
+            var simulation = d3.forceSimulation().nodes(nodes_data);
 
-        var charge_force = d3.forceManyBody().strength(-100);
+            var link_force = d3.forceLink(links_data).id(function (d) {
+                return d.name;
+            });
 
-        var center_force = d3.forceCenter(width / 2, height / 2);
+            var charge_force = d3.forceManyBody().strength(-100);
 
-        simulation
-            .force("charge_force", charge_force)
-            .force("center_force", center_force)
-            .force("links", link_force);
+            var center_force = d3.forceCenter(width / 2, height / 2);
 
-        //add tick instructions:
-        simulation.on("tick", tickActions);
+            simulation
+                .force("charge_force", charge_force)
+                .force("center_force", center_force)
+                .force("links", link_force);
+
+            //add tick instructions:
+            simulation.on("tick", tickActions);
+        }
 
         //add encompassing group for the zoom
         var g = svg.append("g").attr("class", "everything");
@@ -79,9 +79,33 @@
             .data(links_data)
             .enter()
             .append("line")
-            .attr("marker-end", "url(#end)")
+            .attr("marker-end", function (d) {
+                if (forceDirected)
+                    return "url(#end)"
+                if (forceDirected || d.arrow) {
+                    return "url(#endGA)";
+                } else {
+                    return null;
+                }
+            })
             .attr("stroke-width", 2)
-            .style("stroke", "black");
+            .style("stroke", color)
+            .attr("x1", function (d) {
+                if (d.sx == null) return
+                return d.sx
+            })
+            .attr("y1", function (d) {
+                if (d.sy == null) return
+                return d.sy
+            })
+            .attr("x2", function (d) {
+                if (d.tx == null) return
+                return d.tx
+            })
+            .attr("y2", function (d) {
+                if (d.ty == null) return
+                return d.ty
+            });
 
         //draw circles for the nodes
         var node = g.append("g")
@@ -91,7 +115,15 @@
             .enter()
             .append("circle")
             .attr("r", radius)
-            .attr("fill", "black");
+            .attr("fill", color)
+            .attr("cx", function (d) {
+                if (d.x == null) return
+                return d.x
+            })
+            .attr("cy", function (d) {
+                if (d.y == null) return
+                return d.y
+            });
 
         var text = g.append("g")
             .attr("class", "texts")
@@ -104,24 +136,21 @@
             .attr("dominant-baseline", "central")
             .text(function (d) {
                 return d.name;
+            })
+            .attr("transform", function (d) { //<-- use transform it's not a g
+                if (d.x == null || d.y == null) return
+                return "translate(" + d.x + "," + d.y + ")";
             });
 
         //add drag capabilities
-        var drag_handler = d3.drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended);
+        if (forceDirected) {
+            var drag_handler = d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended);
 
-        node.call(drag_handler)
-        text.call(drag_handler)
-
-        //add zoom capabilities
-        svg.call(d3.zoom()
-            .extent([[0, 0], [width, height]])
-            .on("zoom", zoomed));
-
-        function zoomed({transform}) {
-            g.attr("transform", transform);
+            node.call(drag_handler)
+            text.call(drag_handler)
         }
 
         //Drag functions
@@ -173,5 +202,15 @@
                     return "translate(" + d.x + "," + d.y + ")";
                 });
         }
-    });
+
+        //add zoom capabilities
+        svg.call(d3.zoom()
+            .extent([[0, 0], [width, height]])
+            .on("zoom", zoomed));
+
+        function zoomed({transform}) {
+            g.attr("transform", transform);
+        }
+    })
+    ;
 </script>

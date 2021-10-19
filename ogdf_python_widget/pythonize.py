@@ -125,7 +125,7 @@ def GraphAttributes_to_html(self):
         for edge in self.edges:
             links_data.append({"source": str(edge.source().index()), "target": str(edge.target().index())})
 
-        return export_html('basicGraphRepresentation.html', nodes_data, links_data)
+        return export_html('basicGraphRepresentation.html', nodes_data, links_data, True)
 
     if isinstance(self, cppyy.gbl.ogdf.GraphAttributes):
         nodes_data = []
@@ -153,7 +153,7 @@ def GraphAttributes_to_html(self):
                 link_dict['arrow'] = True
             links_data.append(link_dict)
 
-        return export_html('basicGraphAttributesRepresentation.html', nodes_data, links_data)
+        return export_html('basicGraphRepresentation.html', nodes_data, links_data, False)
 
 
 cppyy.gbl.ogdf.Graph._repr_html_ = GraphAttributes_to_html
@@ -162,7 +162,7 @@ cppyy.gbl.ogdf.ClusterGraph._repr_html_ = GraphAttributes_to_html
 cppyy.gbl.ogdf.ClusterGraphAttributes._repr_html_ = GraphAttributes_to_html
 
 
-def export_html(filename, nodes_data, links_data):
+def export_html(filename, nodes_data, links_data, force_directed):
     __location__ = os.path.realpath(
         os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
@@ -172,6 +172,8 @@ def export_html(filename, nodes_data, links_data):
         data = data.replace("var links_data = []", "var links_data = " + json.dumps(links_data))
         # the G is needed because CSS3 selector doesnt support ID selectors that start with a digit
         data = data.replace("placeholderId", 'G' + uuid.uuid4().hex)
+        if not force_directed:
+            data = data.replace("var forceDirected = true;", "var forceDirected = false;")
         return data
 
 
