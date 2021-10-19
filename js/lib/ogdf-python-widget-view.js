@@ -44,19 +44,17 @@ var WidgetView = widgets.DOMWidgetView.extend({
     },
 
     handle_msg: function (msg) {
-        console.log(msg)
-
         if (msg.code === 'deleteNodeById') {
             this.deleteNodeById(msg.data)
         } else if (msg.code === 'deleteLinkById') {
             this.deleteLinkById(msg.data)
+        }else if (msg.code === 'clearGraph') {
+            this.clearGraph()
         }
     },
 
     deleteNodeById: function (nodeId) {
-        console.log("nodeDel " + nodeId)
         let nodes = this.model.get('nodes')
-        let links = this.model.get('links')
 
         for (let i = 0; i < nodes.length; i++) {
             if (nodes[i].id === nodeId) {
@@ -68,13 +66,6 @@ var WidgetView = widgets.DOMWidgetView.extend({
         this.model.unset('nodes')
         this.model.set('nodes', nodes)
         this.model.save_changes()
-
-        //delete all links to and from this node
-        for (let i = links.length - 1; i >= 0; i--) {
-            if (links[i].s_id === nodeId || links[i].t_id === nodeId) {
-                this.deleteLinkById(links[i].id)
-            }
-        }
 
         d3.select(this.svg)
             .selectAll("circle")
@@ -90,11 +81,9 @@ var WidgetView = widgets.DOMWidgetView.extend({
     },
 
     deleteLinkById: function (linkId) {
-        console.log("linkDel " + linkId)
         let links = this.model.get('links')
 
-
-        for (let i = links.length - 1 ; i >= 0; i--) {
+        for (let i = links.length - 1; i >= 0; i--) {
             if (links[i].id === linkId) {
                 links.splice(i, 1);
             }
@@ -109,6 +98,19 @@ var WidgetView = widgets.DOMWidgetView.extend({
             .filter(function (d) {
                 return d.id === linkId;
             }).remove()
+    },
+
+    clearGraph: function () {
+        this.model.unset('nodes')
+        this.model.set('nodes', [])
+        this.model.unset('links')
+        this.model.set('links', [])
+
+        this.model.save_changes()
+
+        d3.select(this.svg).selectAll("circle").remove()
+        d3.select(this.svg).selectAll("text").remove()
+        d3.select(this.svg).selectAll("line").remove()
     },
 
     // Defines how the widget gets rendered into the DOM

@@ -37,7 +37,7 @@ class Widget(widgets.DOMWidget):
         self.graph_attributes = graph_attributes
         self.on_msg(lambda *args: self.handle_msg(args[1]))
         self.export_graph()
-        MyGraphObserver(self.graph_attributes.constGraph(), self)
+        self.myObserver = MyGraphObserver(self.graph_attributes.constGraph(), self)
 
     def handle_msg(self, msg):
         print(msg)
@@ -84,25 +84,22 @@ class MyGraphObserver(cppyy.gbl.ogdf.GraphObserver):
         self.widget = widget
 
     def nodeDeleted(self, node):
-        self.widget.send("node deleted")
-        print("node deleted", node)
+        self.widget.send({'code': 'deleteNodeById', 'data': str(node.index())})
 
     def nodeAdded(self, node):
-        self.widget.send("cleared")
-        print("cleared")
+        self.widget.send("nodeAdded")
+        print("nodeAdded")
 
     def edgeDeleted(self, edge):
-        self.widget.send("cleared")
-        print("cleared")
+        self.widget.send({'code': 'deleteLinkById', 'data': str(edge.index())})
 
     def edgeAdded(self, edge):
-        self.widget.send("cleared")
-        print("cleared")
+        self.widget.send("edgeAdded")
+        print("edgeAdded")
 
     def reInit(self):
-        self.widget.send("cleared")
-        print("cleared")
+        self.widget.send("reInit")
+        print("reInit")
 
-    def cleared(self) -> "void":
-        self.widget.send("cleared")
-        print("cleared")
+    def cleared(self):
+        self.widget.send({'code': 'clearGraph'})

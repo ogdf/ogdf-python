@@ -2,3 +2,7 @@
     stroke: black;
     stroke-width: 0px;
 }
+
+svg {
+    background: #edf0f5;
+}
