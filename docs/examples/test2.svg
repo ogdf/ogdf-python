@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events" version="1.1" baseProfile="full" viewBox="-82 -82 299 314">
+	<g>
+		<g>
+			<polygon points="40,50,35,51.25,35,48.75," stroke="#00FF00" stroke-width="1.000000px" />
+			<path fill="none" d=" M0,50 L40,50" stroke="#00FF00" stroke-width="1.000000px" />
+		</g>
+		<g>
+			<polygon points="-10,50,-15,51.25,-15,48.75," stroke="#00FF00" stroke-width="1.000000px" />
+			<path fill="none" d=" M150,50 L210.5,50 M210.5,50 L210.5,-60.5 M210.5,-60.5 L-60.5,-60.5 M-60.5,-60.5 L-60.5,50 M-60.5,50 L-10,50" stroke="#00FF00" stroke-width="1.000000px" />
+		</g>
+		<g>
+			<polygon points="0,90,-1.25,85,1.25,85," stroke="#FF0000" stroke-width="1.000000px" />
+			<path fill="none" d=" M0,50 L0,85" stroke="#FF0000" stroke-width="1.000000px" />
+		</g>
+		<g>
+			<polygon points="40,100,35,101.25,35,98.75," stroke="#00FF00" stroke-width="1.000000px" />
+			<path fill="none" d=" M0,100 L40,100" stroke="#00FF00" stroke-width="1.000000px" />
+		</g>
+		<g>
+			<polygon points="50,90,48.75,85,51.25,85," stroke="#00FF00" stroke-width="1.000000px" />
+			<path fill="none" d=" M50,50 L50,85" stroke="#00FF00" stroke-width="1.000000px" />
+		</g>
+		<g>
+			<polygon points="150,90,148.75,85,151.25,85," stroke="#FF0000" stroke-width="1.000000px" />
+			<path fill="none" d=" M150,50 L150,85" stroke="#FF0000" stroke-width="1.000000px" />
+		</g>
+		<g>
+			<polygon points="-10,100,-15,101.25,-15,98.75," stroke="#00FF00" stroke-width="1.000000px" />
+			<path fill="none" d=" M150,100 L215.5,100 M215.5,100 L215.5,-65.5 M215.5,-65.5 L-65.5,-65.5 M-65.5,-65.5 L-65.5,100 M-65.5,100 L-10,100" stroke="#00FF00" stroke-width="1.000000px" />
+		</g>
+		<g>
+			<polygon points="50,40,48.75,35,51.25,35," stroke="#000000" stroke-width="1.000000px" />
+			<path fill="none" d=" M50,100 L50,225.5 M50,225.5 L-75.5,225.5 M-75.5,225.5 L-75.5,-75.5 M-75.5,-75.5 L50,-75.5 M50,-75.5 L50,35" stroke="#000000" stroke-width="1.000000px" />
+		</g>
+		<g>
+			<polygon points="0,40,-1.25,35,1.25,35," stroke="#FF0000" stroke-width="1.000000px" />
+			<path fill="none" d=" M0,100 L0,220.5 M0,220.5 L-70.5,220.5 M-70.5,220.5 L-70.5,-70.5 M-70.5,-70.5 L0,-70.5 M0,-70.5 L0,35" stroke="#FF0000" stroke-width="1.000000px" />
+		</g>
+		<g>
+			<polygon points="140,100,135,101.25,135,98.75," stroke="#000000" stroke-width="1.000000px" />
+			<path fill="none" d=" M50,100 L140,100" stroke="#000000" stroke-width="1.000000px" />
+		</g>
+		<g>
+			<polygon points="150,40,148.75,35,151.25,35," stroke="#FF0000" stroke-width="1.000000px" />
+			<path fill="none" d=" M150,100 L150,230.5 M150,230.5 L-80.5,230.5 M-80.5,230.5 L-80.5,-80.5 M-80.5,-80.5 L150,-80.5 M150,-80.5 L150,35" stroke="#FF0000" stroke-width="1.000000px" />
+		</g>
+	</g>
+	<g>
+		<rect x="-10" y="40" width="20" height="20" fill="#FFFFFF" stroke-width="1.000000px" stroke="#000000" />
+		<text x="0" y="50" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="10" fill="#000000">4</text>
+	</g>
+	<g>
+		<rect x="40" y="40" width="20" height="20" fill="#FFFFFF" stroke-width="1.000000px" stroke="#000000" />
+		<text x="50" y="50" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="10" fill="#000000">5</text>
+	</g>
+	<g>
+		<rect x="140" y="40" width="20" height="20" fill="#FFFFFF" stroke-width="1.000000px" stroke="#000000" />
+		<text x="150" y="50" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="10" fill="#000000">7</text>
+	</g>
+	<g>
+		<rect x="-10" y="90" width="20" height="20" fill="#FFFFFF" stroke-width="1.000000px" stroke="#000000" />
+		<text x="0" y="100" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="10" fill="#000000">8</text>
+	</g>
+	<g>
+		<rect x="40" y="90" width="20" height="20" fill="#FFFFFF" stroke-width="1.000000px" stroke="#000000" />
+		<text x="50" y="100" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="10" fill="#000000">9</text>
+	</g>
+	<g>
+		<rect x="140" y="90" width="20" height="20" fill="#FFFFFF" stroke-width="1.000000px" stroke="#000000" />
+		<text x="150" y="100" text-anchor="middle" dominant-baseline="middle" font-family="Arial" font-size="10" fill="#000000">11</text>
+	</g>
+</svg>
