@@ -293,7 +293,7 @@ def findDirection(GA,e1,e2,refNode):
             bendpointy = bendpoint[1]
             
                     
-            a1 = findAngle(refNode,bendpointx,bendpointy)
+            a1 = findAngle(GA,refNode,bendpointx,bendpointy)
                         
         else:
             
@@ -302,15 +302,15 @@ def findDirection(GA,e1,e2,refNode):
             bendpointy = bendpoint[1]
            
                     
-            a1 = findAngle(refNode,bendpointx,bendpointy)
+            a1 = findAngle(GA,refNode,bendpointx,bendpointy)
                         
     else:
         if e1.target() == refNode:
             nextNode = e1.source()
-            a1 = findAngle(refNode,GA.x[nextNode],GA.y[nextNode])
+            a1 = findAngle(GA,refNode,GA.x[nextNode],GA.y[nextNode])
         else:
             nextNode = e1.target()
-            a1 = findAngle(refNode,GA.x[nextNode],GA.y[nextNode])
+            a1 = findAngle(GA,refNode,GA.x[nextNode],GA.y[nextNode])
         
     if len(bendCoord(GA,e2)) != 0:
                
@@ -319,23 +319,23 @@ def findDirection(GA,e1,e2,refNode):
             bendpointx = bendpoint[0]
             bendpointy = bendpoint[1]
                     
-            a2 = findAngle(refNode,bendpointx,bendpointy)
+            a2 = findAngle(GA,refNode,bendpointx,bendpointy)
                         
         else:
             bendpoint = bendCoord(GA,e2)[0]
             bendpointx = bendpoint[0]
             bendpointy = bendpoint[1]
                     
-            a2 = findAngle(refNode,bendpointx,bendpointy)
+            a2 = findAngle(GA,refNode,bendpointx,bendpointy)
                         
     else:
         if e2.target() == refNode:
             nextNode = e2.source()
-            a2 = findAngle(refNode,GA.x[nextNode],GA.y[nextNode])
+            a2 = findAngle(GA,refNode,GA.x[nextNode],GA.y[nextNode])
            
         else:
             nextNode = e2.target()
-            a2 = findAngle(refNode,GA.x[nextNode],GA.y[nextNode])
+            a2 = findAngle(GA,refNode,GA.x[nextNode],GA.y[nextNode])
             
     
     if a1 == 180: 
@@ -382,21 +382,21 @@ def defineOrientation(GA,refEdge,refNode,refOrientation, orientation):
             bendpointx = bendpoint[0]
             bendpointy = bendpoint[1]
                     
-            refAngle = findAngle(refNode,bendpointx,bendpointy)
+            refAngle = findAngle(GA,refNode,bendpointx,bendpointy)
                         
         else:
             bendpoint = bendCoord(GA,refEdge)[0]
             bendpointx = bendpoint[0]
             bendpointy = bendpoint[1]
                     
-            refAngle = findAngle(refNode,bendpointx,bendpointy)
+            refAngle = findAngle(GA,refNode,bendpointx,bendpointy)
                         
     else:
         if refEdge.target() == refNode:        
-            refAngle = findAngle(refNode,GA.x[refEdge.source()],GA.y[refEdge.source()])
+            refAngle = findAngle(GA,refNode,GA.x[refEdge.source()],GA.y[refEdge.source()])
                         
         else:         
-            refAngle = findAngle(refNode,GA.x[refEdge.target()],GA.y[refEdge.target()])
+            refAngle = findAngle(GA,refNode,GA.x[refEdge.target()],GA.y[refEdge.target()])
         
     
     
@@ -418,17 +418,17 @@ def defineOrientation(GA,refEdge,refNode,refOrientation, orientation):
                         bendpointx = bendpoint[0]
                         bendpointy = bendpoint[1]
                     
-                        angle = findAngle(refNode,bendpointx,bendpointy)
+                        angle = findAngle(GA,refNode,bendpointx,bendpointy)
                         
                     else:
                         bendpoint = bendCoord(GA,e)[0]
                         bendpointx = bendpoint[0]
                         bendpointy = bendpoint[1]
                     
-                        angle = findAngle(refNode,bendpointx,bendpointy)
+                        angle = findAngle(GA,refNode,bendpointx,bendpointy)
                         
                 else:
-                    angle = findAngle(refNode,GA.x[nextNode],GA.y[nextNode])
+                    angle = findAngle(GA,refNode,GA.x[nextNode],GA.y[nextNode])
                     
             
             if abs(angle)%180 == abs(refAngle)%180:
@@ -510,7 +510,7 @@ def findSigns(alphaLoop, betaLoop, orientation):
             #ei = alphaLoop[i]
             ei1 = alphaLoop[0]
             
-        turn = findDirection(e.commonNode(ei1),e,ei1)
+        turn = findDirection(GA,e.commonNode(ei1),e,ei1)
     
         if prev_turn == 999:
             flag = 1 
@@ -557,7 +557,7 @@ def findSigns(alphaLoop, betaLoop, orientation):
             ei = betaLoop[i]
             ei1 = betaLoop[0]
             
-        turn = findDirection(e.commonNode(ei1),e,ei1)
+        turn = findDirection(GA,e.commonNode(ei1),e,ei1)
     
         if prev_turn == 999:
             flag = 1 
