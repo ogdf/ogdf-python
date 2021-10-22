@@ -29,8 +29,10 @@ class Widget(widgets.DOMWidget):
     # is automatically synced to the frontend *any* time it changes in Python.
     # It is synced back to Python from the frontend *any* time the model is touched.
 
-    nodes = List(Dict()).tag(sync=True)
+    nodes = List(Dict().tag(sync=True)).tag(sync=True)
     links = List(Dict().tag(sync=True)).tag(sync=True)
+
+    onclick_callback = None
 
     def __init__(self, graph_attributes):
         super().__init__()
@@ -40,7 +42,20 @@ class Widget(widgets.DOMWidget):
         self.myObserver = MyGraphObserver(self.graph_attributes.constGraph(), self)
 
     def handle_msg(self, msg):
-        print(msg)
+        if msg['code'] == 'linkClicked':
+            self.onlick_callback(msg['code'], self.get_link_from_id(msg['id']))
+        if msg['code'] == 'nodeClicked':
+            self.onlick_callback(msg['code'], self.get_node_from_id(msg['id']))
+
+    def get_node_from_id(self, node_id):
+        for node in self.graph_attributes.constGraph().nodes:
+            if node.index() == int(node_id):
+                return node
+
+    def get_link_from_id(self, link_id):
+        for link in self.graph_attributes.constGraph().edges:
+            if link.index() == int(link_id):
+                return link
 
     def export_graph(self):
         nodes_data = []

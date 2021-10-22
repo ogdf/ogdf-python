@@ -36,35 +36,47 @@ var WidgetModel = widgets.DOMWidgetModel.extend({
 // Custom View. Renders the widget model.
 var WidgetView = widgets.DOMWidgetView.extend({
     initialize: function (parameters) {
+        this.callbacksAlowed = true
         WidgetView.__super__.initialize.call(this, parameters);
+        this.nodes = []
+        this.links = []
         this.model.off('msg:custom')
         this.model.on('msg:custom', this.handle_msg.bind(this));
 
-        this.model.once('change:links', this.render, this);
+        this.model.on('change:links', this.renderCallbackCheck, this);
+        this.model.on('change:links', this.renderCallbackCheck, this);
+    },
+
+    renderCallbackCheck: function () {
+        if (this.callbacksAlowed) this.render()
     },
 
     handle_msg: function (msg) {
         if (msg.code === 'deleteNodeById') {
+            this.callbacksAlowed = false
             this.deleteNodeById(msg.data)
+            this.callbacksAlowed = true
         } else if (msg.code === 'deleteLinkById') {
+            this.callbacksAlowed = false
             this.deleteLinkById(msg.data)
-        }else if (msg.code === 'clearGraph') {
+            this.callbacksAlowed = true
+        } else if (msg.code === 'clearGraph') {
+            this.callbacksAlowed = false
             this.clearGraph()
+            this.callbacksAlowed = true
         }
     },
 
     deleteNodeById: function (nodeId) {
-        let nodes = this.model.get('nodes')
-
-        for (let i = 0; i < nodes.length; i++) {
-            if (nodes[i].id === nodeId) {
-                nodes.splice(i, 1);
+        for (let i = 0; i < this.nodes.length; i++) {
+            if (this.nodes[i].id === nodeId) {
+                this.nodes.splice(i, 1);
                 break
             }
         }
 
         this.model.unset('nodes')
-        this.model.set('nodes', nodes)
+        this.model.set('nodes', this.nodes)
         this.model.save_changes()
 
         d3.select(this.svg)
@@ -81,16 +93,14 @@ var WidgetView = widgets.DOMWidgetView.extend({
     },
 
     deleteLinkById: function (linkId) {
-        let links = this.model.get('links')
-
-        for (let i = links.length - 1; i >= 0; i--) {
-            if (links[i].id === linkId) {
-                links.splice(i, 1);
+        for (let i = this.links.length - 1; i >= 0; i--) {
+            if (this.links[i].id === linkId) {
+                this.links.splice(i, 1);
             }
         }
 
         this.model.unset('links')
-        this.model.set('links', links)
+        this.model.set('links', this.links)
         this.model.save_changes()
 
         d3.select(this.svg)
@@ -101,11 +111,13 @@ var WidgetView = widgets.DOMWidgetView.extend({
     },
 
     clearGraph: function () {
-        this.model.unset('nodes')
-        this.model.set('nodes', [])
-        this.model.unset('links')
-        this.model.set('links', [])
+        this.nodes = []
+        this.links = []
 
+        this.model.unset('nodes')
+        this.model.set('nodes', this.nodes)
+        this.model.unset('links')
+        this.model.set('links', this.links)
         this.model.save_changes()
 
         d3.select(this.svg).selectAll("circle").remove()
@@ -113,34 +125,69 @@ var WidgetView = widgets.DOMWidgetView.extend({
         d3.select(this.svg).selectAll("line").remove()
     },
 
+    getBoundingBox: function (nodes, links) {
+        var boundingbox = {
+            "minX": Number.MAX_VALUE,
+            "maxX": Number.MIN_VALUE,
+            "minY": Number.MAX_VALUE,
+            "maxY": Number.MIN_VALUE,
+        }
+
+        for (let i = 0; i < nodes.length; i++) {
+            if (nodes[i].x < boundingbox.minX) boundingbox.minX = nodes[i].x
+            if (nodes[i].x > boundingbox.maxX) boundingbox.maxX = nodes[i].x
+
+            if (nodes[i].y < boundingbox.minY) boundingbox.minY = nodes[i].y
+            if (nodes[i].y > boundingbox.maxY) boundingbox.maxY = nodes[i].y
+        }
+
+        for (let i = 0; i < links.length; i++) {
+            if (links[i].sx < boundingbox.minX) boundingbox.minX = links[i].sx
+            if (links[i].tx < boundingbox.minX) boundingbox.minX = links[i].tx
+            if (links[i].sx > boundingbox.maxX) boundingbox.maxX = links[i].sx
+            if (links[i].tx > boundingbox.maxX) boundingbox.maxX = links[i].tx
+
+            if (links[i].sy < boundingbox.minY) boundingbox.minY = links[i].sy
+            if (links[i].ty < boundingbox.minY) boundingbox.minY = links[i].ty
+            if (links[i].sy > boundingbox.maxY) boundingbox.maxY = links[i].sy
+            if (links[i].ty > boundingbox.maxY) boundingbox.maxY = links[i].ty
+        }
+
+        return boundingbox
+    },
+
     // Defines how the widget gets rendered into the DOM
     render: function () {
-        let nodes = this.model.get('nodes')
-        let links = this.model.get('links')
+        //used for initial data and reloading the widget
+        this.nodes = this.model.get('nodes')
+        this.links = this.model.get('links')
 
         if (this.el.childNodes.length === 0) {
             let svgId = "G" + Math.random().toString(16).slice(2)
 
             this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
             this.svg.setAttribute("id", svgId)
-            this.svg.setAttribute("width", "960");
-            this.svg.setAttribute("height", "540");
+            this.svg.setAttribute("width", "500");
+            this.svg.setAttribute("height", "500");
 
             this.el.appendChild(this.svg)
         }
 
-        if (nodes != null && links != null) {
-            this.draw_graph.call(this, nodes, links)
+        if (this.nodes != null && this.links != null) {
+            this.draw_graph(this.nodes, this.links)
         }
     },
 
     draw_graph(nodes_data, links_data) {
+        let widgetView = this
 
         let svg = d3.select(this.svg),
             width = +svg.attr("width"),
             height = +svg.attr("height");
 
         let radius = 15;
+
+        let boundingBox = this.getBoundingBox(nodes_data, links_data)
 
         //construct arrow
         svg.append("svg:defs").selectAll("marker")
@@ -191,7 +238,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
             .attr("fill", "none")
             .attr("stroke", "green")
             .on("click", function (event) {
-                console.log("on click " + event.target.__data__.id);
+                widgetView.send({"code": "linkClicked", "id": event.target.__data__.id});
             });
 
         let nodes = g.append("g")
@@ -212,7 +259,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 return d.id
             })
             .on("click", function (event) {
-                console.log("on click " + event.target.__data__.name);
+                widgetView.send({"code": "nodeClicked", "id": event.target.__data__.id});
             })
             .on("mouseover", handleMouseOver)
             .on("mouseout", handleMouseOut);
@@ -236,14 +283,32 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 return "translate(" + d.x + "," + d.y + ")";
             })
             .on("click", function (event) {
-                console.log("on click " + event.target.__data__.name);
+                widgetView.send({"code": "nodeClicked", "id": event.target.__data__.id});
             });
 
 
         //add zoom capabilities
-        svg.call(d3.zoom()
-            .extent([[0, 0], [width, height]])
-            .on("zoom", zoomed));
+        const zoom = d3.zoom();
+
+        const boundingBoxWidth = boundingBox.maxX - boundingBox.minX + radius * 2
+        const boundingBoxHeight = boundingBox.maxY - boundingBox.minY + radius * 2
+
+        let scale = Math.min(width / boundingBoxWidth, height / boundingBoxHeight);
+        let x = width / 2 - (boundingBox.minX + boundingBoxWidth / 2 - radius) * scale;
+        let y = height / 2 - (boundingBox.minY + boundingBoxHeight / 2 - radius) * scale;
+
+        if (nodes_data.length === 1) {
+            scale = 1
+            x = width / 2 - nodes_data[0].x
+            y = height / 2 - nodes_data[0].y
+        }
+
+        const initialTransform = d3.zoomIdentity.translate(x, y).scale(scale)
+
+        svg.call(zoom.transform, initialTransform)
+        svg.call(zoom.on('zoom', zoomed));
+        svg.call(zoom)
+        g.attr("transform", initialTransform)
 
         function zoomed({transform}) {
             g.attr("transform", transform);
