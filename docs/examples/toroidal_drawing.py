@@ -494,7 +494,7 @@ def checkCoeff(loop, variableList):
 
 
 #find signs of edges in each loop
-def findSigns(alphaLoop, betaLoop, orientation):
+def findSigns(GA,alphaLoop, betaLoop, orientation):
     #give an orientation to each edge
     alphaLoopVertical = []
     alphaLoopHorizontal = []
@@ -689,7 +689,7 @@ def LP(n):
     orientation = ogdf.EdgeArray[int](G,99)
 
     defineOrientation(GA,start_edge0,start_edge0.source(),0,orientation)
-    signs1, signs2, alphaLoopVertical, alphaLoopHorizontal, betaLoopVertical, betaLoopHorizontal = findSigns(alphaLoop, betaLoop, orientation)
+    signs1, signs2, alphaLoopVertical, alphaLoopHorizontal, betaLoopVertical, betaLoopHorizontal = findSigns(GA,alphaLoop, betaLoop, orientation)
 
     ##Setting variable names
 
