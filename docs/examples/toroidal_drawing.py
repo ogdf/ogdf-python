@@ -114,7 +114,7 @@ def adjList(G,GA):
             
             e = adj.theEdge()
             wrap = find_wrap(GA, e)
-            
+            print("line117",G,n,e)
             if n == e.source():
                 
                 if wrap == "h" or wrap == "hv":
@@ -130,7 +130,7 @@ def adjList(G,GA):
                     if GA.y[n] == GA.y[adj.twinNode()]:
                         position = 1
         
-                #adjList[GA.label[n]][position] = GA.label[adj.twinNode()]  #uncomment to use node lab
+                #adjList[GA.label[n]][position] = GA.label[adj.twinNode()]  #uncomment to use node labels
                 adjList[n][position] = adj
                         
             else:
@@ -150,8 +150,8 @@ def adjList(G,GA):
                         
                 #adjList[GA.label[n]][position] = GA.label[adj.twinNode()]  #uncomment to use node labels
                 adjList[n][position] = adj
-                
-    
+            print("line153",n.index(),adjList[n])
+            
     return adjList
 
 
@@ -235,8 +235,8 @@ def spanningTrees(G, dualG, GA, primalEdge):
         for adj in cur.twinNode().adjEntries:
             if not found[adj.twinNode()]:
                 todo.append(adj)
-    #print(count, dualG.numberOfNodes())
-
+    #print("line 238",count, dualG.numberOfNodes())
+    
     found = ogdf.NodeArray[bool](G, False)
     first_node = next(iter(G.nodes))
     found[first_node] = True
@@ -253,22 +253,15 @@ def spanningTrees(G, dualG, GA, primalEdge):
         count += 1
 
         for adj in cur.twinNode().adjEntries:
-            if not found[adj.twinNode()] and tree[adj] == 0:
+            if not found[adj.twinNode()] and tree[adj.theEdge()] == 0:
                 todo.append(adj)
-
-    #print(count, G.numberOfNodes())
-
-    unlabeled = [e for e in G.edges if tree[e] == 0]
-    #print(unlabeled)
-
     return tree
-
 
 
 #find a list of bends of an edge
 def bendCoord(GA,e):
   
-    print("line 271",GA.bends)
+    print("line 271",GA.bends,e)
       
     bends = [(b.m_x,b.m_y) for b in GA.bends[e]]
     return bends
@@ -282,7 +275,7 @@ def findAngle(GA, node,x,y): #angle relative to the current node
     return deg
 
 #find turn relative to refNode left -1/right 1 /straight 0
-def findDirection(GA,e1,e2,refNode): 
+def findDirection(GA,refNode,e1,e2): 
     
     if len(bendCoord(GA,e1)) != 0:
                     
@@ -446,7 +439,7 @@ def defineOrientation(GA,refEdge,refNode,refOrientation, orientation):
         
 #find the edges in a generator       
 def bfs_findGenerator(tree,target, queue, done = [], path = {}):
-    #print("target", target.index())
+    print("line 423", target.index(),queue)
     while queue:
         
         try:
@@ -461,9 +454,10 @@ def bfs_findGenerator(tree,target, queue, done = [], path = {}):
             path[currNode] = []
             done.append(currEdge)
 
-        #print(currNode.index())
+        print("line438",currNode.index())
         for adj in currNode.adjEntries:
             e = adj.theEdge()
+            print("line441",e, tree[e])
             if e not in done and tree[e] == 2:
                 path[currNode].append(adj)
                 #print("curr node:", currNode.index())
@@ -611,10 +605,10 @@ def LP(n):
         GA.label[n] = str(n.index())
         GA.x[n] = (n.index() % width) * 50 
         GA.y[n] = (n.index() // height) * 50
-
+        #print("line614",n.index())
     box = GA.boundingBox()
     GA, wraps = layout_edges(GA, box)
-
+    print("line 591", G,GA)
     #create embedding
     result = adjList(G, GA)
     Sorted_adjList = sorted_adjList(result)
@@ -623,18 +617,18 @@ def LP(n):
         
         node_adjEntries = Sorted_adjList[n]
         sortAdjs(n, node_adjEntries)
-        #print(n.index(), [(e.theEdge().source().index(),e.theEdge().target().index()) for e in list(n.adjEntries)])
+        print("line626",n.index(), [(e.theEdge().source().index(),e.theEdge().target().index()) for e in n.adjEntries])
 
     #dual tree and spanning trees
     dualG, primalEdge = dualGraph(G)
     tree = spanningTrees(G, dualG, GA, primalEdge)
-
+    #print("line 605", type(tree))
     #the black edges that must be included in each generator
     starter_edges = [e for e in G.edges if tree[e] == 0]
     start_edge0 = starter_edges[0]
     target0 = start_edge0.target()
     source0 =  start_edge0.source()
-    #print(source0.index(), target0.index())
+    print("line611",source0.index(), target0.index())
     queue = [(start_edge0, target0)]
     path0 = bfs_findGenerator(tree,source0, queue, done = [], path = {})
     betaLoop = []
@@ -687,7 +681,7 @@ def LP(n):
     '''
 
     orientation = ogdf.EdgeArray[int](G,99)
-
+    print("line 690",start_edge0,start_edge0.source())
     defineOrientation(GA,start_edge0,start_edge0.source(),0,orientation)
     signs1, signs2, alphaLoopVertical, alphaLoopHorizontal, betaLoopVertical, betaLoopHorizontal = findSigns(GA,alphaLoop, betaLoop, orientation)
 
