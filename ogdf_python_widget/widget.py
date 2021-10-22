@@ -57,14 +57,26 @@ class Widget(widgets.DOMWidget):
             if link.index() == int(link_id):
                 return link
 
+    def color_to_dict(self, color):
+        color = {"r": color.red(),
+                 "g": color.green(),
+                 "b": color.blue(),
+                 "a": color.alpha()}
+        return color
+
     def export_graph(self):
         nodes_data = []
         for node in self.graph_attributes.constGraph().nodes:
-            nodes_data.append(
-                {"id": str(node.index()),
-                 "name": str(self.graph_attributes.label(node)),
-                 "x": int(self.graph_attributes.x(node) + 0.5),
-                 "y": int(self.graph_attributes.y(node) + 0.5)})
+            node_dict = {"id": str(node.index()),
+                         "name": str(self.graph_attributes.label(node)),
+                         "x": int(self.graph_attributes.x(node) + 0.5),
+                         "y": int(self.graph_attributes.y(node) + 0.5),
+                         "shape": self.graph_attributes.shape(node),
+                         "fillColor": self.color_to_dict(self.graph_attributes.fillColor(node)),
+                         "strokeColor": self.color_to_dict(self.graph_attributes.strokeColor(node)),
+                         "strokeWidth": self.graph_attributes.strokeWidth(node)}
+
+            nodes_data.append(node_dict)
 
         links_data = []
 
@@ -77,16 +89,32 @@ class Widget(widgets.DOMWidget):
 
             for point in self.graph_attributes.bends(edge):
                 links_data.append(
-                    {"id": edge_id, "s_id": source_id, "t_id": target_id, "sx": prev_x, "sy": prev_y,
-                     "tx": int(point.m_x + 0.5), "ty": int(point.m_y + 0.5)})
+                    {"id": edge_id,
+                     "s_id": source_id,
+                     "t_id": target_id,
+                     "strokeColor": self.color_to_dict(self.graph_attributes.strokeColor(edge)),
+                     "strokeWidth": self.graph_attributes.strokeWidth(edge),
+                     "sx": prev_x,
+                     "sy": prev_y,
+                     "tx": int(point.m_x + 0.5),
+                     "ty": int(point.m_y + 0.5)})
+
                 prev_x = int(point.m_x + 0.5)
                 prev_y = int(point.m_y + 0.5)
 
-            link_dict = {"id": edge_id, "s_id": source_id, "t_id": target_id, "sx": prev_x, "sy": prev_y,
+            link_dict = {"id": edge_id,
+                         "s_id": source_id,
+                         "t_id": target_id,
+                         "strokeColor": self.color_to_dict(self.graph_attributes.strokeColor(edge)),
+                         "strokeWidth": self.graph_attributes.strokeWidth(edge),
+                         "sx": prev_x,
+                         "sy": prev_y,
                          "tx": int(self.graph_attributes.x(edge.target()) + 0.5),
                          "ty": int(self.graph_attributes.y(edge.target()) + 0.5)}
+
             if self.graph_attributes.arrowType(edge) == 1:
                 link_dict['arrow'] = True
+
             links_data.append(link_dict)
 
         self.set_trait('nodes', nodes_data)

@@ -80,7 +80,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
         this.model.save_changes()
 
         d3.select(this.svg)
-            .selectAll("circle")
+            .selectAll(".node")
             .filter(function (d) {
                 return d.id === nodeId;
             }).remove()
@@ -120,7 +120,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
         this.model.set('links', this.links)
         this.model.save_changes()
 
-        d3.select(this.svg).selectAll("circle").remove()
+        d3.select(this.svg).selectAll(".node").remove()
         d3.select(this.svg).selectAll("text").remove()
         d3.select(this.svg).selectAll("line").remove()
     },
@@ -189,6 +189,17 @@ var WidgetView = widgets.DOMWidgetView.extend({
 
         let boundingBox = this.getBoundingBox(nodes_data, links_data)
 
+        function getColorStringFromJson(color) {
+            return "rgba(" + color.r + ", " + color.g + ", " + color.b + ", " + color.a + ")"
+        }
+
+        function getInvertedColorStringFromJson(color) {
+            color.r = 255 - color.r
+            color.g = 255 - color.g
+            color.b = 255 - color.b
+            return getColorStringFromJson(color)
+        }
+
         //construct arrow
         svg.append("svg:defs").selectAll("marker")
             .data(["endGA"])
@@ -200,7 +211,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
             .attr("markerWidth", 8)
             .attr("markerHeight", 8)
             .attr("orient", "auto")
-            .attr("fill", "green")
+            .attr("fill", "black")
             .append("svg:path")
             .attr("d", "M0,-5L10,0L0,5");
 
@@ -235,34 +246,59 @@ var WidgetView = widgets.DOMWidgetView.extend({
             .attr("y2", function (d) {
                 return d.ty
             })
-            .attr("fill", "none")
-            .attr("stroke", "green")
+            .attr("stroke", function (d) {
+                return getColorStringFromJson(d.strokeColor)
+            })
+            .attr("stroke-width", function (d) {
+                return d.strokeWidth
+            })
             .on("click", function (event) {
                 widgetView.send({"code": "linkClicked", "id": event.target.__data__.id});
             });
 
         let nodes = g.append("g")
-            .attr("class", "node")
-            .selectAll("circle")
+            .attr("class", "node_holder")
+            .selectAll(".node")
             .data(nodes_data)
             .enter()
-            .append("circle")
+            .append(function (d) {
+                if (d.shape === 0) {
+                    return document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                } else {
+                    return document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                }
+            })
+            .attr("class", "node")
+            .attr("width", radius * 2)
+            .attr("height", radius * 2)
+            .attr("x", function (d) {
+                return d.x - radius
+            })
+            .attr("y", function (d) {
+                return d.y - radius
+            })
             .attr("cx", function (d) {
                 return d.x
             })
             .attr("cy", function (d) {
                 return d.y
             })
-            .attr("r", radius)
-            .attr("fill", "green")
             .attr("id", function (d) {
                 return d.id
             })
+            .attr("r", radius)
+            .attr("fill", function (d) {
+                return getColorStringFromJson(d.fillColor)
+            })
+            .attr("stroke", function (d) {
+                return getColorStringFromJson(d.strokeColor)
+            })
+            .attr("stroke-width", function (d) {
+                return d.strokeWidth
+            })
             .on("click", function (event) {
                 widgetView.send({"code": "nodeClicked", "id": event.target.__data__.id});
-            })
-            .on("mouseover", handleMouseOver)
-            .on("mouseout", handleMouseOut);
+            });
 
         let text = g.append("g")
             .attr("class", "texts")
@@ -272,7 +308,9 @@ var WidgetView = widgets.DOMWidgetView.extend({
             .append("text")
             .attr("text-anchor", "middle")
             .attr("dominant-baseline", "central")
-            .attr("fill", "#c2c0ba")
+            .attr("fill", function (d) {
+                return getInvertedColorStringFromJson(d.fillColor)
+            })
             .attr("id", function (d) {
                 return d.id
             })
@@ -312,15 +350,6 @@ var WidgetView = widgets.DOMWidgetView.extend({
 
         function zoomed({transform}) {
             g.attr("transform", transform);
-        }
-
-        // Create Event Handlers for mouse
-        function handleMouseOver() {
-            d3.select(this).attr("fill", "orange").attr("r", radius * 1.5);
-        }
-
-        function handleMouseOut() {
-            d3.select(this).attr("fill", "green").attr("r", radius);
         }
     }
 });
