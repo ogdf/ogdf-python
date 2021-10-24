@@ -259,12 +259,18 @@ def spanningTrees(G, dualG, GA, primalEdge):
 
 
 #find a list of bends of an edge
-def bendCoord(GA,e):
-  
-    print("line 271",GA.bends,e)
-      
-    bends = [(b.m_x,b.m_y) for b in GA.bends[e]]
-    return bends
+def bendCoord(GA, e):
+    bends = []
+    line = GA.bends[e]
+    print("bendCoord 1", repr(line), type(line), getattr(line, "__iter__", "not set"))
+    it = iter(line)
+    print("bendCoord 2", repr(it), type(it), getattr(it, "__next__", "not set"))
+    while True:
+        try:
+            b = next(it)
+            bends.append((b.m_x, b.m_y))
+        except StopIteration:
+            return bends
 
 #find angle relative to a node (180 'West', 90 'North', 0 'East', -90 'South')
 def findAngle(GA, node,x,y): #angle relative to the current node 
