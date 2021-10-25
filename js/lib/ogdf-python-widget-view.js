@@ -36,8 +36,10 @@ var WidgetModel = widgets.DOMWidgetModel.extend({
 // Custom View. Renders the widget model.
 var WidgetView = widgets.DOMWidgetView.extend({
     initialize: function (parameters) {
-        this.callbacksAlowed = true
         WidgetView.__super__.initialize.call(this, parameters);
+
+        this.isCallbackAllowed = true
+        this.isDragDisabled = true
         this.nodes = []
         this.links = []
         this.model.off('msg:custom')
@@ -48,22 +50,36 @@ var WidgetView = widgets.DOMWidgetView.extend({
     },
 
     renderCallbackCheck: function () {
-        if (this.callbacksAlowed) this.render()
+        if (this.isCallbackAllowed) this.render()
     },
 
     handle_msg: function (msg) {
         if (msg.code === 'deleteNodeById') {
-            this.callbacksAlowed = false
+            this.isCallbackAllowed = false
             this.deleteNodeById(msg.data)
-            this.callbacksAlowed = true
+            this.isCallbackAllowed = true
         } else if (msg.code === 'deleteLinkById') {
-            this.callbacksAlowed = false
+            this.isCallbackAllowed = false
             this.deleteLinkById(msg.data)
-            this.callbacksAlowed = true
+            this.isCallbackAllowed = true
         } else if (msg.code === 'clearGraph') {
-            this.callbacksAlowed = false
+            this.isCallbackAllowed = false
             this.clearGraph()
-            this.callbacksAlowed = true
+            this.isCallbackAllowed = true
+        } else if (msg.code === 'enableNodeMovement') {
+            this.isDragDisabled = !msg.value
+
+            if (this.isDragDisabled) {
+                d3.select(this.svg).selectAll(".node").on('mousedown.drag', null);
+                d3.select(this.svg).selectAll("text").on('mousedown.drag', null);
+            } else {
+                d3.select(this.svg).selectAll(".node").call(this.drag_handler)
+                d3.select(this.svg).selectAll("text").call(this.drag_handler)
+            }
+        } else if (msg.code === 'test') {
+            console.log(this.nodes)
+        } else {
+            console.log("msg cannot be read: " + msg)
         }
     },
 
@@ -194,19 +210,35 @@ var WidgetView = widgets.DOMWidgetView.extend({
         }
 
         function getInvertedColorStringFromJson(color) {
-            color.r = 255 - color.r
-            color.g = 255 - color.g
-            color.b = 255 - color.b
-            return getColorStringFromJson(color)
+            const cloneColor = JSON.parse(JSON.stringify(color));
+            cloneColor.r = 255 - color.r
+            cloneColor.g = 255 - color.g
+            cloneColor.b = 255 - color.b
+            return getColorStringFromJson(cloneColor)
         }
 
-        //construct arrow
+        //construct arrow for circle
         svg.append("svg:defs").selectAll("marker")
-            .data(["endGA"])
+            .data(["endCircle"])
             .enter().append("svg:marker")
             .attr("id", String)
             .attr("viewBox", "0 -5 10 10")
-            .attr("refX", 28)
+            .attr("refX", radius * 4 / 3 + 8)
+            .attr("refY", 0)
+            .attr("markerWidth", 8)
+            .attr("markerHeight", 8)
+            .attr("orient", "auto")
+            .attr("fill", "black")
+            .append("svg:path")
+            .attr("d", "M0,-5L10,0L0,5");
+
+        //construct arrow for square
+        svg.append("svg:defs").selectAll("marker")
+            .data(["endSquare"])
+            .enter().append("svg:marker")
+            .attr("id", String)
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", (Math.sqrt(8 * radius * radius) / 2) * 4 / 3 + 8)
             .attr("refY", 0)
             .attr("markerWidth", 8)
             .attr("markerHeight", 8)
@@ -228,8 +260,10 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 return d.id
             })
             .attr("marker-end", function (d) {
-                if (d.arrow) {
-                    return "url(#endGA)";
+                if (d.arrow && d.t_shape === 0) {
+                    return "url(#endSquare)";
+                } else if (d.arrow && d.t_shape !== 0) {
+                    return "url(#endCircle)";
                 } else {
                     return null;
                 }
@@ -297,7 +331,9 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 return d.strokeWidth
             })
             .on("click", function (event) {
-                widgetView.send({"code": "nodeClicked", "id": event.target.__data__.id});
+                if (widgetView.isDragDisabled) {
+                    widgetView.send({"code": "nodeClicked", "id": event.target.__data__.id});
+                }
             });
 
         let text = g.append("g")
@@ -321,7 +357,9 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 return "translate(" + d.x + "," + d.y + ")";
             })
             .on("click", function (event) {
-                widgetView.send({"code": "nodeClicked", "id": event.target.__data__.id});
+                if (widgetView.isDragDisabled) {
+                    widgetView.send({"code": "nodeClicked", "id": event.target.__data__.id});
+                }
             });
 
 
@@ -350,6 +388,96 @@ var WidgetView = widgets.DOMWidgetView.extend({
 
         function zoomed({transform}) {
             g.attr("transform", transform);
+        }
+
+        //add drag capabilities
+        widgetView.drag_handler = d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended);
+
+        //Drag functions
+        function dragstarted(event, d) {
+            const nodeId = this.id
+            d3.select(this).raise().attr("stroke-width", d.strokeWidth == null ? 1 : d.strokeWidth + 1);
+
+            d3.select("svg")
+                .selectAll(".node")
+                .filter(function (data) {
+                    return data.id === nodeId;
+                })
+                .attr("stroke-width", function (data) {
+                    return data.strokeWidth + 1
+                });
+        }
+
+        function dragged(event, d) {
+            const nodeId = this.id
+
+            d3.select("svg")
+                .selectAll(".node")
+                .filter(function (data) {
+                    return data.id === nodeId;
+                })
+                .attr("cx", event.x)
+                .attr("cy", event.y)
+                .attr("x", event.x - 15)
+                .attr("y", event.y - 15);
+
+            d3.select("svg")
+                .selectAll("text")
+                .filter(function (data) {
+                    return data.id === nodeId;
+                })
+                .attr("transform", function (d) { //<-- use transform it's not a g
+                    return "translate(" + event.x + "," + event.y + ")";
+                });
+
+            d3.select("svg")
+                .selectAll("line")
+                .filter(function (data) {
+                    return data.s_id === nodeId && data.touchingSource;
+                })
+                .attr("x1", function (data) {
+                    return data.sx = event.x;
+                })
+                .attr("y1", function (data) {
+                    return data.sy = event.y;
+                })
+
+            d3.select("svg")
+                .selectAll("line")
+                .filter(function (data) {
+                    return data.t_id === nodeId && data.touchingTarget;
+                })
+                .attr("x2", function (data) {
+                    return data.tx = event.x;
+                })
+                .attr("y2", function (data) {
+                    return data.ty = event.y;
+                })
+        }
+
+        function dragended(event, d) {
+            const nodeId = this.id
+
+            d3.select("svg")
+                .selectAll(".node")
+                .filter(function (data) {
+                    return data.id === nodeId;
+                })
+                .attr("stroke-width", function (data) {
+                    return data.strokeWidth
+                });
+
+            //if node only got clicked and not moved
+            if (d.x === event.x && d.y === event.y) {
+                widgetView.send({"code": "nodeClicked", "id": nodeId});
+            } else {
+                d.x = event.x
+                d.y = event.y
+                widgetView.send({"code": "nodeMoved", "id": this.id, "x": d.x, "y": d.y});
+            }
         }
     }
 });
