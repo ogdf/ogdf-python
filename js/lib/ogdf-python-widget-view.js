@@ -421,8 +421,8 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 })
                 .attr("cx", event.x)
                 .attr("cy", event.y)
-                .attr("x", event.x - 15)
-                .attr("y", event.y - 15);
+                .attr("x", event.x - radius)
+                .attr("y", event.y - radius);
 
             d3.select("svg")
                 .selectAll("text")
@@ -474,8 +474,8 @@ var WidgetView = widgets.DOMWidgetView.extend({
             if (d.x === event.x && d.y === event.y) {
                 widgetView.send({"code": "nodeClicked", "id": nodeId});
             } else {
-                d.x = event.x
-                d.y = event.y
+                d.x = Math.round(event.x)
+                d.y = Math.round(event.y)
                 widgetView.send({"code": "nodeMoved", "id": this.id, "x": d.x, "y": d.y});
             }
         }

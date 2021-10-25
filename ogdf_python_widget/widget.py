@@ -46,6 +46,8 @@ class Widget(widgets.DOMWidget):
             self.onlick_callback(msg['code'], self.get_link_from_id(msg['id']), self.graph_attributes)
         if msg['code'] == 'nodeClicked':
             self.onlick_callback(msg['code'], self.get_node_from_id(msg['id']), self.graph_attributes)
+        if msg['code'] == 'nodeMoved':
+            self.move_node_to(self.get_node_from_id(msg['id']), msg['x'], msg['y'])
         print(msg)
 
     def get_node_from_id(self, node_id):
@@ -57,6 +59,10 @@ class Widget(widgets.DOMWidget):
         for link in self.graph_attributes.constGraph().edges:
             if link.index() == int(link_id):
                 return link
+
+    def move_node_to(self, node, x, y):
+        self.graph_attributes.x[node] = x
+        self.graph_attributes.y[node] = y
 
     def enable_node_movement(self, enable):
         self.send({"code": "enableNodeMovement", "value": enable})
