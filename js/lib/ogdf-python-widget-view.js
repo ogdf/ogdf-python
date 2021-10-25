@@ -203,7 +203,163 @@ var WidgetView = widgets.DOMWidgetView.extend({
 
         let radius = 15;
 
-        let boundingBox = this.getBoundingBox(nodes_data, links_data)
+        //add encompassing group for the zoom
+        let g = svg.append("g").attr("class", "everything");
+
+        constructArrowElements()
+        constructLinkElements(links_data)
+        constructNodeElements(nodes_data)
+        constructTextElements(nodes_data)
+
+        function constructArrowElements() {
+            //construct arrow for circle
+            svg.append("svg:defs").selectAll("marker")
+                .data(["endCircle"])
+                .enter().append("svg:marker")
+                .attr("id", String)
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", radius * 4 / 3 + 8)
+                .attr("refY", 0)
+                .attr("markerWidth", 8)
+                .attr("markerHeight", 8)
+                .attr("orient", "auto")
+                .attr("fill", "black")
+                .append("svg:path")
+                .attr("d", "M0,-5L10,0L0,5");
+
+            //construct arrow for square
+            svg.append("svg:defs").selectAll("marker")
+                .data(["endSquare"])
+                .enter().append("svg:marker")
+                .attr("id", String)
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", (Math.sqrt(8 * radius * radius) / 2) * 4 / 3 + 8)
+                .attr("refY", 0)
+                .attr("markerWidth", 8)
+                .attr("markerHeight", 8)
+                .attr("orient", "auto")
+                .attr("fill", "black")
+                .append("svg:path")
+                .attr("d", "M0,-5L10,0L0,5");
+        }
+
+        function constructLinkElements(links_data) {
+            return g.append("g")
+                .attr("class", "link")
+                .selectAll("line")
+                .data(links_data)
+                .enter()
+                .append("line")
+                .attr("id", function (d) {
+                    return d.id
+                })
+                .attr("marker-end", function (d) {
+                    if (d.arrow && d.t_shape === 0) {
+                        return "url(#endSquare)";
+                    } else if (d.arrow && d.t_shape !== 0) {
+                        return "url(#endCircle)";
+                    } else {
+                        return null;
+                    }
+                })
+                .attr("x1", function (d) {
+                    return d.sx
+                })
+                .attr("y1", function (d) {
+                    return d.sy
+                })
+                .attr("x2", function (d) {
+                    return d.tx
+                })
+                .attr("y2", function (d) {
+                    return d.ty
+                })
+                .attr("stroke", function (d) {
+                    return getColorStringFromJson(d.strokeColor)
+                })
+                .attr("stroke-width", function (d) {
+                    return d.strokeWidth
+                })
+                .on("click", function (event) {
+                    widgetView.send({"code": "linkClicked", "id": event.target.__data__.id});
+                });
+        }
+
+        function constructNodeElements(nodes_data) {
+            return g.append("g")
+                .attr("class", "node_holder")
+                .selectAll(".node")
+                .data(nodes_data)
+                .enter()
+                .append(function (d) {
+                    if (d.shape === 0) {
+                        return document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                    } else {
+                        return document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    }
+                })
+                .attr("class", "node")
+                .attr("width", radius * 2)
+                .attr("height", radius * 2)
+                .attr("x", function (d) {
+                    return d.x - radius
+                })
+                .attr("y", function (d) {
+                    return d.y - radius
+                })
+                .attr("cx", function (d) {
+                    return d.x
+                })
+                .attr("cy", function (d) {
+                    return d.y
+                })
+                .attr("id", function (d) {
+                    return d.id
+                })
+                .attr("r", radius)
+                .attr("fill", function (d) {
+                    return getColorStringFromJson(d.fillColor)
+                })
+                .attr("stroke", function (d) {
+                    return getColorStringFromJson(d.strokeColor)
+                })
+                .attr("stroke-width", function (d) {
+                    return d.strokeWidth
+                })
+                .on("click", function (event) {
+                    if (widgetView.isDragDisabled) {
+                        widgetView.send({"code": "nodeClicked", "id": event.target.__data__.id});
+                    }
+                });
+        }
+
+        function constructTextElements(nodes_data) {
+            return g.append("g")
+                .attr("class", "texts")
+                .selectAll("text")
+                .data(nodes_data)
+                .enter()
+                .append("text")
+                .attr("text-anchor", "middle")
+                .attr("dominant-baseline", "central")
+                .attr("fill", function (d) {
+                    return getInvertedColorStringFromJson(d.fillColor)
+                })
+                .attr("id", function (d) {
+                    return d.id
+                })
+                .text(function (d) {
+                    return d.name;
+                })
+                .attr("transform", function (d) { //<-- use transform it's not a g
+                    return "translate(" + d.x + "," + d.y + ")";
+                })
+                .on("click", function (event) {
+                    if (widgetView.isDragDisabled) {
+                        widgetView.send({"code": "nodeClicked", "id": event.target.__data__.id});
+                    }
+                });
+        }
 
         function getColorStringFromJson(color) {
             return "rgba(" + color.r + ", " + color.g + ", " + color.b + ", " + color.a + ")"
@@ -217,174 +373,34 @@ var WidgetView = widgets.DOMWidgetView.extend({
             return getColorStringFromJson(cloneColor)
         }
 
-        //construct arrow for circle
-        svg.append("svg:defs").selectAll("marker")
-            .data(["endCircle"])
-            .enter().append("svg:marker")
-            .attr("id", String)
-            .attr("viewBox", "0 -5 10 10")
-            .attr("refX", radius * 4 / 3 + 8)
-            .attr("refY", 0)
-            .attr("markerWidth", 8)
-            .attr("markerHeight", 8)
-            .attr("orient", "auto")
-            .attr("fill", "black")
-            .append("svg:path")
-            .attr("d", "M0,-5L10,0L0,5");
-
-        //construct arrow for square
-        svg.append("svg:defs").selectAll("marker")
-            .data(["endSquare"])
-            .enter().append("svg:marker")
-            .attr("id", String)
-            .attr("viewBox", "0 -5 10 10")
-            .attr("refX", (Math.sqrt(8 * radius * radius) / 2) * 4 / 3 + 8)
-            .attr("refY", 0)
-            .attr("markerWidth", 8)
-            .attr("markerHeight", 8)
-            .attr("orient", "auto")
-            .attr("fill", "black")
-            .append("svg:path")
-            .attr("d", "M0,-5L10,0L0,5");
-
-        //add encompassing group for the zoom
-        let g = svg.append("g").attr("class", "everything");
-
-        let links = g.append("g")
-            .attr("class", "link")
-            .selectAll("line")
-            .data(links_data)
-            .enter()
-            .append("line")
-            .attr("id", function (d) {
-                return d.id
-            })
-            .attr("marker-end", function (d) {
-                if (d.arrow && d.t_shape === 0) {
-                    return "url(#endSquare)";
-                } else if (d.arrow && d.t_shape !== 0) {
-                    return "url(#endCircle)";
-                } else {
-                    return null;
-                }
-            })
-            .attr("x1", function (d) {
-                return d.sx
-            })
-            .attr("y1", function (d) {
-                return d.sy
-            })
-            .attr("x2", function (d) {
-                return d.tx
-            })
-            .attr("y2", function (d) {
-                return d.ty
-            })
-            .attr("stroke", function (d) {
-                return getColorStringFromJson(d.strokeColor)
-            })
-            .attr("stroke-width", function (d) {
-                return d.strokeWidth
-            })
-            .on("click", function (event) {
-                widgetView.send({"code": "linkClicked", "id": event.target.__data__.id});
-            });
-
-        let nodes = g.append("g")
-            .attr("class", "node_holder")
-            .selectAll(".node")
-            .data(nodes_data)
-            .enter()
-            .append(function (d) {
-                if (d.shape === 0) {
-                    return document.createElementNS("http://www.w3.org/2000/svg", "rect");
-                } else {
-                    return document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                }
-            })
-            .attr("class", "node")
-            .attr("width", radius * 2)
-            .attr("height", radius * 2)
-            .attr("x", function (d) {
-                return d.x - radius
-            })
-            .attr("y", function (d) {
-                return d.y - radius
-            })
-            .attr("cx", function (d) {
-                return d.x
-            })
-            .attr("cy", function (d) {
-                return d.y
-            })
-            .attr("id", function (d) {
-                return d.id
-            })
-            .attr("r", radius)
-            .attr("fill", function (d) {
-                return getColorStringFromJson(d.fillColor)
-            })
-            .attr("stroke", function (d) {
-                return getColorStringFromJson(d.strokeColor)
-            })
-            .attr("stroke-width", function (d) {
-                return d.strokeWidth
-            })
-            .on("click", function (event) {
-                if (widgetView.isDragDisabled) {
-                    widgetView.send({"code": "nodeClicked", "id": event.target.__data__.id});
-                }
-            });
-
-        let text = g.append("g")
-            .attr("class", "texts")
-            .selectAll("text")
-            .data(nodes_data)
-            .enter()
-            .append("text")
-            .attr("text-anchor", "middle")
-            .attr("dominant-baseline", "central")
-            .attr("fill", function (d) {
-                return getInvertedColorStringFromJson(d.fillColor)
-            })
-            .attr("id", function (d) {
-                return d.id
-            })
-            .text(function (d) {
-                return d.name;
-            })
-            .attr("transform", function (d) { //<-- use transform it's not a g
-                return "translate(" + d.x + "," + d.y + ")";
-            })
-            .on("click", function (event) {
-                if (widgetView.isDragDisabled) {
-                    widgetView.send({"code": "nodeClicked", "id": event.target.__data__.id});
-                }
-            });
-
-
         //add zoom capabilities
         const zoom = d3.zoom();
-
-        const boundingBoxWidth = boundingBox.maxX - boundingBox.minX + radius * 2
-        const boundingBoxHeight = boundingBox.maxY - boundingBox.minY + radius * 2
-
-        let scale = Math.min(width / boundingBoxWidth, height / boundingBoxHeight);
-        let x = width / 2 - (boundingBox.minX + boundingBoxWidth / 2 - radius) * scale;
-        let y = height / 2 - (boundingBox.minY + boundingBoxHeight / 2 - radius) * scale;
-
-        if (nodes_data.length === 1) {
-            scale = 1
-            x = width / 2 - nodes_data[0].x
-            y = height / 2 - nodes_data[0].y
-        }
-
-        const initialTransform = d3.zoomIdentity.translate(x, y).scale(scale)
+        const initialTransform = getInitialTransform(nodes_data, links_data)
 
         svg.call(zoom.transform, initialTransform)
         svg.call(zoom.on('zoom', zoomed));
         svg.call(zoom)
         g.attr("transform", initialTransform)
+
+        //Zoom functions
+        function getInitialTransform(nodes_data, links_data) {
+            let boundingBox = widgetView.getBoundingBox(nodes_data, links_data)
+
+            const boundingBoxWidth = boundingBox.maxX - boundingBox.minX + radius * 2
+            const boundingBoxHeight = boundingBox.maxY - boundingBox.minY + radius * 2
+
+            let scale = Math.min(width / boundingBoxWidth, height / boundingBoxHeight);
+            let x = width / 2 - (boundingBox.minX + boundingBoxWidth / 2 - radius) * scale;
+            let y = height / 2 - (boundingBox.minY + boundingBoxHeight / 2 - radius) * scale;
+
+            if (nodes_data.length === 1) {
+                scale = 1
+                x = width / 2 - nodes_data[0].x
+                y = height / 2 - nodes_data[0].y
+            }
+
+            return d3.zoomIdentity.translate(x, y).scale(scale)
+        }
 
         function zoomed({transform}) {
             g.attr("transform", transform);
