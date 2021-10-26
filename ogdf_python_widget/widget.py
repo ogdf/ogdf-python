@@ -44,10 +44,12 @@ class Widget(widgets.DOMWidget):
     def handle_msg(self, msg):
         if msg['code'] == 'linkClicked':
             self.onlick_callback(msg['code'], self.get_link_from_id(msg['id']), self.graph_attributes)
-        if msg['code'] == 'nodeClicked':
+        elif msg['code'] == 'nodeClicked':
             self.onlick_callback(msg['code'], self.get_node_from_id(msg['id']), self.graph_attributes)
-        if msg['code'] == 'nodeMoved':
+        elif msg['code'] == 'nodeMoved':
             self.move_node_to(self.get_node_from_id(msg['id']), msg['x'], msg['y'])
+        elif msg['code'] == 'bendMoved':
+            self.move_bend_to(self.get_link_from_id(msg['edgeId']), msg['x'], msg['y'], msg['bendNr'])
         print(msg)
 
     def get_node_from_id(self, node_id):
@@ -64,8 +66,22 @@ class Widget(widgets.DOMWidget):
         self.graph_attributes.x[node] = x
         self.graph_attributes.y[node] = y
 
+    def move_bend_to(self, edge, x, y, bend_nr):
+        bend = None
+
+        for i, point in enumerate(self.graph_attributes.bends(edge)):
+            if i == bend_nr:
+                bend = point
+                break
+
+        bend.m_x = x
+        bend.m_y = y
+
     def enable_node_movement(self, enable):
         self.send({"code": "enableNodeMovement", "value": enable})
+
+    def enable_bend_movement(self, enable):
+        self.send({"code": "enableBendMovement", "value": enable})
 
     def color_to_dict(self, color):
         color = {"r": color.red(),
@@ -100,6 +116,7 @@ class Widget(widgets.DOMWidget):
             for i, point in enumerate(self.graph_attributes.bends(edge)):
                 links_data.append(
                     {"id": edge_id,
+                     "bendNr": i,
                      "s_id": source_id,
                      "t_id": target_id,
                      "strokeColor": self.color_to_dict(self.graph_attributes.strokeColor(edge)),
@@ -114,6 +131,7 @@ class Widget(widgets.DOMWidget):
                 prev_y = int(point.m_y + 0.5)
 
             link_dict = {"id": edge_id,
+                         "bendNr": self.graph_attributes.bends(edge).size(),
                          "s_id": source_id,
                          "t_id": target_id,
                          "t_shape": self.graph_attributes.shape(edge.target()),

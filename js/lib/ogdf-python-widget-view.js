@@ -38,6 +38,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
     initialize: function (parameters) {
         WidgetView.__super__.initialize.call(this, parameters);
 
+        this.isBendMovementEnabled = false
         this.isCallbackAllowed = true
         this.isDragDisabled = true
         this.nodes = []
@@ -75,6 +76,12 @@ var WidgetView = widgets.DOMWidgetView.extend({
             } else {
                 d3.select(this.svg).selectAll(".node").call(this.drag_handler)
                 d3.select(this.svg).selectAll("text").call(this.drag_handler)
+            }
+        } else if (msg.code === 'enableBendMovement') {
+            this.isBendMovementEnabled = msg.value
+
+            if (!this.isBendMovementEnabled) {
+                this.removeBendMovers()
             }
         } else if (msg.code === 'test') {
             console.log(this.nodes)
@@ -172,6 +179,10 @@ var WidgetView = widgets.DOMWidgetView.extend({
         return boundingbox
     },
 
+    removeBendMovers: function () {
+        d3.select(this.svg).selectAll(".bendMover_holder").remove()
+    },
+
     // Defines how the widget gets rendered into the DOM
     render: function () {
         //used for initial data and reloading the widget
@@ -200,6 +211,12 @@ var WidgetView = widgets.DOMWidgetView.extend({
         let svg = d3.select(this.svg),
             width = +svg.attr("width"),
             height = +svg.attr("height");
+
+        svg.on("click", function (event) {
+            if (event.path[0].nodeName !== "line" && event.path[0].className.animVal !== "bendMover") {
+                widgetView.removeBendMovers()
+            }
+        })
 
         let radius = 15;
 
@@ -280,8 +297,50 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 .attr("stroke-width", function (d) {
                     return d.strokeWidth
                 })
-                .on("click", function (event) {
+                .on("click", function (event, d) {
                     widgetView.send({"code": "linkClicked", "id": event.target.__data__.id});
+
+                    if (!widgetView.isBendMovementEnabled) return
+                    widgetView.removeBendMovers()
+
+                    const bendMoverData = []
+
+                    if (!d.touchingSource) {
+                        bendMoverData.push({"id": d.id, "x": d.sx, "y": d.sy, "bendNr": d.bendNr - 1, "strokeWidth": 1})
+                    }
+                    if (!d.touchingTarget) {
+                        bendMoverData.push({"id": d.id, "x": d.tx, "y": d.ty, "bendNr": d.bendNr, "strokeWidth": 1})
+                    }
+
+                    let bendMovers = g.append("g")
+                        .attr("class", "bendMover_holder")
+                        .selectAll(".bendMover")
+                        .data(bendMoverData)
+                        .enter()
+                        .append("circle")
+                        .attr("class", "bendMover")
+                        .attr("cx", function (d) {
+                            return d.x
+                        })
+                        .attr("cy", function (d) {
+                            return d.y
+                        })
+                        .attr("id", function (d) {
+                            return d.id
+                        })
+                        .attr("r", 7)
+                        .attr("fill", "yellow")
+                        .attr("stroke", "black")
+                        .attr("stroke-width", function (d) {
+                            return d.strokeWidth
+                        })
+
+                    const drag_handler_bends = d3.drag()
+                        .on("start", dragstarted_bends)
+                        .on("drag", dragged_bends)
+                        .on("end", dragended_bends);
+
+                    bendMovers.call(drag_handler_bends);
                 });
         }
 
@@ -415,9 +474,8 @@ var WidgetView = widgets.DOMWidgetView.extend({
         //Drag functions
         function dragstarted(event, d) {
             const nodeId = this.id
-            d3.select(this).raise().attr("stroke-width", d.strokeWidth == null ? 1 : d.strokeWidth + 1);
 
-            d3.select("svg")
+            d3.select(widgetView.svg)
                 .selectAll(".node")
                 .filter(function (data) {
                     return data.id === nodeId;
@@ -430,7 +488,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
         function dragged(event, d) {
             const nodeId = this.id
 
-            d3.select("svg")
+            d3.select(widgetView.svg)
                 .selectAll(".node")
                 .filter(function (data) {
                     return data.id === nodeId;
@@ -440,7 +498,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 .attr("x", event.x - radius)
                 .attr("y", event.y - radius);
 
-            d3.select("svg")
+            d3.select(widgetView.svg)
                 .selectAll("text")
                 .filter(function (data) {
                     return data.id === nodeId;
@@ -449,7 +507,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
                     return "translate(" + event.x + "," + event.y + ")";
                 });
 
-            d3.select("svg")
+            d3.select(widgetView.svg)
                 .selectAll("line")
                 .filter(function (data) {
                     return data.s_id === nodeId && data.touchingSource;
@@ -461,7 +519,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
                     return data.sy = event.y;
                 })
 
-            d3.select("svg")
+            d3.select(widgetView.svg)
                 .selectAll("line")
                 .filter(function (data) {
                     return data.t_id === nodeId && data.touchingTarget;
@@ -477,7 +535,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
         function dragended(event, d) {
             const nodeId = this.id
 
-            d3.select("svg")
+            d3.select(widgetView.svg)
                 .selectAll(".node")
                 .filter(function (data) {
                     return data.id === nodeId;
@@ -493,6 +551,70 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 d.x = Math.round(event.x)
                 d.y = Math.round(event.y)
                 widgetView.send({"code": "nodeMoved", "id": this.id, "x": d.x, "y": d.y});
+            }
+        }
+
+        //Drag functions for bends
+        function dragstarted_bends(event, d) {
+            d3.select(widgetView.svg)
+                .selectAll(".bendMover")
+                .filter(function (data) {
+                    return data.id === d.id && data.bendNr === d.bendNr;
+                })
+                .attr("stroke-width", function (data) {
+                    return data.strokeWidth + 1
+                });
+        }
+
+        function dragged_bends(event, d) {
+            const edgeId = d.id
+            const bendNr = d.bendNr
+
+            d3.select(widgetView.svg)
+                .selectAll(".bendMover")
+                .filter(function (data) {
+                    return data.id === edgeId && data.bendNr === bendNr;
+                })
+                .attr("cx", event.x)
+                .attr("cy", event.y);
+
+            d3.select(widgetView.svg)
+                .selectAll("line")
+                .filter(function (data) {
+                    return data.id === edgeId && data.bendNr === bendNr;
+                })
+                .attr("x2", function (data) {
+                    return data.tx = event.x;
+                })
+                .attr("y2", function (data) {
+                    return data.ty = event.y;
+                })
+
+            d3.select(widgetView.svg)
+                .selectAll("line")
+                .filter(function (data) {
+                    return data.id === edgeId && data.bendNr === bendNr + 1;
+                })
+                .attr("x1", function (data) {
+                    return data.sx = event.x;
+                })
+                .attr("y1", function (data) {
+                    return data.sy = event.y;
+                })
+        }
+
+        function dragended_bends(event, d) {
+            d3.select(widgetView.svg)
+                .selectAll(".bendMover")
+                .attr("stroke-width", function (data) {
+                    return data.strokeWidth
+                });
+
+            //if node only got clicked and not moved
+            if (d.x !== event.x || d.y !== event.y) {
+                d.x = Math.round(event.x)
+                d.y = Math.round(event.y)
+                widgetView.send({"code": "bendMoved", "edgeId": this.id, "bendNr": d.bendNr, "x": d.x, "y": d.y});
             }
         }
     }
