@@ -114,7 +114,7 @@ def adjList(G,GA):
             
             e = adj.theEdge()
             wrap = find_wrap(GA, e)
-            print("line117",G,n,e)
+            #print("line117",G,n,e)
             if n == e.source():
                 
                 if wrap == "h" or wrap == "hv":
@@ -150,7 +150,7 @@ def adjList(G,GA):
                         
                 #adjList[GA.label[n]][position] = GA.label[adj.twinNode()]  #uncomment to use node labels
                 adjList[n][position] = adj
-            print("line153",n.index(),adjList[n])
+            #print("line153",n.index(),adjList[n])
             
     return adjList
 
@@ -262,15 +262,14 @@ def spanningTrees(G, dualG, GA, primalEdge):
 def bendCoord(GA, e):
     bends = []
     line = GA.bends[e]
-    print("bendCoord 1", repr(line), type(line), getattr(line, "__iter__", "not set"))
-    it = iter(line)
-    print("bendCoord 2", repr(it), type(it), getattr(it, "__next__", "not set"))
-    while True:
-        try:
-            b = next(it)
-            bends.append((b.m_x, b.m_y))
-        except StopIteration:
-            return bends
+    #print("bendCoord 1", repr(line), type(line), getattr(line, "__iter__", "not set"))
+    it = line.__iter__()
+    #print("bendCoord 2", repr(it), type(it), getattr(it, "__next__", "not set"))
+    while it.valid():
+        b = it.__deref__()
+        bends.append((b.m_x, b.m_y))
+        it.__preinc__()
+    return bends
 
 #find angle relative to a node (180 'West', 90 'North', 0 'East', -90 'South')
 def findAngle(GA, node,x,y): #angle relative to the current node 
@@ -445,7 +444,7 @@ def defineOrientation(GA,refEdge,refNode,refOrientation, orientation):
         
 #find the edges in a generator       
 def bfs_findGenerator(tree,target, queue, done = [], path = {}):
-    print("line 423", target.index(),queue)
+    #print("line 423", target.index(),queue)
     while queue:
         
         try:
@@ -460,10 +459,10 @@ def bfs_findGenerator(tree,target, queue, done = [], path = {}):
             path[currNode] = []
             done.append(currEdge)
 
-        print("line438",currNode.index())
+        #print("line438",currNode.index())
         for adj in currNode.adjEntries:
             e = adj.theEdge()
-            print("line441",e, tree[e])
+            #print("line441",e, tree[e])
             if e not in done and tree[e] == 2:
                 path[currNode].append(adj)
                 #print("curr node:", currNode.index())
@@ -614,7 +613,7 @@ def LP(n):
         #print("line614",n.index())
     box = GA.boundingBox()
     GA, wraps = layout_edges(GA, box)
-    print("line 591", G,GA)
+    #print("line 591", G,GA)
     #create embedding
     result = adjList(G, GA)
     Sorted_adjList = sorted_adjList(result)
@@ -623,7 +622,7 @@ def LP(n):
         
         node_adjEntries = Sorted_adjList[n]
         sortAdjs(n, node_adjEntries)
-        print("line626",n.index(), [(e.theEdge().source().index(),e.theEdge().target().index()) for e in n.adjEntries])
+        #print("line626",n.index(), [(e.theEdge().source().index(),e.theEdge().target().index()) for e in n.adjEntries])
 
     #dual tree and spanning trees
     dualG, primalEdge = dualGraph(G)
@@ -634,7 +633,7 @@ def LP(n):
     start_edge0 = starter_edges[0]
     target0 = start_edge0.target()
     source0 =  start_edge0.source()
-    print("line611",source0.index(), target0.index())
+    #print("line611",source0.index(), target0.index())
     queue = [(start_edge0, target0)]
     path0 = bfs_findGenerator(tree,source0, queue, done = [], path = {})
     betaLoop = []
@@ -650,7 +649,7 @@ def LP(n):
             for adj in path0[e]:
                 if adj.twinNode() == prev_node:
                     betaLoop.append(adj.theEdge())
-                    print(adj.twinNode().index())
+                    #print(adj.twinNode().index())
                     prev_node = e
                     break
     '''
@@ -687,7 +686,7 @@ def LP(n):
     '''
 
     orientation = ogdf.EdgeArray[int](G,99)
-    print("line 690",start_edge0,start_edge0.source())
+    #print("line 690",start_edge0,start_edge0.source())
     defineOrientation(GA,start_edge0,start_edge0.source(),0,orientation)
     signs1, signs2, alphaLoopVertical, alphaLoopHorizontal, betaLoopVertical, betaLoopHorizontal = findSigns(GA,alphaLoop, betaLoop, orientation)
 
@@ -793,8 +792,8 @@ def LP(n):
             edge_set = set()
             e = adj.theEdge()
             edge_set.add(e)
-            list = lhs1
-            list.append(e)
+            curr_list = lhs1
+            curr_list.append(e)
             orig_adj = adj
             #print("current edge",e.source().index(),e.target().index())
             
@@ -809,21 +808,21 @@ def LP(n):
                     break
                     
                 if orientation[next_e] == orientation[e]:
-                    list.append(next_e)
+                    curr_list.append(next_e)
                     
                 else:
                     if lhs0 == []:
                         lhs0.append(next_e)
-                        list = lhs0
+                        curr_list = lhs0
                     elif rhs1 == []:
                         rhs1.append(next_e)
-                        list = rhs1
+                        curr_list = rhs1
                     elif rhs0 == []:
                         rhs0.append(next_e)
-                        list = rhs0
+                        curr_list = rhs0
                     else:
                         lhs1.append(next_e)
-                        list = lhs1
+                        curr_list = lhs1
 
 
                 e = next_e
@@ -832,7 +831,7 @@ def LP(n):
             if edge_set in edge_set_list:
                 continue
             else:
-                edge_set_list.append(edge_set)       
+                edge_set_list.append(edge_set)      
             
             #print("rhs0")
             #[print(e.source().index(),e.target().index()) for e in rhs0]
@@ -962,15 +961,19 @@ def LP(n):
         model.solve()
         time = model.solutionTime
         
-        return n, time
+        return time
 
 
 if __name__ == "__main__":
-    for i in range(4,10):
+    run_time = []
+    for i in range(4,50):
         
-       print("Iteration",i)
-       n,time = LP(i)
-       print(n, time)
+       #print("Iteration",i)
+       time = LP(i)
+       #print(i, time)
+       run_time.append((i,time))
+    print(run_time)
+  
 
 
 
