@@ -49,7 +49,7 @@ class Widget(widgets.DOMWidget):
         elif msg['code'] == 'nodeMoved':
             self.move_node_to(self.get_node_from_id(msg['id']), msg['x'], msg['y'])
         elif msg['code'] == 'bendMoved':
-            self.move_bend_to(self.get_link_from_id(msg['edgeId']), msg['x'], msg['y'], msg['bendNr'])
+            self.move_bend_to(self.get_link_from_id(msg['edgeId']), msg['x'], msg['y'], msg['bendIndex'])
         print(msg)
 
     def get_node_from_id(self, node_id):
@@ -76,6 +76,10 @@ class Widget(widgets.DOMWidget):
 
         bend.m_x = x
         bend.m_y = y
+
+    def refresh_graph(self):
+        self.send({"code": "clearGraph"})
+        self.export_graph()
 
     def enable_node_movement(self, enable):
         self.send({"code": "enableNodeMovement", "value": enable})
@@ -107,47 +111,23 @@ class Widget(widgets.DOMWidget):
         links_data = []
 
         for edge in self.graph_attributes.constGraph().edges:
-            edge_id = str(edge.index())
-            source_id = str(edge.source().index())
-            target_id = str(edge.target().index())
-            prev_x = int(self.graph_attributes.x(edge.source()) + 0.5)
-            prev_y = int(self.graph_attributes.y(edge.source()) + 0.5)
-
+            bends = []
             for i, point in enumerate(self.graph_attributes.bends(edge)):
-                links_data.append(
-                    {"id": edge_id,
-                     "bendNr": i,
-                     "s_id": source_id,
-                     "t_id": target_id,
-                     "strokeColor": self.color_to_dict(self.graph_attributes.strokeColor(edge)),
-                     "strokeWidth": self.graph_attributes.strokeWidth(edge),
-                     "sx": prev_x,
-                     "sy": prev_y,
-                     "tx": int(point.m_x + 0.5),
-                     "ty": int(point.m_y + 0.5),
-                     "touchingSource": i == 0})
+                bends.append([int(point.m_x + 0.5), int(point.m_y + 0.5)])
 
-                prev_x = int(point.m_x + 0.5)
-                prev_y = int(point.m_y + 0.5)
-
-            link_dict = {"id": edge_id,
-                         "bendNr": self.graph_attributes.bends(edge).size(),
-                         "s_id": source_id,
-                         "t_id": target_id,
-                         "t_shape": self.graph_attributes.shape(edge.target()),
-                         "strokeColor": self.color_to_dict(self.graph_attributes.strokeColor(edge)),
-                         "strokeWidth": self.graph_attributes.strokeWidth(edge),
-                         "sx": prev_x,
-                         "sy": prev_y,
-                         "tx": int(self.graph_attributes.x(edge.target()) + 0.5),
-                         "ty": int(self.graph_attributes.y(edge.target()) + 0.5),
-                         "touchingTarget": True,
-                         "touchingSource": self.graph_attributes.bends(edge).size() == 0}
-
-            if self.graph_attributes.arrowType(edge) == 1:
-                link_dict['arrow'] = True
-
-            links_data.append(link_dict)
+            links_data.append(
+                {"id": str(edge.index()),
+                 "s_id": str(edge.source().index()),
+                 "t_id": str(edge.target().index()),
+                 "t_shape": self.graph_attributes.shape(edge.target()),
+                 "strokeColor": self.color_to_dict(self.graph_attributes.strokeColor(edge)),
+                 "strokeWidth": self.graph_attributes.strokeWidth(edge),
+                 "sx": int(self.graph_attributes.x(edge.source()) + 0.5),
+                 "sy": int(self.graph_attributes.y(edge.source()) + 0.5),
+                 "tx": int(self.graph_attributes.x(edge.target()) + 0.5),
+                 "ty": int(self.graph_attributes.y(edge.target()) + 0.5),
+                 "arrow": self.graph_attributes.arrowType(edge) == 1,
+                 "bends": bends})
 
         self.set_trait('nodes', nodes_data)
         self.set_trait('links', links_data)
