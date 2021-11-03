@@ -30,6 +30,11 @@ var WidgetModel = widgets.DOMWidgetModel.extend({
         _model_module_version: '0.1.0',
         _view_module_version: '0.1.0',
         value: 'Hello Test!',
+        width: 960,
+        height: 540,
+        x_pos: 0,
+        y_pos: 0,
+        zoom: 1,
     })
 });
 
@@ -39,34 +44,119 @@ var WidgetView = widgets.DOMWidgetView.extend({
         WidgetView.__super__.initialize.call(this, parameters);
 
         this.isBendMovementEnabled = false
-        this.isCallbackAllowed = true
         this.isNodeMovementEnabled = false
+        this.rescaleOnResize = true
+
+        //only for internal use
+        this.isRenderCallbackAllowed = true
+        this.isTransformCallbackAllowed = true
+
         this.nodes = []
         this.links = []
+
+        this.width = this.model.get('width')
+        this.height = this.model.get('height')
+
         this.model.off('msg:custom')
         this.model.on('msg:custom', this.handle_msg.bind(this));
 
         this.model.on('change:links', this.renderCallbackCheck, this);
-        this.model.on('change:links', this.renderCallbackCheck, this);
+        this.model.on('change:nodes', this.renderCallbackCheck, this);
+
+        this.model.on('change:x_pos', this.transformCallbackCheck, this);
+        this.model.on('change:y_pos', this.transformCallbackCheck, this);
+        this.model.on('change:zoom', this.transformCallbackCheck, this);
+
+        this.model.on('change:width', this.svgSizeChanged, this)
+        this.model.on('change:height', this.svgSizeChanged, this)
+    },
+
+    svgSizeChanged: function () {
+        this.width = this.model.get('width')
+        this.height = this.model.get('height')
+
+        d3.select(this.svg)
+            .attr("width", this.model.get('width'))
+            .attr("height", this.model.get('height'))
+
+        if (this.rescaleOnResize) this.readjustZoomLevel(15)
+    },
+
+    getInitialTransform: function (radius) {
+        let boundingBox = this.getBoundingBox(this.nodes, this.links)
+
+        const boundingBoxWidth = boundingBox.maxX - boundingBox.minX + radius * 2
+        const boundingBoxHeight = boundingBox.maxY - boundingBox.minY + radius * 2
+
+        let scale = Math.min(this.width / boundingBoxWidth, this.height / boundingBoxHeight);
+        let x = this.width / 2 - (boundingBox.minX + boundingBoxWidth / 2 - radius) * scale;
+        let y = this.height / 2 - (boundingBox.minY + boundingBoxHeight / 2 - radius) * scale;
+
+        if (this.nodes.length === 1) {
+            scale = 1
+            x = this.width / 2 - this.nodes[0].x
+            y = this.height / 2 - this.nodes[0].y
+        }
+
+        return d3.zoomIdentity.translate(x, y).scale(scale)
+    },
+
+    readjustZoomLevel: function (transform) {
+        const widgetView = this
+        const svg = d3.select(this.svg)
+
+        //add zoom capabilities
+        const zoom = d3.zoom();
+
+        svg.call(zoom.transform, transform)
+        svg.call(zoom.on('zoom', zoomed).on('end', zoomended));
+        svg.call(zoom)
+        this.g.attr("transform", transform)
+        this.updateZoomLevelInModel(transform)
+
+        function zoomed({transform}) {
+            widgetView.g.attr("transform", transform);
+        }
+
+        function zoomended({transform}) {
+            widgetView.updateZoomLevelInModel(transform)
+        }
+    },
+
+    updateZoomLevelInModel: function (transform) {
+        this.isTransformCallbackAllowed = false
+        this.model.set("x_pos", transform.x)
+        this.model.set("y_pos", transform.y)
+        this.model.set("zoom", transform.k)
+        this.model.save_changes()
+        this.isTransformCallbackAllowed = true
+    },
+
+    transformCallbackCheck: function () {
+        if (this.isTransformCallbackAllowed) {
+            this.readjustZoomLevel(
+                d3.zoomIdentity.translate(this.model.get('x_pos'), this.model.get('y_pos')).scale(this.model.get('zoom')))
+            console.log("readjusting zoom")
+        }
     },
 
     renderCallbackCheck: function () {
-        if (this.isCallbackAllowed) this.render()
+        if (this.isRenderCallbackAllowed) this.render()
     },
 
     handle_msg: function (msg) {
         if (msg.code === 'deleteNodeById') {
-            this.isCallbackAllowed = false
+            this.isRenderCallbackAllowed = false
             this.deleteNodeById(msg.data)
-            this.isCallbackAllowed = true
+            this.isRenderCallbackAllowed = true
         } else if (msg.code === 'deleteLinkById') {
-            this.isCallbackAllowed = false
+            this.isRenderCallbackAllowed = false
             this.deleteLinkById(msg.data)
-            this.isCallbackAllowed = true
+            this.isRenderCallbackAllowed = true
         } else if (msg.code === 'clearGraph') {
-            this.isCallbackAllowed = false
+            this.isRenderCallbackAllowed = false
             this.clearGraph()
-            this.isCallbackAllowed = true
+            this.isRenderCallbackAllowed = true
         } else if (msg.code === 'enableNodeMovement') {
             this.isNodeMovementEnabled = msg.value
 
@@ -83,6 +173,8 @@ var WidgetView = widgets.DOMWidgetView.extend({
             if (!this.isBendMovementEnabled) {
                 this.removeBendMovers()
             }
+        } else if (msg.code === 'enableRescaleOnResize') {
+            this.rescaleOnResize = msg.value
         } else if (msg.code === 'test') {
             console.log(this.nodes)
         } else {
@@ -168,11 +260,11 @@ var WidgetView = widgets.DOMWidgetView.extend({
             for (let j = 0; j < links[i].bends.length; j++) {
                 let bend = links[i].bends[j]
 
-                if(bend[0] < boundingbox.minX) boundingbox.minX = bend[0]
-                if(bend[0] > boundingbox.maxX) boundingbox.maxX = bend[0]
+                if (bend[0] < boundingbox.minX) boundingbox.minX = bend[0]
+                if (bend[0] > boundingbox.maxX) boundingbox.maxX = bend[0]
 
-                if(bend[1] < boundingbox.minY) boundingbox.minY = bend[1]
-                if(bend[1] > boundingbox.maxY) boundingbox.maxY = bend[1]
+                if (bend[1] < boundingbox.minY) boundingbox.minY = bend[1]
+                if (bend[1] > boundingbox.maxY) boundingbox.maxY = bend[1]
             }
         }
 
@@ -194,8 +286,8 @@ var WidgetView = widgets.DOMWidgetView.extend({
 
             this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
             this.svg.setAttribute("id", svgId)
-            this.svg.setAttribute("width", "960");
-            this.svg.setAttribute("height", "540");
+            this.svg.setAttribute("width", this.width);
+            this.svg.setAttribute("height", this.height);
 
             this.el.appendChild(this.svg)
         }
@@ -208,9 +300,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
     draw_graph(nodes_data, links_data) {
         let widgetView = this
 
-        let svg = d3.select(this.svg),
-            width = +svg.attr("width"),
-            height = +svg.attr("height");
+        const svg = d3.select(this.svg)
 
         svg.on("click", function (event) {
             if (event.path[0].className.animVal !== "line" && event.path[0].className.animVal !== "bendMover") {
@@ -222,8 +312,11 @@ var WidgetView = widgets.DOMWidgetView.extend({
 
         const line = d3.line()
 
+        d3.select(".everything").remove()
         //add encompassing group for the zoom
-        let g = svg.append("g").attr("class", "everything");
+        this.g = svg.append("g").attr("class", "everything");
+        let g = this.g
+
 
         constructArrowElements()
         constructLinkElements(links_data)
@@ -400,9 +493,10 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 .append("text")
                 .attr("text-anchor", "middle")
                 .attr("dominant-baseline", "central")
-                .attr("fill", function (d) {
-                    return getInvertedColorStringFromJson(d.fillColor)
-                })
+                .attr("fill", "black")
+                .attr("stroke-width", 1)
+                .attr("stroke", "white")
+                .attr("paint-order", "stroke")
                 .attr("id", function (d) {
                     return d.id
                 })
@@ -423,46 +517,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
             return "rgba(" + color.r + ", " + color.g + ", " + color.b + ", " + color.a + ")"
         }
 
-        function getInvertedColorStringFromJson(color) {
-            const cloneColor = JSON.parse(JSON.stringify(color));
-            cloneColor.r = 255 - color.r
-            cloneColor.g = 255 - color.g
-            cloneColor.b = 255 - color.b
-            return getColorStringFromJson(cloneColor)
-        }
-
-        //add zoom capabilities
-        const zoom = d3.zoom();
-        const initialTransform = getInitialTransform(nodes_data, links_data)
-
-        svg.call(zoom.transform, initialTransform)
-        svg.call(zoom.on('zoom', zoomed));
-        svg.call(zoom)
-        g.attr("transform", initialTransform)
-
-        //Zoom functions
-        function getInitialTransform(nodes_data, links_data) {
-            let boundingBox = widgetView.getBoundingBox(nodes_data, links_data)
-
-            const boundingBoxWidth = boundingBox.maxX - boundingBox.minX + radius * 2
-            const boundingBoxHeight = boundingBox.maxY - boundingBox.minY + radius * 2
-
-            let scale = Math.min(width / boundingBoxWidth, height / boundingBoxHeight);
-            let x = width / 2 - (boundingBox.minX + boundingBoxWidth / 2 - radius) * scale;
-            let y = height / 2 - (boundingBox.minY + boundingBoxHeight / 2 - radius) * scale;
-
-            if (nodes_data.length === 1) {
-                scale = 1
-                x = width / 2 - nodes_data[0].x
-                y = height / 2 - nodes_data[0].y
-            }
-
-            return d3.zoomIdentity.translate(x, y).scale(scale)
-        }
-
-        function zoomed({transform}) {
-            g.attr("transform", transform);
-        }
+        this.readjustZoomLevel(this.getInitialTransform(radius))
 
         //add drag capabilities
         widgetView.drag_handler = d3.drag()

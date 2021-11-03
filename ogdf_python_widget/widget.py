@@ -1,5 +1,5 @@
 import ipywidgets as widgets
-from traitlets import Unicode, List, Dict
+from traitlets import Unicode, List, Dict, Integer, Float
 import cppyy
 
 
@@ -32,7 +32,14 @@ class Widget(widgets.DOMWidget):
     nodes = List(Dict().tag(sync=True)).tag(sync=True)
     links = List(Dict().tag(sync=True)).tag(sync=True)
 
-    onclick_callback = None
+    width = Integer(960).tag(sync=True)
+    height = Integer(540).tag(sync=True)
+    x_pos = Float(0).tag(sync=True)
+    y_pos = Float(0).tag(sync=True)
+    zoom = Float(1).tag(sync=True)
+
+    on_node_click_callback = None
+    on_link_click_callback = None
 
     def __init__(self, graph_attributes):
         super().__init__()
@@ -43,9 +50,9 @@ class Widget(widgets.DOMWidget):
 
     def handle_msg(self, msg):
         if msg['code'] == 'linkClicked':
-            self.onlick_callback(msg['code'], self.get_link_from_id(msg['id']), self.graph_attributes)
+            self.on_link_click_callback(self.get_link_from_id(msg['id']), self.graph_attributes)
         elif msg['code'] == 'nodeClicked':
-            self.onlick_callback(msg['code'], self.get_node_from_id(msg['id']), self.graph_attributes)
+            self.on_node_click_callback(self.get_node_from_id(msg['id']), self.graph_attributes)
         elif msg['code'] == 'nodeMoved':
             self.move_node_to(self.get_node_from_id(msg['id']), msg['x'], msg['y'])
         elif msg['code'] == 'bendMoved':
@@ -86,6 +93,9 @@ class Widget(widgets.DOMWidget):
 
     def enable_bend_movement(self, enable):
         self.send({"code": "enableBendMovement", "value": enable})
+
+    def enable_rescale_on_resize(self, enable):
+        self.send({"code": "enableRescaleOnResize", "value": enable})
 
     def color_to_dict(self, color):
         color = {"r": color.red(),
