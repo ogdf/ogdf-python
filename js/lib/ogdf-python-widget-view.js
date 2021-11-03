@@ -317,9 +317,12 @@ var WidgetView = widgets.DOMWidgetView.extend({
         this.g = svg.append("g").attr("class", "everything");
         let g = this.g
 
+        let clickThickness = 10
+
 
         constructArrowElements()
         constructLinkElements(links_data)
+        constructLinkClickElements(links_data)
         constructNodeElements(nodes_data)
         constructTextElements(nodes_data)
 
@@ -384,6 +387,28 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 })
                 .attr("stroke-width", function (d) {
                     return d.strokeWidth
+                })
+                .attr("fill", "none");
+        }
+
+        function constructLinkClickElements(links_data){
+            return g.append("g")
+                .attr("class", "line_click_holder")
+                .selectAll(".line")
+                .data(links_data)
+                .enter()
+                .append("path")
+                .attr("class", "line")
+                .attr("id", function (d) {
+                    return d.id
+                })
+                .attr("d", function (d) {
+                    let points = [[d.sx, d.sy]].concat(d.bends).concat([[d.tx, d.ty]])
+                    return line(points)
+                })
+                .attr("stroke", "transparent")
+                .attr("stroke-width", function (d) {
+                    return Math.max(d.strokeWidth, clickThickness)
                 })
                 .attr("fill", "none")
                 .on("click", function (event, d) {
