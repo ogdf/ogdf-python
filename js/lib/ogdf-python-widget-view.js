@@ -51,6 +51,8 @@ var WidgetView = widgets.DOMWidgetView.extend({
         this.isRenderCallbackAllowed = true
         this.isTransformCallbackAllowed = true
 
+        this.clickThickness = 15
+
         this.nodes = []
         this.links = []
 
@@ -163,8 +165,8 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 d3.select(this.svg).selectAll(".node").on('mousedown.drag', null);
                 d3.select(this.svg).selectAll("text").on('mousedown.drag', null);
             } else {
-                d3.select(this.svg).selectAll(".node").call(this.drag_handler)
-                d3.select(this.svg).selectAll("text").call(this.drag_handler)
+                d3.select(this.svg).selectAll(".node").call(this.node_drag_handler)
+                d3.select(this.svg).selectAll("text").call(this.node_drag_handler)
             }
         } else if (msg.code === 'enableBendMovement') {
             this.isBendMovementEnabled = msg.value
@@ -293,8 +295,249 @@ var WidgetView = widgets.DOMWidgetView.extend({
 
         if (this.nodes != null && this.links != null) {
             this.draw_graph(this.nodes, this.links)
-            setTimeout(() => { this.rescaleText() }, 1);
+            setTimeout(() => {
+                this.rescaleText()
+            }, 1);
         }
+    },
+
+    constructLink(linkData) {
+        let widgetView = this
+        const line = d3.line()
+
+        this.line_holder
+            .data([linkData])
+            .enter()
+            .append("path")
+            .attr("class", "line")
+            .attr("id", function (d) {
+                return d.id
+            })
+            .attr("marker-end", function (d) {
+                if (d.arrow && d.t_shape === 0) {
+                    return "url(#endSquare)";
+                } else if (d.arrow && d.t_shape !== 0) {
+                    return "url(#endCircle)";
+                } else {
+                    return null;
+                }
+            })
+            .attr("d", function (d) {
+                let points = [[d.sx, d.sy]].concat(d.bends).concat([[d.tx, d.ty]])
+                return line(points)
+            })
+            .attr("stroke", function (d) {
+                return widgetView.getColorStringFromJson(d.strokeColor)
+            })
+            .attr("stroke-width", function (d) {
+                return d.strokeWidth
+            })
+            .attr("fill", "none");
+
+        this.line_click_holder
+            .data([linkData])
+            .enter()
+            .append("path")
+            .attr("class", "line")
+            .attr("id", function (d) {
+                return d.id
+            })
+            .attr("d", function (d) {
+                let points = [[d.sx, d.sy]].concat(d.bends).concat([[d.tx, d.ty]])
+                return line(points)
+            })
+            .attr("stroke", "transparent")
+            .attr("stroke-width", function (d) {
+                return Math.max(d.strokeWidth, widgetView.clickThickness)
+            })
+            .attr("fill", "none")
+            .on("click", function (event, d) {
+                widgetView.send({"code": "linkClicked", "id": event.target.__data__.id});
+
+                if (!widgetView.isBendMovementEnabled) return
+                widgetView.removeBendMovers()
+
+                const bendMoverData = []
+
+                for (let i = 0; i < d.bends.length; i++) {
+                    bendMoverData.push({
+                        "id": d.id,
+                        "x": d.bends[i][0],
+                        "y": d.bends[i][1],
+                        "bendIndex": i,
+                        "strokeWidth": 1
+                    })
+                }
+
+                let bendMovers = widgetView.g.append("g")
+                    .attr("class", "bendMover_holder")
+                    .selectAll(".bendMover")
+                    .data(bendMoverData)
+                    .enter()
+                    .append("circle")
+                    .attr("class", "bendMover")
+                    .attr("cx", function (d) {
+                        return d.x
+                    })
+                    .attr("cy", function (d) {
+                        return d.y
+                    })
+                    .attr("id", function (d) {
+                        return d.id
+                    })
+                    .attr("r", 7)
+                    .attr("fill", "yellow")
+                    .attr("stroke", "black")
+                    .attr("stroke-width", function (d) {
+                        return d.strokeWidth
+                    })
+
+                const drag_handler_bends = d3.drag()
+                    .on("start", dragstarted_bends)
+                    .on("drag", dragged_bends)
+                    .on("end", dragended_bends);
+
+                bendMovers.call(drag_handler_bends);
+            });
+
+        //Drag functions for bends
+        function dragstarted_bends(event, d) {
+            d3.select(widgetView.svg)
+                .selectAll(".bendMover")
+                .filter(function (data) {
+                    return data.id === d.id && data.bendIndex === d.bendIndex;
+                })
+                .attr("stroke-width", function (data) {
+                    return data.strokeWidth + 1
+                });
+        }
+
+        function dragged_bends(event, d) {
+            const edgeId = d.id
+            const bendIndex = d.bendIndex
+
+            d3.select(widgetView.svg)
+                .selectAll(".bendMover")
+                .filter(function (data) {
+                    return data.id === edgeId && data.bendIndex === bendIndex;
+                })
+                .attr("cx", event.x)
+                .attr("cy", event.y);
+
+            d3.select(widgetView.svg)
+                .selectAll(".line")
+                .filter(function (data) {
+                    return data.id === edgeId;
+                })
+                .attr("d", function (data) {
+                    data.bends[bendIndex][0] = event.x
+                    data.bends[bendIndex][1] = event.y
+                    let points = [[data.sx, data.sy]].concat(data.bends).concat([[data.tx, data.ty]])
+                    return line(points)
+                })
+        }
+
+        function dragended_bends(event, d) {
+            d3.select(widgetView.svg)
+                .selectAll(".bendMover")
+                .attr("stroke-width", function (data) {
+                    return data.strokeWidth
+                });
+
+            //only send message if bend actually moved
+            if (d.x !== event.x || d.y !== event.y) {
+                d.x = Math.round(event.x)
+                d.y = Math.round(event.y)
+                widgetView.send({"code": "bendMoved", "edgeId": this.id, "bendIndex": d.bendIndex, "x": d.x, "y": d.y});
+            }
+        }
+    },
+
+    constructNode(nodeData) {
+        let widgetView = this
+
+        this.node_holder
+            .data([nodeData])
+            .enter()
+            .append(function (d) {
+                if (d.shape === 0) {
+                    return document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                } else {
+                    return document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                }
+            })
+            .attr("class", "node")
+            .attr("width", function (d) {
+                return d.nodeWidth
+            })
+            .attr("height", function (d) {
+                return d.nodeHeight
+            })
+            .attr("x", function (d) {
+                return d.x - d.nodeWidth / 2
+            })
+            .attr("y", function (d) {
+                return d.y - d.nodeHeight / 2
+            })
+            .attr("cx", function (d) {
+                return d.x
+            })
+            .attr("cy", function (d) {
+                return d.y
+            })
+            .attr("id", function (d) {
+                return d.id
+            })
+            .attr("r", function (d) {
+                return d.nodeHeight / 2
+            })
+            .attr("fill", function (d) {
+                return widgetView.getColorStringFromJson(d.fillColor)
+            })
+            .attr("stroke", function (d) {
+                return widgetView.getColorStringFromJson(d.strokeColor)
+            })
+            .attr("stroke-width", function (d) {
+                return d.strokeWidth
+            })
+            .on("click", function (event) {
+                if (!widgetView.isNodeMovementEnabled) {
+                    widgetView.send({"code": "nodeClicked", "id": event.target.__data__.id});
+                }
+            });
+
+
+        this.text_holder
+            .data([nodeData])
+            .enter()
+            .append("text")
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "central")
+            .attr("fill", "black")
+            .attr("stroke-width", 1)
+            .attr("stroke", "white")
+            .attr("paint-order", "stroke")
+            .attr("id", function (d) {
+                return d.id
+            })
+            .text(function (d) {
+                return d.name;
+            })
+            .style("font-size", "1em")
+            .attr("transform", function (d) { //<-- use transform it's not a g
+                return "translate(" + d.x + "," + d.y + ")";
+            })
+            .on("click", function (event) {
+                if (!widgetView.isNodeMovementEnabled) {
+                    widgetView.send({"code": "nodeClicked", "id": event.target.__data__.id});
+                }
+            });
+
+
+    },
+
+    getColorStringFromJson(color) {
+        return "rgba(" + color.r + ", " + color.g + ", " + color.b + ", " + color.a + ")"
     },
 
     draw_graph(nodes_data, links_data) {
@@ -310,21 +553,42 @@ var WidgetView = widgets.DOMWidgetView.extend({
 
         let radius = nodes_data.length > 0 ? nodes_data[0].nodeWidth / 2 : 0
 
-        const line = d3.line()
-
         d3.select(".everything").remove()
         //add encompassing group for the zoom
         this.g = svg.append("g").attr("class", "everything");
-        let g = this.g
-
-        let clickThickness = 10
-
 
         constructArrowElements()
-        constructLinkElements(links_data)
-        constructLinkClickElements(links_data)
-        constructNodeElements(nodes_data)
-        constructTextElements(nodes_data)
+
+        //links
+        this.line_holder = this.g.append("g")
+            .attr("class", "line_holder")
+            .selectAll(".line")
+
+        this.line_click_holder = this.g.append("g")
+            .attr("class", "line_click_holder")
+            .selectAll(".line")
+
+        for (let i = 0; i < links_data.length; i++) {
+            widgetView.constructLink(links_data[i])
+        }
+
+        //nodes
+        widgetView.node_drag_handler = d3.drag()
+            .on("start", dragstarted_nodes)
+            .on("drag", dragged_nodes)
+            .on("end", dragended_nodes);
+
+        this.node_holder = this.g.append("g")
+            .attr("class", "node_holder")
+            .selectAll(".node")
+
+        this.text_holder = this.g.append("g")
+            .attr("class", "text_holder")
+            .selectAll("text")
+
+        for (let i = 0; i < nodes_data.length; i++) {
+            widgetView.constructNode(nodes_data[i])
+        }
 
         function constructArrowElements() {
             //construct arrow for circle
@@ -358,204 +622,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 .attr("d", "M0,-5L10,0L0,5");
         }
 
-        function constructLinkElements(links_data) {
-            return g.append("g")
-                .attr("class", "line_holder")
-                .selectAll(".line")
-                .data(links_data)
-                .enter()
-                .append("path")
-                .attr("class", "line")
-                .attr("id", function (d) {
-                    return d.id
-                })
-                .attr("marker-end", function (d) {
-                    if (d.arrow && d.t_shape === 0) {
-                        return "url(#endSquare)";
-                    } else if (d.arrow && d.t_shape !== 0) {
-                        return "url(#endCircle)";
-                    } else {
-                        return null;
-                    }
-                })
-                .attr("d", function (d) {
-                    let points = [[d.sx, d.sy]].concat(d.bends).concat([[d.tx, d.ty]])
-                    return line(points)
-                })
-                .attr("stroke", function (d) {
-                    return getColorStringFromJson(d.strokeColor)
-                })
-                .attr("stroke-width", function (d) {
-                    return d.strokeWidth
-                })
-                .attr("fill", "none");
-        }
-
-        function constructLinkClickElements(links_data) {
-            return g.append("g")
-                .attr("class", "line_click_holder")
-                .selectAll(".line")
-                .data(links_data)
-                .enter()
-                .append("path")
-                .attr("class", "line")
-                .attr("id", function (d) {
-                    return d.id
-                })
-                .attr("d", function (d) {
-                    let points = [[d.sx, d.sy]].concat(d.bends).concat([[d.tx, d.ty]])
-                    return line(points)
-                })
-                .attr("stroke", "transparent")
-                .attr("stroke-width", function (d) {
-                    return Math.max(d.strokeWidth, clickThickness)
-                })
-                .attr("fill", "none")
-                .on("click", function (event, d) {
-                    widgetView.send({"code": "linkClicked", "id": event.target.__data__.id});
-
-                    if (!widgetView.isBendMovementEnabled) return
-                    widgetView.removeBendMovers()
-
-                    const bendMoverData = []
-
-                    for (let i = 0; i < d.bends.length; i++) {
-                        bendMoverData.push({
-                            "id": d.id,
-                            "x": d.bends[i][0],
-                            "y": d.bends[i][1],
-                            "bendIndex": i,
-                            "strokeWidth": 1
-                        })
-                    }
-
-                    let bendMovers = g.append("g")
-                        .attr("class", "bendMover_holder")
-                        .selectAll(".bendMover")
-                        .data(bendMoverData)
-                        .enter()
-                        .append("circle")
-                        .attr("class", "bendMover")
-                        .attr("cx", function (d) {
-                            return d.x
-                        })
-                        .attr("cy", function (d) {
-                            return d.y
-                        })
-                        .attr("id", function (d) {
-                            return d.id
-                        })
-                        .attr("r", 7)
-                        .attr("fill", "yellow")
-                        .attr("stroke", "black")
-                        .attr("stroke-width", function (d) {
-                            return d.strokeWidth
-                        })
-
-                    const drag_handler_bends = d3.drag()
-                        .on("start", dragstarted_bends)
-                        .on("drag", dragged_bends)
-                        .on("end", dragended_bends);
-
-                    bendMovers.call(drag_handler_bends);
-                });
-        }
-
-        function constructNodeElements(nodes_data) {
-            return g.append("g")
-                .attr("class", "node_holder")
-                .selectAll(".node")
-                .data(nodes_data)
-                .enter()
-                .append(function (d) {
-                    if (d.shape === 0) {
-                        return document.createElementNS("http://www.w3.org/2000/svg", "rect");
-                    } else {
-                        return document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                    }
-                })
-                .attr("class", "node")
-                .attr("width", function (d) {
-                    return d.nodeWidth
-                })
-                .attr("height", function (d) {
-                    return d.nodeHeight
-                })
-                .attr("x", function (d) {
-                    return d.x - d.nodeWidth / 2
-                })
-                .attr("y", function (d) {
-                    return d.y - d.nodeHeight / 2
-                })
-                .attr("cx", function (d) {
-                    return d.x
-                })
-                .attr("cy", function (d) {
-                    return d.y
-                })
-                .attr("id", function (d) {
-                    return d.id
-                })
-                .attr("r", function (d) {
-                    return d.nodeHeight / 2
-                })
-                .attr("fill", function (d) {
-                    return getColorStringFromJson(d.fillColor)
-                })
-                .attr("stroke", function (d) {
-                    return getColorStringFromJson(d.strokeColor)
-                })
-                .attr("stroke-width", function (d) {
-                    return d.strokeWidth
-                })
-                .on("click", function (event) {
-                    if (!widgetView.isNodeMovementEnabled) {
-                        widgetView.send({"code": "nodeClicked", "id": event.target.__data__.id});
-                    }
-                });
-        }
-
-        function constructTextElements(nodes_data) {
-            return g.append("g")
-                .attr("class", "texts")
-                .selectAll("text")
-                .data(nodes_data)
-                .enter()
-                .append("text")
-                .attr("text-anchor", "middle")
-                .attr("dominant-baseline", "central")
-                .attr("fill", "black")
-                .attr("stroke-width", 1)
-                .attr("stroke", "white")
-                .attr("paint-order", "stroke")
-                .attr("id", function (d) {
-                    return d.id
-                })
-                .text(function (d) {
-                    return d.name;
-                })
-                .style("font-size", "1em")
-                .attr("transform", function (d) { //<-- use transform it's not a g
-                    return "translate(" + d.x + "," + d.y + ")";
-                })
-                .on("click", function (event) {
-                    if (!widgetView.isNodeMovementEnabled) {
-                        widgetView.send({"code": "nodeClicked", "id": event.target.__data__.id});
-                    }
-                });
-        }
-
-        function getColorStringFromJson(color) {
-            return "rgba(" + color.r + ", " + color.g + ", " + color.b + ", " + color.a + ")"
-        }
-
         this.readjustZoomLevel(this.getInitialTransform(radius))
-
-        //add drag capabilities
-        widgetView.drag_handler = d3.drag()
-            .on("start", dragstarted_nodes)
-            .on("drag", dragged_nodes)
-            .on("end", dragended_nodes);
 
         //Drag functions for nodes
         function dragstarted_nodes(event, d) {
@@ -637,58 +704,6 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 d.x = Math.round(event.x)
                 d.y = Math.round(event.y)
                 widgetView.send({"code": "nodeMoved", "id": this.id, "x": d.x, "y": d.y});
-            }
-        }
-
-        //Drag functions for bends
-        function dragstarted_bends(event, d) {
-            d3.select(widgetView.svg)
-                .selectAll(".bendMover")
-                .filter(function (data) {
-                    return data.id === d.id && data.bendIndex === d.bendIndex;
-                })
-                .attr("stroke-width", function (data) {
-                    return data.strokeWidth + 1
-                });
-        }
-
-        function dragged_bends(event, d) {
-            const edgeId = d.id
-            const bendIndex = d.bendIndex
-
-            d3.select(widgetView.svg)
-                .selectAll(".bendMover")
-                .filter(function (data) {
-                    return data.id === edgeId && data.bendIndex === bendIndex;
-                })
-                .attr("cx", event.x)
-                .attr("cy", event.y);
-
-            d3.select(widgetView.svg)
-                .selectAll(".line")
-                .filter(function (data) {
-                    return data.id === edgeId;
-                })
-                .attr("d", function (data) {
-                    data.bends[bendIndex][0] = event.x
-                    data.bends[bendIndex][1] = event.y
-                    let points = [[data.sx, data.sy]].concat(data.bends).concat([[data.tx, data.ty]])
-                    return line(points)
-                })
-        }
-
-        function dragended_bends(event, d) {
-            d3.select(widgetView.svg)
-                .selectAll(".bendMover")
-                .attr("stroke-width", function (data) {
-                    return data.strokeWidth
-                });
-
-            //only send message if bend actually moved
-            if (d.x !== event.x || d.y !== event.y) {
-                d.x = Math.round(event.x)
-                d.y = Math.round(event.y)
-                widgetView.send({"code": "bendMoved", "edgeId": this.id, "bendIndex": d.bendIndex, "x": d.x, "y": d.y});
             }
         }
     },
