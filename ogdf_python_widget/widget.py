@@ -114,7 +114,9 @@ class Widget(widgets.DOMWidget):
                          "shape": self.graph_attributes.shape(node),
                          "fillColor": self.color_to_dict(self.graph_attributes.fillColor(node)),
                          "strokeColor": self.color_to_dict(self.graph_attributes.strokeColor(node)),
-                         "strokeWidth": self.graph_attributes.strokeWidth(node)}
+                         "strokeWidth": self.graph_attributes.strokeWidth(node),
+                         "nodeWidth": self.graph_attributes.width(node),
+                         "nodeHeight": self.graph_attributes.height(node)}
 
             nodes_data.append(node_dict)
 

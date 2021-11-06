@@ -57,7 +57,6 @@ var WidgetView = widgets.DOMWidgetView.extend({
         this.width = this.model.get('width')
         this.height = this.model.get('height')
 
-        this.model.off('msg:custom')
         this.model.on('msg:custom', this.handle_msg.bind(this));
 
         this.model.on('change:links', this.renderCallbackCheck, this);
@@ -391,7 +390,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 .attr("fill", "none");
         }
 
-        function constructLinkClickElements(links_data){
+        function constructLinkClickElements(links_data) {
             return g.append("g")
                 .attr("class", "line_click_holder")
                 .selectAll(".line")
@@ -475,13 +474,17 @@ var WidgetView = widgets.DOMWidgetView.extend({
                     }
                 })
                 .attr("class", "node")
-                .attr("width", radius * 2)
-                .attr("height", radius * 2)
+                .attr("width", function (d) {
+                    return d.nodeWidth
+                })
+                .attr("height", function (d) {
+                    return d.nodeHeight
+                })
                 .attr("x", function (d) {
-                    return d.x - radius
+                    return d.x - d.nodeWidth / 2
                 })
                 .attr("y", function (d) {
-                    return d.y - radius
+                    return d.y - d.nodeHeight / 2
                 })
                 .attr("cx", function (d) {
                     return d.x
@@ -492,7 +495,9 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 .attr("id", function (d) {
                     return d.id
                 })
-                .attr("r", radius)
+                .attr("r", function (d) {
+                    return d.nodeHeight / 2
+                })
                 .attr("fill", function (d) {
                     return getColorStringFromJson(d.fillColor)
                 })
@@ -574,8 +579,8 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 })
                 .attr("cx", event.x)
                 .attr("cy", event.y)
-                .attr("x", event.x - radius)
-                .attr("y", event.y - radius);
+                .attr("x", event.x - d.nodeWidth/2)
+                .attr("y", event.y - d.nodeHeight/2);
 
             d3.select(widgetView.svg)
                 .selectAll("text")
