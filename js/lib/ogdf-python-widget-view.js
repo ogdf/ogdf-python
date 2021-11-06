@@ -175,7 +175,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
         } else if (msg.code === 'enableRescaleOnResize') {
             this.rescaleOnResize = msg.value
         } else if (msg.code === 'test') {
-            console.log(this.nodes)
+            this.rescaleText()
         } else {
             console.log("msg cannot be read: " + msg)
         }
@@ -293,6 +293,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
 
         if (this.nodes != null && this.links != null) {
             this.draw_graph(this.nodes, this.links)
+            setTimeout(() => { this.rescaleText() }, 1);
         }
     },
 
@@ -307,7 +308,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
             }
         })
 
-        let radius = 15;
+        let radius = nodes_data.length > 0 ? nodes_data[0].nodeWidth / 2 : 0
 
         const line = d3.line()
 
@@ -533,6 +534,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 .text(function (d) {
                     return d.name;
                 })
+                .style("font-size", "1em")
                 .attr("transform", function (d) { //<-- use transform it's not a g
                     return "translate(" + d.x + "," + d.y + ")";
                 })
@@ -579,8 +581,8 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 })
                 .attr("cx", event.x)
                 .attr("cy", event.y)
-                .attr("x", event.x - d.nodeWidth/2)
-                .attr("y", event.y - d.nodeHeight/2);
+                .attr("x", event.x - d.nodeWidth / 2)
+                .attr("y", event.y - d.nodeHeight / 2);
 
             d3.select(widgetView.svg)
                 .selectAll("text")
@@ -688,6 +690,36 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 d.y = Math.round(event.y)
                 widgetView.send({"code": "bendMoved", "edgeId": this.id, "bendIndex": d.bendIndex, "x": d.x, "y": d.y});
             }
+        }
+    },
+
+    rescaleText() {
+        d3.select(this.svg).selectAll("text").style("font-size", adaptLabelFontSize)
+
+        function adaptLabelFontSize(d) {
+            let xPadding, diameter, labelAvailableWidth, labelWidth;
+
+            xPadding = 2;
+            diameter = d.nodeWidth;
+            labelAvailableWidth = diameter - xPadding;
+
+            labelWidth = this.getComputedTextLength();
+
+            // There is enough space for the label so leave it as is.
+            if (labelWidth < labelAvailableWidth) {
+                return null;
+            }
+
+            /*
+             * The meaning of the ratio between labelAvailableWidth and labelWidth equaling 1 is that
+             * the label is taking up exactly its available space.
+             * With the result as `1em` the font remains the same.
+             *
+             * The meaning of the ratio between labelAvailableWidth and labelWidth equaling 0.5 is that
+             * the label is taking up twice its available space.
+             * With the result as `0.5em` the font will change to half its original size.
+             */
+            return (labelAvailableWidth / labelWidth) + 'em';
         }
     }
 });
