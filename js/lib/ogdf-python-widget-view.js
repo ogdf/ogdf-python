@@ -146,18 +146,8 @@ var WidgetView = widgets.DOMWidgetView.extend({
     },
 
     handle_msg: function (msg) {
-        if (msg.code === 'deleteNodeById') {
-            this.isRenderCallbackAllowed = false
-            this.deleteNodeById(msg.data)
-            this.isRenderCallbackAllowed = true
-        } else if (msg.code === 'deleteLinkById') {
-            this.isRenderCallbackAllowed = false
-            this.deleteLinkById(msg.data)
-            this.isRenderCallbackAllowed = true
-        } else if (msg.code === 'clearGraph') {
-            this.isRenderCallbackAllowed = false
+        if (msg.code === 'clearGraph') {
             this.clearGraph()
-            this.isRenderCallbackAllowed = true
         } else if (msg.code === 'enableNodeMovement') {
             this.isNodeMovementEnabled = msg.value
 
@@ -176,14 +166,42 @@ var WidgetView = widgets.DOMWidgetView.extend({
             }
         } else if (msg.code === 'enableRescaleOnResize') {
             this.rescaleOnResize = msg.value
+        } else if (msg.code === 'nodeAdded') {
+            this.addNode(msg.data)
+        } else if (msg.code === 'linkAdded') {
+            this.addLink(msg.data)
+        } else if (msg.code === 'deleteNodeById') {
+            this.deleteNodeById(msg.data)
+        } else if (msg.code === 'deleteLinkById') {
+            this.deleteLinkById(msg.data)
+        } else if (msg.code === 'updateNode') {
+            this.updateNode(msg.data)
+        } else if (msg.code === 'updateLink') {
+            this.updateLink(msg.data)
         } else if (msg.code === 'test') {
-            this.rescaleText()
+            this.rescaleAllText()
         } else {
             console.log("msg cannot be read: " + msg)
         }
     },
 
+    addNode: function (node) {
+        this.isRenderCallbackAllowed = false
+        this.nodes.push(node)
+        this.constructNode(node)
+        this.isRenderCallbackAllowed = true
+    },
+
+    addLink: function (link) {
+        this.isRenderCallbackAllowed = false
+        this.links.push(link)
+        this.constructLink(link)
+        this.isRenderCallbackAllowed = true
+    },
+
     deleteNodeById: function (nodeId) {
+        this.isRenderCallbackAllowed = false
+
         for (let i = 0; i < this.nodes.length; i++) {
             if (this.nodes[i].id === nodeId) {
                 this.nodes.splice(i, 1);
@@ -206,9 +224,13 @@ var WidgetView = widgets.DOMWidgetView.extend({
             .filter(function (d) {
                 return d.id === nodeId;
             }).remove()
+
+        this.isRenderCallbackAllowed = true
     },
 
     deleteLinkById: function (linkId) {
+        this.isRenderCallbackAllowed = false
+
         for (let i = this.links.length - 1; i >= 0; i--) {
             if (this.links[i].id === linkId) {
                 this.links.splice(i, 1);
@@ -224,9 +246,28 @@ var WidgetView = widgets.DOMWidgetView.extend({
             .filter(function (d) {
                 return d.id === linkId;
             }).remove()
+
+        this.isRenderCallbackAllowed = true
+    },
+
+    updateNode: function (node) {
+        this.isRenderCallbackAllowed = false
+        this.deleteNodeById(node.id)
+        this.addNode(node)
+        this.rescaleTextById(node.id)
+        this.isRenderCallbackAllowed = true
+    },
+
+    updateLink: function (link) {
+        this.isRenderCallbackAllowed = false
+        this.deleteLinkById(link.id)
+        this.addLink(link)
+        this.isRenderCallbackAllowed = true
     },
 
     clearGraph: function () {
+        this.isRenderCallbackAllowed = false
+
         this.nodes = []
         this.links = []
 
@@ -239,6 +280,8 @@ var WidgetView = widgets.DOMWidgetView.extend({
         d3.select(this.svg).selectAll(".node").remove()
         d3.select(this.svg).selectAll("text").remove()
         d3.select(this.svg).selectAll(".line").remove()
+
+        this.isRenderCallbackAllowed = true
     },
 
     getBoundingBox: function (nodes, links) {
@@ -278,6 +321,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
 
     // Defines how the widget gets rendered into the DOM
     render: function () {
+        console.log("rendering")
         //used for initial data and reloading the widget
         this.nodes = this.model.get('nodes')
         this.links = this.model.get('links')
@@ -296,7 +340,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
         if (this.nodes != null && this.links != null) {
             this.draw_graph(this.nodes, this.links)
             setTimeout(() => {
-                this.rescaleText()
+                this.rescaleAllText()
             }, 1);
         }
     },
@@ -456,7 +500,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
     constructNode(nodeData) {
         let widgetView = this
 
-        this.node_holder
+        let node = this.node_holder
             .data([nodeData])
             .enter()
             .append(function (d) {
@@ -504,10 +548,9 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 if (!widgetView.isNodeMovementEnabled) {
                     widgetView.send({"code": "nodeClicked", "id": event.target.__data__.id});
                 }
-            });
+            })
 
-
-        this.text_holder
+        let text = this.text_holder
             .data([nodeData])
             .enter()
             .append("text")
@@ -531,9 +574,12 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 if (!widgetView.isNodeMovementEnabled) {
                     widgetView.send({"code": "nodeClicked", "id": event.target.__data__.id});
                 }
-            });
+            })
 
-
+        if (this.isNodeMovementEnabled) {
+            node.call(widgetView.node_drag_handler)
+            text.call(widgetView.node_drag_handler)
+        }
     },
 
     getColorStringFromJson(color) {
@@ -640,6 +686,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
 
         function dragged_nodes(event, d) {
             const nodeId = this.id
+            const line = d3.line()
 
             d3.select(widgetView.svg)
                 .selectAll(".node")
@@ -708,34 +755,40 @@ var WidgetView = widgets.DOMWidgetView.extend({
         }
     },
 
-    rescaleText() {
-        d3.select(this.svg).selectAll("text").style("font-size", adaptLabelFontSize)
+    rescaleAllText() {
+        d3.select(this.svg).selectAll("text").style("font-size", this.adaptLabelFontSize)
+    },
 
-        function adaptLabelFontSize(d) {
-            let xPadding, diameter, labelAvailableWidth, labelWidth;
+    rescaleTextById(nodeId) {
+        d3.select(this.svg).selectAll("text").filter(function (d) {
+            return d.id === nodeId;
+        }).style("font-size", this.adaptLabelFontSize)
+    },
 
-            xPadding = 2;
-            diameter = d.nodeWidth;
-            labelAvailableWidth = diameter - xPadding;
+    adaptLabelFontSize(d) {
+        let xPadding, diameter, labelAvailableWidth, labelWidth;
 
-            labelWidth = this.getComputedTextLength();
+        xPadding = 2;
+        diameter = d.nodeWidth;
+        labelAvailableWidth = diameter - xPadding;
 
-            // There is enough space for the label so leave it as is.
-            if (labelWidth < labelAvailableWidth) {
-                return null;
-            }
+        labelWidth = this.getComputedTextLength();
 
-            /*
-             * The meaning of the ratio between labelAvailableWidth and labelWidth equaling 1 is that
-             * the label is taking up exactly its available space.
-             * With the result as `1em` the font remains the same.
-             *
-             * The meaning of the ratio between labelAvailableWidth and labelWidth equaling 0.5 is that
-             * the label is taking up twice its available space.
-             * With the result as `0.5em` the font will change to half its original size.
-             */
-            return (labelAvailableWidth / labelWidth) + 'em';
+        // There is enough space for the label so leave it as is.
+        if (labelWidth < labelAvailableWidth) {
+            return null;
         }
+
+        /*
+         * The meaning of the ratio between labelAvailableWidth and labelWidth equaling 1 is that
+         * the label is taking up exactly its available space.
+         * With the result as `1em` the font remains the same.
+         *
+         * The meaning of the ratio between labelAvailableWidth and labelWidth equaling 0.5 is that
+         * the label is taking up twice its available space.
+         * With the result as `0.5em` the font will change to half its original size.
+         */
+        return (labelAvailableWidth / labelWidth) + 'em';
     }
 });
 

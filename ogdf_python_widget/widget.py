@@ -5,6 +5,14 @@ import cppyy
 
 # See js/lib/ogdf-python-widget-view.js for the frontend counterpart to this file.
 
+def color_to_dict(color):
+    color = {"r": color.red(),
+             "g": color.green(),
+             "b": color.blue(),
+             "a": color.alpha()}
+    return color
+
+
 @widgets.register
 class Widget(widgets.DOMWidget):
     # Name of the widget view class in front-end
@@ -97,12 +105,11 @@ class Widget(widgets.DOMWidget):
     def enable_rescale_on_resize(self, enable):
         self.send({"code": "enableRescaleOnResize", "value": enable})
 
-    def color_to_dict(self, color):
-        color = {"r": color.red(),
-                 "g": color.green(),
-                 "b": color.blue(),
-                 "a": color.alpha()}
-        return color
+    def update_node(self, node):
+        self.send({"code": "updateNode", "data": self.node_to_dict(node)})
+
+    def update_link(self, link):
+        self.send({"code": "updateLink", "data": self.link_to_dict(link)})
 
     def node_to_dict(self, node):
         return {"id": str(node.index()),
@@ -110,8 +117,8 @@ class Widget(widgets.DOMWidget):
                 "x": int(self.graph_attributes.x(node) + 0.5),
                 "y": int(self.graph_attributes.y(node) + 0.5),
                 "shape": self.graph_attributes.shape(node),
-                "fillColor": self.color_to_dict(self.graph_attributes.fillColor(node)),
-                "strokeColor": self.color_to_dict(self.graph_attributes.strokeColor(node)),
+                "fillColor": color_to_dict(self.graph_attributes.fillColor(node)),
+                "strokeColor": color_to_dict(self.graph_attributes.strokeColor(node)),
                 "strokeWidth": self.graph_attributes.strokeWidth(node),
                 "nodeWidth": self.graph_attributes.width(node),
                 "nodeHeight": self.graph_attributes.height(node)}
@@ -125,7 +132,7 @@ class Widget(widgets.DOMWidget):
                 "s_id": str(link.source().index()),
                 "t_id": str(link.target().index()),
                 "t_shape": self.graph_attributes.shape(link.target()),
-                "strokeColor": self.color_to_dict(self.graph_attributes.strokeColor(link)),
+                "strokeColor": color_to_dict(self.graph_attributes.strokeColor(link)),
                 "strokeWidth": self.graph_attributes.strokeWidth(link),
                 "sx": int(self.graph_attributes.x(link.source()) + 0.5),
                 "sy": int(self.graph_attributes.y(link.source()) + 0.5),
@@ -156,15 +163,13 @@ class MyGraphObserver(cppyy.gbl.ogdf.GraphObserver):
         self.widget.send({'code': 'deleteNodeById', 'data': str(node.index())})
 
     def nodeAdded(self, node):
-        self.widget.send("nodeAdded")
-        print("nodeAdded")
+        self.widget.send({'code': 'nodeAdded', 'data': self.widget.node_to_dict(node)})
 
     def edgeDeleted(self, edge):
         self.widget.send({'code': 'deleteLinkById', 'data': str(edge.index())})
 
     def edgeAdded(self, edge):
-        self.widget.send("edgeAdded")
-        print("edgeAdded")
+        self.widget.send({'code': 'linkAdded', 'data': self.widget.link_to_dict(edge)})
 
     def reInit(self):
         self.widget.send("reInit")
