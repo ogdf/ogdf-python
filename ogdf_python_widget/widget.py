@@ -104,42 +104,44 @@ class Widget(widgets.DOMWidget):
                  "a": color.alpha()}
         return color
 
+    def node_to_dict(self, node):
+        return {"id": str(node.index()),
+                "name": str(self.graph_attributes.label(node)),
+                "x": int(self.graph_attributes.x(node) + 0.5),
+                "y": int(self.graph_attributes.y(node) + 0.5),
+                "shape": self.graph_attributes.shape(node),
+                "fillColor": self.color_to_dict(self.graph_attributes.fillColor(node)),
+                "strokeColor": self.color_to_dict(self.graph_attributes.strokeColor(node)),
+                "strokeWidth": self.graph_attributes.strokeWidth(node),
+                "nodeWidth": self.graph_attributes.width(node),
+                "nodeHeight": self.graph_attributes.height(node)}
+
+    def link_to_dict(self, link):
+        bends = []
+        for i, point in enumerate(self.graph_attributes.bends(link)):
+            bends.append([int(point.m_x + 0.5), int(point.m_y + 0.5)])
+
+        return {"id": str(link.index()),
+                "s_id": str(link.source().index()),
+                "t_id": str(link.target().index()),
+                "t_shape": self.graph_attributes.shape(link.target()),
+                "strokeColor": self.color_to_dict(self.graph_attributes.strokeColor(link)),
+                "strokeWidth": self.graph_attributes.strokeWidth(link),
+                "sx": int(self.graph_attributes.x(link.source()) + 0.5),
+                "sy": int(self.graph_attributes.y(link.source()) + 0.5),
+                "tx": int(self.graph_attributes.x(link.target()) + 0.5),
+                "ty": int(self.graph_attributes.y(link.target()) + 0.5),
+                "arrow": self.graph_attributes.arrowType(link) == 1,
+                "bends": bends}
+
     def export_graph(self):
         nodes_data = []
         for node in self.graph_attributes.constGraph().nodes:
-            node_dict = {"id": str(node.index()),
-                         "name": str(self.graph_attributes.label(node)),
-                         "x": int(self.graph_attributes.x(node) + 0.5),
-                         "y": int(self.graph_attributes.y(node) + 0.5),
-                         "shape": self.graph_attributes.shape(node),
-                         "fillColor": self.color_to_dict(self.graph_attributes.fillColor(node)),
-                         "strokeColor": self.color_to_dict(self.graph_attributes.strokeColor(node)),
-                         "strokeWidth": self.graph_attributes.strokeWidth(node),
-                         "nodeWidth": self.graph_attributes.width(node),
-                         "nodeHeight": self.graph_attributes.height(node)}
-
-            nodes_data.append(node_dict)
+            nodes_data.append(self.node_to_dict(node))
 
         links_data = []
-
-        for edge in self.graph_attributes.constGraph().edges:
-            bends = []
-            for i, point in enumerate(self.graph_attributes.bends(edge)):
-                bends.append([int(point.m_x + 0.5), int(point.m_y + 0.5)])
-
-            links_data.append(
-                {"id": str(edge.index()),
-                 "s_id": str(edge.source().index()),
-                 "t_id": str(edge.target().index()),
-                 "t_shape": self.graph_attributes.shape(edge.target()),
-                 "strokeColor": self.color_to_dict(self.graph_attributes.strokeColor(edge)),
-                 "strokeWidth": self.graph_attributes.strokeWidth(edge),
-                 "sx": int(self.graph_attributes.x(edge.source()) + 0.5),
-                 "sy": int(self.graph_attributes.y(edge.source()) + 0.5),
-                 "tx": int(self.graph_attributes.x(edge.target()) + 0.5),
-                 "ty": int(self.graph_attributes.y(edge.target()) + 0.5),
-                 "arrow": self.graph_attributes.arrowType(edge) == 1,
-                 "bends": bends})
+        for link in self.graph_attributes.constGraph().edges:
+            links_data.append(self.link_to_dict(link))
 
         self.set_trait('nodes', nodes_data)
         self.set_trait('links', links_data)
