@@ -48,6 +48,7 @@ class Widget(widgets.DOMWidget):
 
     on_node_click_callback = None
     on_link_click_callback = None
+    on_svg_click_callback = None
 
     def __init__(self, graph_attributes):
         super().__init__()
@@ -65,6 +66,8 @@ class Widget(widgets.DOMWidget):
             self.move_node_to(self.get_node_from_id(msg['id']), msg['x'], msg['y'])
         elif msg['code'] == 'bendMoved':
             self.move_bend_to(self.get_link_from_id(msg['edgeId']), msg['x'], msg['y'], msg['bendIndex'])
+        elif msg['code'] == 'svgClicked':
+            self.on_svg_click_callback(msg['path'], msg['x'], msg['y'])
         print(msg)
 
     def get_node_from_id(self, node_id):
@@ -110,6 +113,11 @@ class Widget(widgets.DOMWidget):
 
     def update_link(self, link):
         self.send({"code": "updateLink", "data": self.link_to_dict(link)})
+
+    def viewcoords_to_svgcoords(self, x, y):
+        svg_x = x / self.zoom - self.x_pos / self.zoom
+        svg_y = y / self.zoom - self.y_pos / self.zoom
+        return {'x': svg_x, 'y': svg_y}
 
     def node_to_dict(self, node):
         return {"id": str(node.index()),

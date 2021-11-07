@@ -592,6 +592,8 @@ var WidgetView = widgets.DOMWidgetView.extend({
         const svg = d3.select(this.svg)
 
         svg.on("click", function (event) {
+            widgetView.send({"code": "svgClicked", "path": event.path[0], "x": event.offsetX, "y": event.offsetY});
+
             if (event.path[0].className.animVal !== "line" && event.path[0].className.animVal !== "bendMover") {
                 widgetView.removeBendMovers()
             }
