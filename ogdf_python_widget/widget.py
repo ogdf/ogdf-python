@@ -46,6 +46,8 @@ class Widget(widgets.DOMWidget):
     y_pos = Float(0).tag(sync=True)
     zoom = Float(1).tag(sync=True)
 
+    click_thickness = Integer(10).tag(sync=True)
+
     on_node_click_callback = None
     on_link_click_callback = None
     on_svg_click_callback = None
@@ -67,7 +69,8 @@ class Widget(widgets.DOMWidget):
         elif msg['code'] == 'bendMoved':
             self.move_bend_to(self.get_link_from_id(msg['edgeId']), msg['x'], msg['y'], msg['bendIndex'])
         elif msg['code'] == 'svgClicked':
-            self.on_svg_click_callback(msg['path'], msg['x'], msg['y'])
+            if self.on_svg_click_callback is not None:
+                self.on_svg_click_callback(msg['path'], msg['x'], msg['y'])
         print(msg)
 
     def get_node_from_id(self, node_id):
@@ -180,8 +183,7 @@ class MyGraphObserver(cppyy.gbl.ogdf.GraphObserver):
         self.widget.send({'code': 'linkAdded', 'data': self.widget.link_to_dict(edge)})
 
     def reInit(self):
-        self.widget.send("reInit")
-        print("reInit")
+        self.widget.export_graph()
 
     def cleared(self):
         self.widget.send({'code': 'clearGraph'})

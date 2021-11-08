@@ -35,6 +35,7 @@ var WidgetModel = widgets.DOMWidgetModel.extend({
         x_pos: 0,
         y_pos: 0,
         zoom: 1,
+        click_thickness: 10,
     })
 });
 
@@ -51,7 +52,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
         this.isRenderCallbackAllowed = true
         this.isTransformCallbackAllowed = true
 
-        this.clickThickness = 15
+        this.clickThickness = this.model.get("click_thickness")
 
         this.nodes = []
         this.links = []
@@ -70,6 +71,18 @@ var WidgetView = widgets.DOMWidgetView.extend({
 
         this.model.on('change:width', this.svgSizeChanged, this)
         this.model.on('change:height', this.svgSizeChanged, this)
+
+        this.model.on('change:click_thickness', this.clickThicknessChanged, this)
+    },
+
+    clickThicknessChanged: function () {
+        this.clickThickness = this.model.get("click_thickness")
+        let widgetView = this
+
+        d3.select(this.svg).selectAll(".line_click_holder > .line")
+            .attr("stroke-width", function (d) {
+                return Math.max(d.strokeWidth, widgetView.clickThickness)
+            })
     },
 
     svgSizeChanged: function () {
@@ -137,7 +150,6 @@ var WidgetView = widgets.DOMWidgetView.extend({
         if (this.isTransformCallbackAllowed) {
             this.readjustZoomLevel(
                 d3.zoomIdentity.translate(this.model.get('x_pos'), this.model.get('y_pos')).scale(this.model.get('zoom')))
-            console.log("readjusting zoom")
         }
     },
 
