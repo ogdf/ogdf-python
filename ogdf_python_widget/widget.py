@@ -64,10 +64,10 @@ class Widget(widgets.DOMWidget):
     def handle_msg(self, msg):
         if msg['code'] == 'linkClicked':
             if self.on_link_click_callback is not None:
-                self.on_link_click_callback(self.get_link_from_id(msg['id']), self.graph_attributes)
+                self.on_link_click_callback(self.get_link_from_id(msg['id']), msg['altKey'], msg['ctrlKey'])
         elif msg['code'] == 'nodeClicked':
             if self.on_node_click_callback is not None:
-                self.on_node_click_callback(self.get_node_from_id(msg['id']), self.graph_attributes)
+                self.on_node_click_callback(self.get_node_from_id(msg['id']), msg['altKey'], msg['ctrlKey'])
         elif msg['code'] == 'nodeMoved':
             node = self.get_node_from_id(msg['id'])
             self.move_node_to(node, msg['x'], msg['y'])
@@ -80,7 +80,7 @@ class Widget(widgets.DOMWidget):
                 self.on_bend_moved_callback(link, msg['x'], msg['y'], msg['bendIndex'])
         elif msg['code'] == 'svgClicked':
             if self.on_svg_click_callback is not None:
-                self.on_svg_click_callback(msg['path'], msg['x'], msg['y'])
+                self.on_svg_click_callback(msg['x'], msg['y'], msg['altKey'], msg['ctrlKey'], msg['backgroundClicked'])
         print(msg)
 
     def get_node_from_id(self, node_id):

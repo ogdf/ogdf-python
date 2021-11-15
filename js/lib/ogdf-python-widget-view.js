@@ -185,9 +185,9 @@ var WidgetView = widgets.DOMWidgetView.extend({
             this.updateLink(msg.data)
         } else if (msg.code === 'moveLink') {
             this.moveLinkBends(msg.data)
-        }else if (msg.code === 'removeAllBendMovers') {
+        } else if (msg.code === 'removeAllBendMovers') {
             this.removeAllBendMovers()
-        }else if (msg.code === 'removeBendMoversFor') {
+        } else if (msg.code === 'removeBendMoversFor') {
             this.removeBendMoversForLink(msg.data)
         } else if (msg.code === 'test') {
             this.rescaleAllText()
@@ -511,7 +511,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
             })
             .attr("fill", "none")
             .on("click", function (event, d) {
-                widgetView.send({"code": "linkClicked", "id": event.target.__data__.id});
+                widgetView.send({"code": "linkClicked", "id": d.id, "altKey": event.altKey, "ctrlKey": event.ctrlKey});
             });
     },
 
@@ -562,9 +562,14 @@ var WidgetView = widgets.DOMWidgetView.extend({
             .attr("stroke-width", function (d) {
                 return d.strokeWidth
             })
-            .on("click", function (event) {
+            .on("click", function (event, d) {
                 if (!widgetView.isNodeMovementEnabled) {
-                    widgetView.send({"code": "nodeClicked", "id": event.target.__data__.id});
+                    widgetView.send({
+                        "code": "nodeClicked",
+                        "id": d.id,
+                        "altKey": event.altKey,
+                        "ctrlKey": event.ctrlKey
+                    });
                 }
             })
 
@@ -588,9 +593,14 @@ var WidgetView = widgets.DOMWidgetView.extend({
             .attr("transform", function (d) { //<-- use transform it's not a g
                 return "translate(" + d.x + "," + d.y + ")";
             })
-            .on("click", function (event) {
+            .on("click", function (event, d) {
                 if (!widgetView.isNodeMovementEnabled) {
-                    widgetView.send({"code": "nodeClicked", "id": event.target.__data__.id});
+                    widgetView.send({
+                        "code": "nodeClicked",
+                        "id": d.id,
+                        "altKey": event.altKey,
+                        "ctrlKey": event.ctrlKey
+                    });
                 }
             })
 
@@ -610,7 +620,14 @@ var WidgetView = widgets.DOMWidgetView.extend({
         const svg = d3.select(this.svg)
 
         svg.on("click", function (event) {
-            widgetView.send({"code": "svgClicked", "path": event.path[0], "x": event.offsetX, "y": event.offsetY});
+            widgetView.send({
+                "code": "svgClicked",
+                "x": event.offsetX,
+                "y": event.offsetY,
+                "altKey": event.altKey,
+                "ctrlKey": event.ctrlKey,
+                "backgroundClicked": event.path[0].nodeName === "svg"
+            });
             console.log(event)
 
             if (event.path[0].className.animVal !== "line" && event.path[0].className.animVal !== "bendMover") {
@@ -769,7 +786,12 @@ var WidgetView = widgets.DOMWidgetView.extend({
 
             //if node only got clicked and not moved
             if (d.x === event.x && d.y === event.y) {
-                widgetView.send({"code": "nodeClicked", "id": nodeId});
+                widgetView.send({
+                    "code": "nodeClicked",
+                    "id": nodeId,
+                    "altKey": event.sourceEvent.altKey,
+                    "ctrlKey": event.sourceEvent.ctrlKey
+                });
             } else {
                 d.x = Math.round(event.x)
                 d.y = Math.round(event.y)
