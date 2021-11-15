@@ -54,12 +54,13 @@ class Widget(widgets.DOMWidget):
     on_node_moved_callback = None
     on_bend_moved_callback = None
 
-    def __init__(self, graph_attributes):
+    def __init__(self, graph_attributes, debug=False):
         super().__init__()
         self.graph_attributes = graph_attributes
         self.on_msg(lambda *args: self.handle_msg(args[1]))
         self.export_graph()
         self.myObserver = MyGraphObserver(self.graph_attributes.constGraph(), self)
+        self.debug = debug
 
     def handle_msg(self, msg):
         if msg['code'] == 'linkClicked':
@@ -81,7 +82,8 @@ class Widget(widgets.DOMWidget):
         elif msg['code'] == 'svgClicked':
             if self.on_svg_click_callback is not None:
                 self.on_svg_click_callback(msg['x'], msg['y'], msg['altKey'], msg['ctrlKey'], msg['backgroundClicked'])
-        print(msg)
+        if self.debug:
+            print(msg)
 
     def get_node_from_id(self, node_id):
         for node in self.graph_attributes.constGraph().nodes:
@@ -124,7 +126,7 @@ class Widget(widgets.DOMWidget):
     def remove_all_bend_movers(self):
         self.send({"code": "removeAllBendMovers"})
 
-    def remove_bend_mover_for(self, link_id):
+    def remove_bend_mover_for_id(self, link_id):
         self.send({"code": "removeBendMoversFor", "data": str(link_id)})
 
     def update_node(self, node):
