@@ -105,11 +105,17 @@ class Widget(widgets.DOMWidget):
     def enable_node_movement(self, enable):
         self.send({"code": "enableNodeMovement", "value": enable})
 
-    def enable_bend_movement(self, enable):
-        self.send({"code": "enableBendMovement", "value": enable})
-
     def enable_rescale_on_resize(self, enable):
         self.send({"code": "enableRescaleOnResize", "value": enable})
+
+    def move_link(self, link):
+        self.send({"code": "moveLink", "data": self.link_to_dict(link)})
+
+    def remove_all_bend_movers(self):
+        self.send({"code": "removeAllBendMovers"})
+
+    def remove_bend_mover_for(self, link_id):
+        self.send({"code": "removeBendMoversFor", "data": str(link_id)})
 
     def update_node(self, node):
         self.send({"code": "updateNode", "data": self.node_to_dict(node)})
