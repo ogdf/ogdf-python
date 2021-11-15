@@ -51,6 +51,8 @@ class Widget(widgets.DOMWidget):
     on_node_click_callback = None
     on_link_click_callback = None
     on_svg_click_callback = None
+    on_node_moved_callback = None
+    on_bend_moved_callback = None
 
     def __init__(self, graph_attributes):
         super().__init__()
@@ -61,13 +63,21 @@ class Widget(widgets.DOMWidget):
 
     def handle_msg(self, msg):
         if msg['code'] == 'linkClicked':
-            self.on_link_click_callback(self.get_link_from_id(msg['id']), self.graph_attributes)
+            if self.on_link_click_callback is not None:
+                self.on_link_click_callback(self.get_link_from_id(msg['id']), self.graph_attributes)
         elif msg['code'] == 'nodeClicked':
-            self.on_node_click_callback(self.get_node_from_id(msg['id']), self.graph_attributes)
+            if self.on_node_click_callback is not None:
+                self.on_node_click_callback(self.get_node_from_id(msg['id']), self.graph_attributes)
         elif msg['code'] == 'nodeMoved':
-            self.move_node_to(self.get_node_from_id(msg['id']), msg['x'], msg['y'])
+            node = self.get_node_from_id(msg['id'])
+            self.move_node_to(node, msg['x'], msg['y'])
+            if self.on_node_moved_callback is not None:
+                self.on_node_moved_callback(node, msg['x'], msg['y'])
         elif msg['code'] == 'bendMoved':
-            self.move_bend_to(self.get_link_from_id(msg['edgeId']), msg['x'], msg['y'], msg['bendIndex'])
+            link = self.get_link_from_id(msg['linkId'])
+            self.move_bend_to(link, msg['x'], msg['y'], msg['bendIndex'])
+            if self.on_bend_moved_callback is not None:
+                self.on_bend_moved_callback(link, msg['x'], msg['y'], msg['bendIndex'])
         elif msg['code'] == 'svgClicked':
             if self.on_svg_click_callback is not None:
                 self.on_svg_click_callback(msg['path'], msg['x'], msg['y'])

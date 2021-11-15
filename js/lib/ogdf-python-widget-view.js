@@ -287,7 +287,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
             if (d.x !== event.x || d.y !== event.y) {
                 d.x = Math.round(event.x)
                 d.y = Math.round(event.y)
-                widgetView.send({"code": "bendMoved", "edgeId": this.id, "bendIndex": d.bendIndex, "x": d.x, "y": d.y});
+                widgetView.send({"code": "bendMoved", "linkId": this.id, "bendIndex": d.bendIndex, "x": d.x, "y": d.y});
             }
         }
     },
