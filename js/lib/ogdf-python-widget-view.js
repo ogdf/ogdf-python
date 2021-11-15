@@ -1,6 +1,6 @@
-var widgets = require('@jupyter-widgets/base');
-var _ = require('lodash');
-var d3 = require("d3");
+let widgets = require('@jupyter-widgets/base');
+let _ = require('lodash');
+let d3 = require("d3");
 require("./style.css");
 
 // See widget.py for the kernel counterpart to this file.
@@ -21,7 +21,7 @@ require("./style.css");
 
 // When serializing the entire widget state for embedding, only values that
 // differ from the defaults will be specified.
-var WidgetModel = widgets.DOMWidgetModel.extend({
+let WidgetModel = widgets.DOMWidgetModel.extend({
     defaults: _.extend(widgets.DOMWidgetModel.prototype.defaults(), {
         _model_name: 'WidgetModel',
         _view_name: 'WidgetView',
@@ -40,7 +40,7 @@ var WidgetModel = widgets.DOMWidgetModel.extend({
 });
 
 // Custom View. Renders the widget model.
-var WidgetView = widgets.DOMWidgetView.extend({
+let WidgetView = widgets.DOMWidgetView.extend({
     initialize: function (parameters) {
         WidgetView.__super__.initialize.call(this, parameters);
 
@@ -122,7 +122,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
         const zoom = d3.zoom();
 
         svg.call(zoom.transform, transform)
-        svg.call(zoom.on('zoom', zoomed).on('end', zoomended));
+        svg.call(zoom.on('zoom', zoomed).on('end', zoomEnded));
         svg.call(zoom)
         this.g.attr("transform", transform)
         this.updateZoomLevelInModel(transform)
@@ -131,7 +131,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
             widgetView.g.attr("transform", transform);
         }
 
-        function zoomended({transform}) {
+        function zoomEnded({transform}) {
             widgetView.updateZoomLevelInModel(transform)
         }
     },
@@ -233,14 +233,14 @@ var WidgetView = widgets.DOMWidgetView.extend({
             })
 
         const drag_handler_bends = d3.drag()
-            .on("start", dragstarted_bends)
+            .on("start", dragStarted_bends)
             .on("drag", dragged_bends)
-            .on("end", dragended_bends);
+            .on("end", dragEnded_bends);
 
         bendMovers.call(drag_handler_bends);
 
         //Drag functions for bends
-        function dragstarted_bends(event, d) {
+        function dragStarted_bends(event, d) {
             d3.select(widgetView.svg)
                 .selectAll(".bendMover")
                 .filter(function (data) {
@@ -276,7 +276,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 })
         }
 
-        function dragended_bends(event, d) {
+        function dragEnded_bends(event, d) {
             d3.select(widgetView.svg)
                 .selectAll(".bendMover")
                 .attr("stroke-width", function (data) {
@@ -392,7 +392,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
     },
 
     getBoundingBox: function (nodes, links) {
-        var boundingbox = {
+        let boundingBox = {
             "minX": Number.MAX_VALUE,
             "maxX": Number.MIN_VALUE,
             "minY": Number.MAX_VALUE,
@@ -400,26 +400,26 @@ var WidgetView = widgets.DOMWidgetView.extend({
         }
 
         for (let i = 0; i < nodes.length; i++) {
-            if (nodes[i].x < boundingbox.minX) boundingbox.minX = nodes[i].x
-            if (nodes[i].x > boundingbox.maxX) boundingbox.maxX = nodes[i].x
+            if (nodes[i].x < boundingBox.minX) boundingBox.minX = nodes[i].x
+            if (nodes[i].x > boundingBox.maxX) boundingBox.maxX = nodes[i].x
 
-            if (nodes[i].y < boundingbox.minY) boundingbox.minY = nodes[i].y
-            if (nodes[i].y > boundingbox.maxY) boundingbox.maxY = nodes[i].y
+            if (nodes[i].y < boundingBox.minY) boundingBox.minY = nodes[i].y
+            if (nodes[i].y > boundingBox.maxY) boundingBox.maxY = nodes[i].y
         }
 
         for (let i = 0; i < links.length; i++) {
             for (let j = 0; j < links[i].bends.length; j++) {
                 let bend = links[i].bends[j]
 
-                if (bend[0] < boundingbox.minX) boundingbox.minX = bend[0]
-                if (bend[0] > boundingbox.maxX) boundingbox.maxX = bend[0]
+                if (bend[0] < boundingBox.minX) boundingBox.minX = bend[0]
+                if (bend[0] > boundingBox.maxX) boundingBox.maxX = bend[0]
 
-                if (bend[1] < boundingbox.minY) boundingbox.minY = bend[1]
-                if (bend[1] > boundingbox.maxY) boundingbox.maxY = bend[1]
+                if (bend[1] < boundingBox.minY) boundingBox.minY = bend[1]
+                if (bend[1] > boundingBox.maxY) boundingBox.maxY = bend[1]
             }
         }
 
-        return boundingbox
+        return boundingBox
     },
 
     removeAllBendMovers: function () {
@@ -660,9 +660,9 @@ var WidgetView = widgets.DOMWidgetView.extend({
 
         //nodes
         widgetView.node_drag_handler = d3.drag()
-            .on("start", dragstarted_nodes)
+            .on("start", dragStarted_nodes)
             .on("drag", dragged_nodes)
-            .on("end", dragended_nodes);
+            .on("end", dragEnded_nodes);
 
         this.node_holder = this.g.append("g")
             .attr("class", "node_holder")
@@ -711,7 +711,7 @@ var WidgetView = widgets.DOMWidgetView.extend({
         this.readjustZoomLevel(this.getInitialTransform(radius))
 
         //Drag functions for nodes
-        function dragstarted_nodes(event, d) {
+        function dragStarted_nodes() {
             const nodeId = this.id
 
             d3.select(widgetView.svg)
@@ -743,36 +743,29 @@ var WidgetView = widgets.DOMWidgetView.extend({
                 .filter(function (data) {
                     return data.id === nodeId;
                 })
-                .attr("transform", function (d) { //<-- use transform it's not a g
+                .attr("transform", function () { //<-- use transform it's not a g
                     return "translate(" + event.x + "," + event.y + ")";
                 });
 
             d3.select(widgetView.svg)
                 .selectAll(".line")
                 .filter(function (data) {
-                    return data.s_id === nodeId;
+                    return data.s_id === nodeId || data.t_id === nodeId;
                 })
                 .attr("d", function (d) {
-                    d.sx = event.x
-                    d.sy = event.y
-                    let points = [[d.sx, d.sy]].concat(d.bends).concat([[d.tx, d.ty]])
-                    return line(points)
-                })
-
-            d3.select(widgetView.svg)
-                .selectAll(".line")
-                .filter(function (data) {
-                    return data.t_id === nodeId;
-                })
-                .attr("d", function (d) {
-                    d.tx = event.x
-                    d.ty = event.y
+                    if (d.s_id === nodeId) {
+                        d.sx = event.x
+                        d.sy = event.y
+                    } else if (d.t_id === nodeId) {
+                        d.tx = event.x
+                        d.ty = event.y
+                    }
                     let points = [[d.sx, d.sy]].concat(d.bends).concat([[d.tx, d.ty]])
                     return line(points)
                 })
         }
 
-        function dragended_nodes(event, d) {
+        function dragEnded_nodes(event, d) {
             const nodeId = this.id
 
             d3.select(widgetView.svg)
