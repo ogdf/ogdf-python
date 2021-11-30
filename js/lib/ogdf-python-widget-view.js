@@ -289,7 +289,12 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 widgetView.send({"code": "bendMoved", "linkId": this.id, "bendIndex": d.bendIndex, "x": d.x, "y": d.y});
             } else {
                 //ctrl key not possible because it doesnt activate the drag todo: additional clickable layer over the bend mover
-                widgetView.send({"code": "bendClicked", "linkId": this.id, "bendIndex": d.bendIndex, "altKey": event.sourceEvent.altKey});
+                widgetView.send({
+                    "code": "bendClicked",
+                    "linkId": this.id,
+                    "bendIndex": d.bendIndex,
+                    "altKey": event.sourceEvent.altKey
+                });
             }
         }
     },
@@ -329,7 +334,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
             }).remove()
 
         d3.select(this.svg)
-            .selectAll("text")
+            .selectAll(".nodeLabel")
             .filter(function (d) {
                 return d.id === nodeId;
             }).remove()
@@ -352,6 +357,12 @@ let WidgetView = widgets.DOMWidgetView.extend({
 
         d3.select(this.svg)
             .selectAll(".line")
+            .filter(function (d) {
+                return d.id === linkId;
+            }).remove()
+
+        d3.select(this.svg)
+            .selectAll(".linkLabel")
             .filter(function (d) {
                 return d.id === linkId;
             }).remove()
@@ -515,6 +526,28 @@ let WidgetView = widgets.DOMWidgetView.extend({
             .on("click", function (event, d) {
                 widgetView.send({"code": "linkClicked", "id": d.id, "altKey": event.altKey, "ctrlKey": event.ctrlKey});
             });
+
+        this.line_text_holder
+            .data([linkData])
+            .enter()
+            .append("text")
+            .attr("class", "linkLabel")
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "central")
+            .attr("fill", "black")
+            .attr("stroke-width", 1)
+            .attr("stroke", "white")
+            .attr("paint-order", "stroke")
+            .attr("id", function (d) {
+                return d.id
+            })
+            .text(function (d) {
+                return d.label;
+            })
+            .style("font-size", "0.5em")
+            .attr("transform", function (d) { //<-- use transform it's not a g
+                return "translate(" + d.label_x + "," + d.label_y + ")";
+            })
     },
 
     constructNode(nodeData) {
@@ -579,6 +612,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
             .data([nodeData])
             .enter()
             .append("text")
+            .attr("class", "nodeLabel")
             .attr("text-anchor", "middle")
             .attr("dominant-baseline", "central")
             .attr("fill", "black")
@@ -624,9 +658,9 @@ let WidgetView = widgets.DOMWidgetView.extend({
         svg.on("click", function (event) {
             console.log(event)
             let backgroundClicked
-            if(event.path === undefined){
+            if (event.path === undefined) {
                 backgroundClicked = event.originalTarget.nodeName === "svg"
-            }else{
+            } else {
                 backgroundClicked = event.path[0].nodeName === "svg"
             }
 
@@ -646,7 +680,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
         //add encompassing group for the zoom
         this.g = svg.append("g").attr("class", "everything");
 
-        constructArrowElements()
+        constructArrowElements(radius)
 
         //links
         this.line_holder = this.g.append("g")
@@ -656,6 +690,10 @@ let WidgetView = widgets.DOMWidgetView.extend({
         this.line_click_holder = this.g.append("g")
             .attr("class", "line_click_holder")
             .selectAll(".line")
+
+        this.line_text_holder = this.g.append("g")
+            .attr("class", "line_text_holder")
+            .selectAll(".lineText")
 
         for (let i = 0; i < links_data.length; i++) {
             widgetView.constructLink(links_data[i])
@@ -681,7 +719,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
             widgetView.constructNode(nodes_data[i])
         }
 
-        function constructArrowElements() {
+        function constructArrowElements(radius) {
             //construct arrow for circle
             svg.append("svg:defs").selectAll("marker")
                 .data(["endCircle"])

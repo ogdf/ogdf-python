@@ -128,7 +128,7 @@ class Widget(widgets.DOMWidget):
         self.send({"code": "enableNodeMovement", "value": enable})
 
     def enable_rescale_on_resize(self, enable):
-        #todo als model attribut; arbeit ändern
+        # todo als model attribut; arbeit ändern
         self.send({"code": "enableRescaleOnResize", "value": enable})
 
     def move_link(self, link):
@@ -168,18 +168,28 @@ class Widget(widgets.DOMWidget):
         for i, point in enumerate(self.graph_attributes.bends(link)):
             bends.append([int(point.m_x + 0.5), int(point.m_y + 0.5)])
 
-        return {"id": str(link.index()),
-                "s_id": str(link.source().index()),
-                "t_id": str(link.target().index()),
-                "t_shape": self.graph_attributes.shape(link.target()),
-                "strokeColor": color_to_dict(self.graph_attributes.strokeColor(link)),
-                "strokeWidth": self.graph_attributes.strokeWidth(link),
-                "sx": int(self.graph_attributes.x(link.source()) + 0.5),
-                "sy": int(self.graph_attributes.y(link.source()) + 0.5),
-                "tx": int(self.graph_attributes.x(link.target()) + 0.5),
-                "ty": int(self.graph_attributes.y(link.target()) + 0.5),
-                "arrow": self.graph_attributes.arrowType(link) == 1,
-                "bends": bends}
+        link_dict = {"id": str(link.index()),
+                     "label": str(self.graph_attributes.label(link)),
+                     "s_id": str(link.source().index()),
+                     "t_id": str(link.target().index()),
+                     "t_shape": self.graph_attributes.shape(link.target()),
+                     "strokeColor": color_to_dict(self.graph_attributes.strokeColor(link)),
+                     "strokeWidth": self.graph_attributes.strokeWidth(link),
+                     "sx": int(self.graph_attributes.x(link.source()) + 0.5),
+                     "sy": int(self.graph_attributes.y(link.source()) + 0.5),
+                     "tx": int(self.graph_attributes.x(link.target()) + 0.5),
+                     "ty": int(self.graph_attributes.y(link.target()) + 0.5),
+                     "arrow": self.graph_attributes.arrowType(link) == 1,
+                     "bends": bends}
+
+        if len(bends) > 0:
+            link_dict["label_x"] = bends[0][0]
+            link_dict["label_y"] = bends[0][1]
+        else:
+            link_dict["label_x"] = (link_dict["sx"] + link_dict["tx"]) / 2
+            link_dict["label_y"] = (link_dict["sy"] + link_dict["ty"]) / 2
+
+        return link_dict
 
     def export_graph(self):
         nodes_data = []
