@@ -29,7 +29,6 @@ let WidgetModel = widgets.DOMWidgetModel.extend({
         _view_module: 'ogdf-python-widget',
         _model_module_version: '0.1.0',
         _view_module_version: '0.1.0',
-        value: 'Hello Test!',
         width: 960,
         height: 540,
         x_pos: 0,
@@ -288,6 +287,9 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 d.x = Math.round(event.x)
                 d.y = Math.round(event.y)
                 widgetView.send({"code": "bendMoved", "linkId": this.id, "bendIndex": d.bendIndex, "x": d.x, "y": d.y});
+            } else {
+                //ctrl key not possible because it doesnt activate the drag todo: additional clickable layer over the bend mover
+                widgetView.send({"code": "bendClicked", "linkId": this.id, "bendIndex": d.bendIndex, "altKey": event.sourceEvent.altKey});
             }
         }
     },
@@ -620,19 +622,22 @@ let WidgetView = widgets.DOMWidgetView.extend({
         const svg = d3.select(this.svg)
 
         svg.on("click", function (event) {
+            console.log(event)
+            let backgroundClicked
+            if(event.path === undefined){
+                backgroundClicked = event.originalTarget.nodeName === "svg"
+            }else{
+                backgroundClicked = event.path[0].nodeName === "svg"
+            }
+
             widgetView.send({
                 "code": "svgClicked",
                 "x": event.offsetX,
                 "y": event.offsetY,
                 "altKey": event.altKey,
                 "ctrlKey": event.ctrlKey,
-                "backgroundClicked": event.path[0].nodeName === "svg"
+                "backgroundClicked": backgroundClicked
             });
-            console.log(event)
-
-            if (event.path[0].className.animVal !== "line" && event.path[0].className.animVal !== "bendMover") {
-                //widgetView.removeAllBendMovers()
-            }
         })
 
         let radius = nodes_data.length > 0 ? nodes_data[0].nodeWidth / 2 : 0

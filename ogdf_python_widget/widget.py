@@ -53,6 +53,7 @@ class Widget(widgets.DOMWidget):
     on_svg_click_callback = None
     on_node_moved_callback = None
     on_bend_moved_callback = None
+    on_bend_clicked_callback = None
 
     def __init__(self, graph_attributes, debug=False):
         super().__init__()
@@ -61,6 +62,11 @@ class Widget(widgets.DOMWidget):
         self.export_graph()
         self.myObserver = MyGraphObserver(self.graph_attributes.constGraph(), self)
         self.debug = debug
+
+    def set_graph_attributes(self, graph_attributes):
+        self.graph_attributes = graph_attributes
+        self.export_graph()
+        self.myObserver = MyGraphObserver(self.graph_attributes.constGraph(), self)
 
     def handle_msg(self, msg):
         if msg['code'] == 'linkClicked':
@@ -79,6 +85,10 @@ class Widget(widgets.DOMWidget):
             self.move_bend_to(link, msg['x'], msg['y'], msg['bendIndex'])
             if self.on_bend_moved_callback is not None:
                 self.on_bend_moved_callback(link, msg['x'], msg['y'], msg['bendIndex'])
+        elif msg['code'] == 'bendClicked':
+            link = self.get_link_from_id(msg['linkId'])
+            if self.on_bend_clicked_callback is not None:
+                self.on_bend_clicked_callback(link, msg['bendIndex'])
         elif msg['code'] == 'svgClicked':
             if self.on_svg_click_callback is not None:
                 self.on_svg_click_callback(msg['x'], msg['y'], msg['altKey'], msg['ctrlKey'], msg['backgroundClicked'])
@@ -118,6 +128,7 @@ class Widget(widgets.DOMWidget):
         self.send({"code": "enableNodeMovement", "value": enable})
 
     def enable_rescale_on_resize(self, enable):
+        #todo als model attribut; arbeit ändern
         self.send({"code": "enableRescaleOnResize", "value": enable})
 
     def move_link(self, link):
