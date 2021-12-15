@@ -371,18 +371,150 @@ let WidgetView = widgets.DOMWidgetView.extend({
     },
 
     updateNode: function (node) {
-        this.isRenderCallbackAllowed = false
-        this.deleteNodeById(node.id)
-        this.addNode(node)
-        this.rescaleTextById(node.id)
-        this.isRenderCallbackAllowed = true
+        let widgetView = this
+
+        let n = d3.select(this.svg)
+            .selectAll(".node")
+            .filter(function (d) {
+                return d.id === node.id;
+            })
+
+        let nl = d3.select(this.svg)
+            .selectAll(".nodeLabel")
+            .filter(function (d) {
+                return d.id === node.id;
+            })
+
+        n.transition()
+            .duration(1000)
+            .attr("width", function (d) {
+                d.nodeWidth = node.nodeWidth
+                return d.nodeWidth
+            })
+            .attr("height", function (d) {
+                d.nodeHeight = node.nodeHeight
+                return d.nodeHeight
+            })
+            .attr("x", function (d) {
+                d.x = node.x
+                return d.x - d.nodeWidth / 2
+            })
+            .attr("y", function (d) {
+                d.y = node.y
+                return d.y - d.nodeHeight / 2
+            })
+            .attr("cx", function (d) {
+                d.x = node.x
+                return d.x
+            })
+            .attr("cy", function (d) {
+                d.y = node.y
+                return d.y
+            })
+            .attr("r", function (d) {
+                d.nodeHeight = node.nodeHeight
+                return d.nodeHeight / 2
+            })
+            .attr("fill", function (d) {
+                d.fillColor = node.fillColor
+                return widgetView.getColorStringFromJson(d.fillColor)
+            })
+            .attr("stroke", function (d) {
+                d.strokeColor = node.strokeColor
+                return widgetView.getColorStringFromJson(d.strokeColor)
+            })
+            .attr("stroke-width", function (d) {
+                d.strokeWidth = node.strokeWidth
+                return d.strokeWidth
+            })
+
+        nl.transition()
+            .duration(1000)
+            .attr("transform", function (d) { //<-- use transform it's not a g
+                d.x = node.x
+                d.y = node.y
+                return "translate(" + d.x + "," + d.y + ")";
+            })
+
+        nl.text(function (d) {
+            d.name = node.name
+            return d.name;
+        })
+
+        setTimeout(function () {
+            widgetView.rescaleTextById(node.id)
+        }, 200)
     },
 
     updateLink: function (link) {
-        this.isRenderCallbackAllowed = false
-        this.deleteLinkById(link.id)
-        this.addLink(link)
-        this.isRenderCallbackAllowed = true
+        let widgetView = this
+        const line = d3.line()
+
+        let l = d3.select(this.svg)
+            .selectAll(".line_holder > .line")
+            .filter(function (d) {
+                return d.id === link.id;
+            })
+
+        let lc = d3.select(this.svg)
+            .selectAll(".line_click_holder > .line")
+            .filter(function (d) {
+                return d.id === link.id;
+            })
+
+        let ll = d3.select(this.svg)
+            .selectAll(".linkLabel")
+            .filter(function (d) {
+                return d.id === link.id;
+            })
+
+        l.transition()
+            .duration(1000)
+            .attr("d", function (d) {
+                d.sx = link.sx
+                d.sy = link.sy
+                d.bends = link.bends
+                d.tx = link.tx
+                d.ty = link.ty
+                let points = [[d.sx, d.sy]].concat(d.bends).concat([[d.tx, d.ty]])
+                return line(points)
+            })
+            .attr("stroke", function (d) {
+                d.strokeColor = link.strokeColor
+                return widgetView.getColorStringFromJson(d.strokeColor)
+            })
+            .attr("stroke-width", function (d) {
+                d.strokeWidth = link.strokeWidth
+                return d.strokeWidth
+            })
+
+        lc.transition()
+            .duration(1000)
+            .attr("d", function (d) {
+                d.sx = link.sx
+                d.sy = link.sy
+                d.bends = link.bends
+                d.tx = link.tx
+                d.ty = link.ty
+                let points = [[d.sx, d.sy]].concat(d.bends).concat([[d.tx, d.ty]])
+                return line(points)
+            })
+            .attr("stroke-width", function (d) {
+                d.strokeWidth = link.strokeWidth
+                return Math.max(d.strokeWidth, widgetView.clickThickness)
+            })
+
+        ll.transition()
+            .duration(1000)
+            .text(function (d) {
+                d.label = link.label
+                return d.label;
+            })
+            .attr("transform", function (d) { //<-- use transform it's not a g
+                d.label_x = link.label_x
+                d.label_y = link.label_y
+                return "translate(" + d.label_x + "," + d.label_y + ")";
+            })
     },
 
     clearGraph: function () {
@@ -656,7 +788,6 @@ let WidgetView = widgets.DOMWidgetView.extend({
         const svg = d3.select(this.svg)
 
         svg.on("click", function (event) {
-            console.log(event)
             let backgroundClicked
             if (event.path === undefined) {
                 backgroundClicked = event.originalTarget.nodeName === "svg"
