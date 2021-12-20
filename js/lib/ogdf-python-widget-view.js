@@ -179,9 +179,9 @@ let WidgetView = widgets.DOMWidgetView.extend({
         } else if (msg.code === 'deleteLinkById') {
             this.deleteLinkById(msg.data)
         } else if (msg.code === 'updateNode') {
-            this.updateNode(msg.data)
+            this.updateNode(msg.data, msg.animated)
         } else if (msg.code === 'updateLink') {
-            this.updateLink(msg.data)
+            this.updateLink(msg.data, msg.animated)
         } else if (msg.code === 'moveLink') {
             this.moveLinkBends(msg.data)
         } else if (msg.code === 'removeAllBendMovers') {
@@ -370,7 +370,16 @@ let WidgetView = widgets.DOMWidgetView.extend({
         this.isRenderCallbackAllowed = true
     },
 
-    updateNode: function (node) {
+    updateNode: function (node, animated) {
+        if (!animated) {
+            this.isRenderCallbackAllowed = false
+            this.deleteNodeById(node.id)
+            this.addNode(node)
+            this.rescaleTextById(node.id)
+            this.isRenderCallbackAllowed = true
+            return
+        }
+
         let widgetView = this
 
         let n = d3.select(this.svg)
@@ -446,7 +455,16 @@ let WidgetView = widgets.DOMWidgetView.extend({
         }, 200)
     },
 
-    updateLink: function (link) {
+    updateLink: function (link, animated) {
+
+        if (!animated) {
+            this.isRenderCallbackAllowed = false
+            this.deleteLinkById(link.id)
+            this.addLink(link)
+            this.isRenderCallbackAllowed = true
+            return
+        }
+
         let widgetView = this
         const line = d3.line()
 

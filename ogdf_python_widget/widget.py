@@ -68,6 +68,14 @@ class Widget(widgets.DOMWidget):
         self.export_graph()
         self.myObserver = MyGraphObserver(self.graph_attributes.constGraph(), self)
 
+    def update_graph_attributes(self, graph_attributes):
+        if self.graph_attributes.constGraph() is graph_attributes.constGraph():
+            self.graph_attributes = graph_attributes
+            self.update_all_nodes()
+            self.update_all_links()
+        else:
+            print("Your GraphAttributes need to depend on the same Graph in order to work. To completely update the GraphAttributes use set_graph_attributes(GA)")
+
     def handle_msg(self, msg):
         if msg['code'] == 'linkClicked':
             if self.on_link_click_callback is not None:
@@ -140,11 +148,19 @@ class Widget(widgets.DOMWidget):
     def remove_bend_mover_for_id(self, link_id):
         self.send({"code": "removeBendMoversFor", "data": str(link_id)})
 
-    def update_node(self, node):
-        self.send({"code": "updateNode", "data": self.node_to_dict(node)})
+    def update_node(self, node, animated=True):
+        self.send({"code": "updateNode", "data": self.node_to_dict(node), "animated": animated})
 
-    def update_link(self, link):
-        self.send({"code": "updateLink", "data": self.link_to_dict(link)})
+    def update_link(self, link, animated=True):
+        self.send({"code": "updateLink", "data": self.link_to_dict(link), "animated": animated})
+
+    def update_all_nodes(self, animated=True):
+        for node in self.graph_attributes.constGraph().nodes:
+            self.update_node(node, animated)
+
+    def update_all_links(self, animated=True):
+        for link in self.graph_attributes.constGraph().edges:
+            self.update_link(link, animated)
 
     def viewcoords_to_svgcoords(self, x, y):
         svg_x = x / self.zoom - self.x_pos / self.zoom
