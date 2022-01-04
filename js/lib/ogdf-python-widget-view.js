@@ -574,12 +574,48 @@ let WidgetView = widgets.DOMWidgetView.extend({
             })
     },
 
+    addBendsToLink: function (link, totalBendAmount) {
+        let points = [[link.sx, link.sy]].concat(link.bends).concat([[link.tx, link.ty]])
+
+        while (totalBendAmount > points.length - 2) {
+            for (let i = points.length - 2; i >= 0 && totalBendAmount > points.length - 2; i--) {
+                let newPoint = [(points[i][0] + points[i + 1][0]) / 2, (points[i][1] + points[i + 1][1]) / 2]
+                points.splice(i + 1, 0, newPoint);
+            }
+        }
+
+        points.shift()
+        points.pop()
+
+        link.bends = points
+
+        return link
+    },
+
     updateLink: function (link, animated) {
 
         if (!animated) {
             this.deleteLinkById(link.id)
             this.addLink(link)
             return
+        }
+
+        //artificially add bends to make animation better
+        let currentLink
+        for (let i = this.links.length - 1; i >= 0; i--) {
+            if (this.links[i].id === link.id) {
+                currentLink = this.links[i]
+            }
+        }
+
+        let paddedLink = null
+        if (currentLink !== null && currentLink.bends.length !== link.bends.length) {
+            if (currentLink.bends.length < link.bends.length) {
+                this.deleteLinkById(link.id)
+                this.addLink(this.addBendsToLink(JSON.parse(JSON.stringify(currentLink)), link.bends.length))
+            } else {
+                paddedLink = this.addBendsToLink(JSON.parse(JSON.stringify(link)), currentLink.bends.length)
+            }
         }
 
         let widgetView = this
@@ -606,11 +642,13 @@ let WidgetView = widgets.DOMWidgetView.extend({
         l.transition()
             .duration(this.animationDuration)
             .attr("d", function (d) {
-                d.sx = link.sx
-                d.sy = link.sy
-                d.bends = link.bends
-                d.tx = link.tx
-                d.ty = link.ty
+                let newLink = paddedLink == null ? link : paddedLink
+                d.sx = newLink.sx
+                d.sy = newLink.sy
+                d.bends = newLink.bends
+                d.tx = newLink.tx
+                d.ty = newLink.ty
+
                 let points = [[d.sx, d.sy]].concat(d.bends).concat([[d.tx, d.ty]])
                 return line(points)
             })
@@ -650,6 +688,13 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 d.label_y = link.label_y
                 return "translate(" + d.label_x + "," + d.label_y + ")";
             })
+
+        if (paddedLink != null) {
+            setTimeout(() => {
+                this.deleteLinkById(link.id)
+                this.addLink(link)
+            }, this.animationDuration);
+        }
     },
 
     clearGraph: function () {
