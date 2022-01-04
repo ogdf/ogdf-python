@@ -35,6 +35,8 @@ let WidgetModel = widgets.DOMWidgetModel.extend({
         y_pos: 0,
         zoom: 1,
         click_thickness: 10,
+        animation_duration: 1000,
+        force_config: null,
     })
 });
 
@@ -47,10 +49,12 @@ let WidgetView = widgets.DOMWidgetView.extend({
         this.rescaleOnResize = true
 
         //only for internal use
-        this.isRenderCallbackAllowed = true
         this.isTransformCallbackAllowed = true
 
+        this.forceDirected = false
+
         this.clickThickness = this.model.get("click_thickness")
+        this.animationDuration = this.model.get("animation_duration")
 
         this.nodes = []
         this.links = []
@@ -60,9 +64,6 @@ let WidgetView = widgets.DOMWidgetView.extend({
 
         this.model.on('msg:custom', this.handle_msg.bind(this));
 
-        this.model.on('change:links', this.renderCallbackCheck, this);
-        this.model.on('change:nodes', this.renderCallbackCheck, this);
-
         this.model.on('change:x_pos', this.transformCallbackCheck, this);
         this.model.on('change:y_pos', this.transformCallbackCheck, this);
         this.model.on('change:zoom', this.transformCallbackCheck, this);
@@ -71,6 +72,115 @@ let WidgetView = widgets.DOMWidgetView.extend({
         this.model.on('change:height', this.svgSizeChanged, this)
 
         this.model.on('change:click_thickness', this.clickThicknessChanged, this)
+
+        this.model.on('change:animation_duration', this.animationDurationChanged, this)
+
+        this.model.on('change:force_config', this.forceConfigChanged, this)
+
+        this.send({"code": "widgetReady"})
+    },
+
+    startForceLayout: function (forceConfig) {
+        let widgetView = this
+
+        this.forceDirected = true
+        d3.select(this.svg).selectAll(".node").remove()
+        d3.select(this.svg).selectAll("text").remove()
+        d3.select(this.svg).selectAll(".line").remove()
+
+        for (let i = 0; i < this.links.length; i++) {
+            this.constructForceLink(this.links[i])
+        }
+
+        for (let i = 0; i < this.nodes.length; i++) {
+            this.constructNode(this.nodes[i])
+        }
+
+        this.simulation = d3.forceSimulation().nodes(this.nodes);
+
+        let link_force = d3.forceLink(this.links).id(function (d) {
+            return d.id;
+        });
+
+        let charge_force = d3.forceManyBody().strength(forceConfig.chargeForce);
+
+        let center_force = d3.forceCenter(forceConfig.forceCenterX, forceConfig.forceCenterY);
+
+        this.simulation
+            .force("charge_force", charge_force)
+            .force("center_force", center_force)
+            .force("links", link_force);
+
+        //add tick instructions:
+        this.simulation.on("tick", tickActions);
+
+        if (forceConfig.fixStartPosition) {
+            d3.select(this.svg).selectAll(".node")
+                .attr("x", function (d) {
+                    d.fx = d.x
+                    d.fy = d.y
+                })
+        }
+
+        function tickActions() {
+            d3.select(widgetView.svg)
+                .selectAll(".node")
+                .attr("x", function (d) {
+                    return d.x - d.nodeWidth / 2;
+                })
+                .attr("y", function (d) {
+                    return d.y - d.nodeHeight / 2;
+                });
+
+            d3.select(widgetView.svg)
+                .selectAll(".nodeLabel")
+                .attr("transform", function (d) {
+                    return "translate(" + d.x + "," + d.y + ")";
+                });
+
+            d3.select(widgetView.svg)
+                .selectAll(".line")
+                .attr("x1", function (d) {
+                    return d.source.x;
+                })
+                .attr("y1", function (d) {
+                    return d.source.y;
+                })
+                .attr("x2", function (d) {
+                    return d.target.x;
+                })
+                .attr("y2", function (d) {
+                    return d.target.y;
+                });
+
+            widgetView.syncBackend()
+        }
+    },
+
+    stopForceLayout: function () {
+        this.forceDirected = false;
+        if (this.simulation != null) {
+            this.simulation.stop()
+            this.simulation = null
+        }
+    },
+
+    forceConfigChanged: function () {
+        let forceConfig = this.model.get("force_config")
+
+        if (forceConfig.stop || forceConfig.stop == null) {
+            this.stopForceLayout()
+        } else {
+            this.startForceLayout(forceConfig)
+        }
+    },
+
+    syncBackend: function () {
+        this.send({'code': 'positionUpdate', 'nodes': this.nodes})
+    },
+
+    animationDurationChanged: function () {
+        this.animationDuration = this.model.get("animation_duration")
     },
 
     clickThicknessChanged: function () {
@@ -151,10 +261,6 @@ let WidgetView = widgets.DOMWidgetView.extend({
         }
     },
 
-    renderCallbackCheck: function () {
-        if (this.isRenderCallbackAllowed) this.render()
-    },
-
     handle_msg: function (msg) {
         if (msg.code === 'clearGraph') {
             this.clearGraph()
@@ -168,6 +274,10 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 d3.select(this.svg).selectAll(".node").call(this.node_drag_handler)
                 d3.select(this.svg).selectAll("text").call(this.node_drag_handler)
             }
+        } else if (msg.code === 'initGraph') {
+            this.links = msg.links
+            this.nodes = msg.nodes
+            this.render()
         } else if (msg.code === 'enableRescaleOnResize') {
             this.rescaleOnResize = msg.value
         } else if (msg.code === 'nodeAdded') {
@@ -189,7 +299,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
         } else if (msg.code === 'removeBendMoversFor') {
             this.removeBendMoversForLink(msg.data)
         } else if (msg.code === 'test') {
-            this.rescaleAllText()
+            console.log(this.nodes)
         } else {
             console.log("msg cannot be read: " + msg)
         }
@@ -300,32 +410,27 @@ let WidgetView = widgets.DOMWidgetView.extend({
     },
 
     addNode: function (node) {
-        this.isRenderCallbackAllowed = false
+        if (this.forceDirected) this.stopForceLayout()
         this.nodes.push(node)
         this.constructNode(node)
-        this.isRenderCallbackAllowed = true
+        this.forceConfigChanged()
     },
 
     addLink: function (link) {
-        this.isRenderCallbackAllowed = false
+        if (this.forceDirected) this.stopForceLayout()
         this.links.push(link)
         this.constructLink(link)
-        this.isRenderCallbackAllowed = true
+        this.forceConfigChanged()
     },
 
     deleteNodeById: function (nodeId) {
-        this.isRenderCallbackAllowed = false
-
+        if (this.forceDirected) this.stopForceLayout()
         for (let i = 0; i < this.nodes.length; i++) {
             if (this.nodes[i].id === nodeId) {
                 this.nodes.splice(i, 1);
                 break
             }
         }
-
-        this.model.unset('nodes')
-        this.model.set('nodes', this.nodes)
-        this.model.save_changes()
 
         d3.select(this.svg)
             .selectAll(".node")
@@ -339,21 +444,16 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 return d.id === nodeId;
             }).remove()
 
-        this.isRenderCallbackAllowed = true
+        this.forceConfigChanged()
     },
 
     deleteLinkById: function (linkId) {
-        this.isRenderCallbackAllowed = false
-
+        if (this.forceDirected) this.stopForceLayout()
         for (let i = this.links.length - 1; i >= 0; i--) {
             if (this.links[i].id === linkId) {
                 this.links.splice(i, 1);
             }
         }
-
-        this.model.unset('links')
-        this.model.set('links', this.links)
-        this.model.save_changes()
 
         d3.select(this.svg)
             .selectAll(".line")
@@ -367,19 +467,10 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 return d.id === linkId;
             }).remove()
 
-        this.isRenderCallbackAllowed = true
+        this.forceConfigChanged()
     },
 
     updateNode: function (node, animated) {
-        if (!animated) {
-            this.isRenderCallbackAllowed = false
-            this.deleteNodeById(node.id)
-            this.addNode(node)
-            this.rescaleTextById(node.id)
-            this.isRenderCallbackAllowed = true
-            return
-        }
-
         let widgetView = this
 
         let n = d3.select(this.svg)
@@ -394,8 +485,10 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 return d.id === node.id;
             })
 
+        if (widgetView.forceDirected) widgetView.simulation.alphaTarget(0.3).restart()
+
         n.transition()
-            .duration(1000)
+            .duration(animated ? this.animationDuration : 1)
             .attr("width", function (d) {
                 d.nodeWidth = node.nodeWidth
                 return d.nodeWidth
@@ -405,10 +498,20 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 return d.nodeHeight
             })
             .attr("x", function (d) {
+                if (widgetView.forceDirected && !widgetView.isNodeMovementEnabled)
+                    d.fx = node.x
+                else if (widgetView.forceDirected)
+                    return
+
                 d.x = node.x
                 return d.x - d.nodeWidth / 2
             })
             .attr("y", function (d) {
+                if (widgetView.forceDirected && !widgetView.isNodeMovementEnabled)
+                    d.fy = node.y
+                else if (widgetView.forceDirected)
+                    return
+
                 d.y = node.y
                 return d.y - d.nodeHeight / 2
             })
@@ -437,31 +540,45 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 return d.strokeWidth
             })
 
+        if (widgetView.forceDirected) {
+            setTimeout(function () {
+                widgetView.simulation.alphaTarget(0)
+            }, 1000)
+        }
+
+        let textChanged = true
+        nl.text(function (d) {
+            if (d.name !== node.name) {
+                d.name = node.name
+            } else {
+                textChanged = false
+            }
+            return d.name;
+        })
+
+        if (textChanged) {
+            setTimeout(function () {
+                widgetView.rescaleTextById(node.id)
+            }, 10)
+        }
+
         nl.transition()
-            .duration(1000)
+            .duration(animated ? this.animationDuration : 1)
             .attr("transform", function (d) { //<-- use transform it's not a g
+                if (widgetView.forceDirected && widgetView.isNodeMovementEnabled)
+                    return
+
                 d.x = node.x
                 d.y = node.y
                 return "translate(" + d.x + "," + d.y + ")";
             })
-
-        nl.text(function (d) {
-            d.name = node.name
-            return d.name;
-        })
-
-        setTimeout(function () {
-            widgetView.rescaleTextById(node.id)
-        }, 200)
     },
 
     updateLink: function (link, animated) {
 
         if (!animated) {
-            this.isRenderCallbackAllowed = false
             this.deleteLinkById(link.id)
             this.addLink(link)
-            this.isRenderCallbackAllowed = true
             return
         }
 
@@ -487,7 +604,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
             })
 
         l.transition()
-            .duration(1000)
+            .duration(this.animationDuration)
             .attr("d", function (d) {
                 d.sx = link.sx
                 d.sy = link.sy
@@ -507,7 +624,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
             })
 
         lc.transition()
-            .duration(1000)
+            .duration(this.animationDuration)
             .attr("d", function (d) {
                 d.sx = link.sx
                 d.sy = link.sy
@@ -523,7 +640,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
             })
 
         ll.transition()
-            .duration(1000)
+            .duration(this.animationDuration)
             .text(function (d) {
                 d.label = link.label
                 return d.label;
@@ -536,22 +653,12 @@ let WidgetView = widgets.DOMWidgetView.extend({
     },
 
     clearGraph: function () {
-        this.isRenderCallbackAllowed = false
-
         this.nodes = []
         this.links = []
-
-        this.model.unset('nodes')
-        this.model.set('nodes', this.nodes)
-        this.model.unset('links')
-        this.model.set('links', this.links)
-        this.model.save_changes()
 
         d3.select(this.svg).selectAll(".node").remove()
         d3.select(this.svg).selectAll("text").remove()
         d3.select(this.svg).selectAll(".line").remove()
-
-        this.isRenderCallbackAllowed = true
     },
 
     getBoundingBox: function (nodes, links) {
@@ -599,10 +706,10 @@ let WidgetView = widgets.DOMWidgetView.extend({
 
     // Defines how the widget gets rendered into the DOM
     render: function () {
+        if (this.links.length === 0 && this.nodes.length === 0)
+            return
+
         console.log("rendering")
-        //used for initial data and reloading the widget
-        this.nodes = this.model.get('nodes')
-        this.links = this.model.get('links')
 
         if (this.el.childNodes.length === 0) {
             let svgId = "G" + Math.random().toString(16).slice(2)
@@ -615,12 +722,58 @@ let WidgetView = widgets.DOMWidgetView.extend({
             this.el.appendChild(this.svg)
         }
 
-        if (this.nodes != null && this.links != null) {
-            this.draw_graph(this.nodes, this.links)
-            setTimeout(() => {
-                this.rescaleAllText()
-            }, 1);
-        }
+        this.draw_graph(this.nodes, this.links)
+        setTimeout(() => {
+            this.rescaleAllText()
+        }, 1);
+    },
+
+    constructForceLink(linkData) {
+        let widgetView = this
+
+        this.line_holder
+            .data([linkData])
+            .enter()
+            .append("line")
+            .attr("class", "line")
+            .attr("id", function (d) {
+                return d.id
+            })
+            .attr("marker-end", function (d) {
+                if (d.arrow && d.t_shape === 0) {
+                    return "url(#endSquare)";
+                } else if (d.arrow && d.t_shape !== 0) {
+                    return "url(#endCircle)";
+                } else {
+                    return null;
+                }
+            })
+            .attr("x1", function (d) {
+                if (d.sx == null) return
+                return d.sx
+            })
+            .attr("y1", function (d) {
+                if (d.sy == null) return
+                return d.sy
+            })
+            .attr("x2", function (d) {
+                if (d.tx == null) return
+                return d.tx
+            })
+            .attr("y2", function (d) {
+                if (d.ty == null) return
+                return d.ty
+            })
+            .attr("stroke", function (d) {
+                return widgetView.getColorStringFromJson(d.strokeColor)
+            })
+            .attr("stroke-width", function (d) {
+                return d.strokeWidth
+            })
+            .attr("fill", "none")
+            .on("click", function (event, d) {
+                widgetView.send({"code": "linkClicked", "id": d.id, "altKey": event.altKey, "ctrlKey": event.ctrlKey});
+            });
     },
 
     constructLink(linkData) {
@@ -802,7 +955,6 @@ let WidgetView = widgets.DOMWidgetView.extend({
 
     draw_graph(nodes_data, links_data) {
         let widgetView = this
-
         const svg = d3.select(this.svg)
 
         svg.on("click", function (event) {
@@ -903,8 +1055,11 @@ let WidgetView = widgets.DOMWidgetView.extend({
         this.readjustZoomLevel(this.getInitialTransform(radius))
 
         //Drag functions for nodes
-        function dragStarted_nodes() {
+        function dragStarted_nodes(event, d) {
             const nodeId = this.id
+
+            d.startX = d.x
+            d.startY = d.y
 
             d3.select(widgetView.svg)
                 .selectAll(".node")
@@ -914,9 +1069,17 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 .attr("stroke-width", function (data) {
                     return data.strokeWidth + 1
                 });
+
+            if (widgetView.forceDirected && !event.active) widgetView.simulation.alphaTarget(0.3).restart();
         }
 
         function dragged_nodes(event, d) {
+            if (widgetView.forceDirected) {
+                event.subject.fx = event.x;
+                event.subject.fy = event.y;
+                return
+            }
+
             const nodeId = this.id
             const line = d3.line()
 
@@ -969,8 +1132,15 @@ let WidgetView = widgets.DOMWidgetView.extend({
                     return data.strokeWidth
                 });
 
+            if (widgetView.forceDirected && !event.active) widgetView.simulation.alphaTarget(0);
+
             //if node only got clicked and not moved
-            if (d.x === event.x && d.y === event.y) {
+            if (d.startX === event.x && d.startY === event.y) {
+                if (widgetView.forceDirected) {
+                    event.subject.fx = null;
+                    event.subject.fy = null;
+                }
+
                 widgetView.send({
                     "code": "nodeClicked",
                     "id": nodeId,
@@ -986,11 +1156,11 @@ let WidgetView = widgets.DOMWidgetView.extend({
     },
 
     rescaleAllText() {
-        d3.select(this.svg).selectAll("text").style("font-size", this.adaptLabelFontSize)
+        d3.select(this.svg).selectAll(".nodeLabel").style("font-size", this.adaptLabelFontSize)
     },
 
     rescaleTextById(nodeId) {
-        d3.select(this.svg).selectAll("text").filter(function (d) {
+        d3.select(this.svg).selectAll(".nodeLabel").filter(function (d) {
             return d.id === nodeId;
         }).style("font-size", this.adaptLabelFontSize)
     },
@@ -1005,8 +1175,8 @@ let WidgetView = widgets.DOMWidgetView.extend({
         labelWidth = this.getComputedTextLength();
 
         // There is enough space for the label so leave it as is.
-        if (labelWidth < labelAvailableWidth) {
-            return null;
+        if (labelWidth <= labelAvailableWidth) {
+            return '1em';
         }
 
         /*
@@ -1018,7 +1188,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
          * the label is taking up twice its available space.
          * With the result as `0.5em` the font will change to half its original size.
          */
-        return (labelAvailableWidth / labelWidth) + 'em';
+        return (labelAvailableWidth / labelWidth - 0.01) + 'em';
     }
 });
 

@@ -37,9 +37,6 @@ class Widget(widgets.DOMWidget):
     # is automatically synced to the frontend *any* time it changes in Python.
     # It is synced back to Python from the frontend *any* time the model is touched.
 
-    nodes = List(Dict().tag(sync=True)).tag(sync=True)
-    links = List(Dict().tag(sync=True)).tag(sync=True)
-
     width = Integer(960).tag(sync=True)
     height = Integer(540).tag(sync=True)
     x_pos = Float(0).tag(sync=True)
@@ -47,6 +44,10 @@ class Widget(widgets.DOMWidget):
     zoom = Float(1).tag(sync=True)
 
     click_thickness = Integer(10).tag(sync=True)
+
+    animation_duration = Integer(1000).tag(sync=True)
+
+    force_config = Dict().tag(sync=True)
 
     on_node_click_callback = None
     on_link_click_callback = None
@@ -59,7 +60,6 @@ class Widget(widgets.DOMWidget):
         super().__init__()
         self.graph_attributes = graph_attributes
         self.on_msg(lambda *args: self.handle_msg(args[1]))
-        self.export_graph()
         self.myObserver = MyGraphObserver(self.graph_attributes.constGraph(), self)
         self.debug = debug
 
@@ -74,7 +74,8 @@ class Widget(widgets.DOMWidget):
             self.update_all_nodes()
             self.update_all_links()
         else:
-            print("Your GraphAttributes need to depend on the same Graph in order to work. To completely update the GraphAttributes use set_graph_attributes(GA)")
+            print("Your GraphAttributes need to depend on the same Graph in order to work. To completely update the "
+                  "GraphAttributes use set_graph_attributes(GA)")
 
     def handle_msg(self, msg):
         if msg['code'] == 'linkClicked':
@@ -100,8 +101,31 @@ class Widget(widgets.DOMWidget):
         elif msg['code'] == 'svgClicked':
             if self.on_svg_click_callback is not None:
                 self.on_svg_click_callback(msg['x'], msg['y'], msg['altKey'], msg['ctrlKey'], msg['backgroundClicked'])
-        if self.debug:
+        elif msg['code'] == 'widgetReady':
+            self.export_graph()
+        elif msg['code'] == 'positionUpdate':
+            self.position_update(msg['nodes'])
+        if self.debug and msg['code'] != 'positionUpdate':
             print(msg)
+
+    def position_update(self, nodes):
+        for node in nodes:
+            n = self.get_node_from_id(node['id'])
+            self.move_node_to(n, node['x'], node['y'])
+
+    def start_force_directed(self, charge_force=-100, force_center_x=500, force_center_y=500, fix_start_position=True):
+        for link in self.graph_attributes.constGraph().edges:
+            self.graph_attributes.bends(link).clear()
+
+        self.force_config = {"chargeForce": charge_force,
+                             "forceCenterX": force_center_x,
+                             "forceCenterY": force_center_y,
+                             "fixStartPosition": fix_start_position,
+                             "stop": False}
+
+    def stop_force_directed(self):
+        self.force_config = {"stop": True}
+        self.refresh_graph()
 
     def get_node_from_id(self, node_id):
         for node in self.graph_attributes.constGraph().nodes:
@@ -188,6 +212,8 @@ class Widget(widgets.DOMWidget):
                      "label": str(self.graph_attributes.label(link)),
                      "s_id": str(link.source().index()),
                      "t_id": str(link.target().index()),
+                     "source": str(link.source().index()),
+                     "target": str(link.target().index()),
                      "t_shape": self.graph_attributes.shape(link.target()),
                      "strokeColor": color_to_dict(self.graph_attributes.strokeColor(link)),
                      "strokeWidth": self.graph_attributes.strokeWidth(link),
@@ -207,6 +233,9 @@ class Widget(widgets.DOMWidget):
 
         return link_dict
 
+    def cluster_to_dict(self, cluster):
+        pass
+
     def export_graph(self):
         nodes_data = []
         for node in self.graph_attributes.constGraph().nodes:
@@ -216,8 +245,7 @@ class Widget(widgets.DOMWidget):
         for link in self.graph_attributes.constGraph().edges:
             links_data.append(self.link_to_dict(link))
 
-        self.set_trait('nodes', nodes_data)
-        self.set_trait('links', links_data)
+        self.send({'code': 'initGraph', 'nodes': nodes_data, 'links': links_data})
 
 
 class MyGraphObserver(cppyy.gbl.ogdf.GraphObserver):
