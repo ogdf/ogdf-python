@@ -77,6 +77,8 @@ let WidgetView = widgets.DOMWidgetView.extend({
 
         this.model.on('change:force_config', this.forceConfigChanged, this)
 
+        this.ticksSinceSync = 0
+
         this.send({"code": "widgetReady"})
     },
 
@@ -96,7 +98,10 @@ let WidgetView = widgets.DOMWidgetView.extend({
             this.constructNode(this.nodes[i])
         }
 
-        this.simulation = d3.forceSimulation().nodes(this.nodes);
+        this.simulation = d3.forceSimulation().nodes(this.nodes)
+            .on('end', function () {
+                widgetView.syncBackend()
+            });
 
         let link_force = d3.forceLink(this.links).id(function (d) {
             return d.id;
@@ -153,7 +158,10 @@ let WidgetView = widgets.DOMWidgetView.extend({
                     return d.target.y;
                 });
 
-            widgetView.syncBackend()
+            if(widgetView.ticksSinceSync % 5 === 0){
+                widgetView.syncBackend()
+                widgetView.ticksSinceSync = 0
+            }
         }
     },
 
