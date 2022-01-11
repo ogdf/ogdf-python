@@ -1,6 +1,6 @@
-import ipywidgets as widgets
-from traitlets import Unicode, List, Dict, Integer, Float
 import cppyy
+import ipywidgets as widgets
+from traitlets import Unicode, Dict, Integer, Float, Bool
 
 
 # See js/lib/ogdf-python-widget-view.js for the frontend counterpart to this file.
@@ -49,6 +49,8 @@ class Widget(widgets.DOMWidget):
 
     force_config = Dict().tag(sync=True)
 
+    rescale_on_resize = Bool(True).tag(sync=True)
+
     on_node_click_callback = None
     on_link_click_callback = None
     on_svg_click_callback = None
@@ -67,9 +69,12 @@ class Widget(widgets.DOMWidget):
         self.graph_attributes = graph_attributes
         self.export_graph()
         self.myObserver = MyGraphObserver(self.graph_attributes.constGraph(), self)
+        self.stop_force_directed()
 
     def update_graph_attributes(self, graph_attributes):
         if self.graph_attributes.constGraph() is graph_attributes.constGraph():
+            if self.force_config != {} and not self.force_config['stop']:
+                self.stop_force_directed()
             self.graph_attributes = graph_attributes
             self.update_all_nodes()
             self.update_all_links()
@@ -97,7 +102,7 @@ class Widget(widgets.DOMWidget):
         elif msg['code'] == 'bendClicked':
             link = self.get_link_from_id(msg['linkId'])
             if self.on_bend_clicked_callback is not None:
-                self.on_bend_clicked_callback(link, msg['bendIndex'])
+                self.on_bend_clicked_callback(link, msg['bendIndex'], msg['altKey'])
         elif msg['code'] == 'svgClicked':
             if self.on_svg_click_callback is not None:
                 self.on_svg_click_callback(msg['x'], msg['y'], msg['altKey'], msg['ctrlKey'], msg['backgroundClicked'])
@@ -109,6 +114,8 @@ class Widget(widgets.DOMWidget):
             print(msg)
 
     def position_update(self, nodes):
+        if self.force_config == {} or self.force_config['stop']:
+            return
         for node in nodes:
             n = self.get_node_from_id(node['id'])
             self.move_node_to(n, node['x'], node['y'])
@@ -159,10 +166,6 @@ class Widget(widgets.DOMWidget):
     def enable_node_movement(self, enable):
         self.send({"code": "enableNodeMovement", "value": enable})
 
-    def enable_rescale_on_resize(self, enable):
-        # todo als model attribut; arbeit ändern
-        self.send({"code": "enableRescaleOnResize", "value": enable})
-
     def move_link(self, link):
         self.send({"code": "moveLink", "data": self.link_to_dict(link)})
 
@@ -210,8 +213,6 @@ class Widget(widgets.DOMWidget):
 
         link_dict = {"id": str(link.index()),
                      "label": str(self.graph_attributes.label(link)),
-                     "s_id": str(link.source().index()),
-                     "t_id": str(link.target().index()),
                      "source": str(link.source().index()),
                      "target": str(link.target().index()),
                      "t_shape": self.graph_attributes.shape(link.target()),
@@ -232,9 +233,6 @@ class Widget(widgets.DOMWidget):
             link_dict["label_y"] = (link_dict["sy"] + link_dict["ty"]) / 2
 
         return link_dict
-
-    def cluster_to_dict(self, cluster):
-        pass
 
     def export_graph(self):
         nodes_data = []

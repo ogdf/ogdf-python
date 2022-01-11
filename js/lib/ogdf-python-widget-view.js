@@ -37,6 +37,7 @@ let WidgetModel = widgets.DOMWidgetModel.extend({
         click_thickness: 10,
         animation_duration: 1000,
         force_config: null,
+        rescale_on_resize: true,
     })
 });
 
@@ -46,7 +47,6 @@ let WidgetView = widgets.DOMWidgetView.extend({
         WidgetView.__super__.initialize.call(this, parameters);
 
         this.isNodeMovementEnabled = false
-        this.rescaleOnResize = true
 
         //only for internal use
         this.isTransformCallbackAllowed = true
@@ -166,6 +166,8 @@ let WidgetView = widgets.DOMWidgetView.extend({
     },
 
     stopForceLayout: function () {
+        if(!this.forceDirected) return
+
         this.forceDirected = false;
         if (this.simulation != null) {
             this.simulation.stop()
@@ -209,7 +211,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
             .attr("width", this.model.get('width'))
             .attr("height", this.model.get('height'))
 
-        if (this.rescaleOnResize) this.readjustZoomLevel(15)
+        if (this.model.get("rescale_on_resize")) this.readjustZoomLevel(this.getInitialTransform(15))
     },
 
     getInitialTransform: function (radius) {
@@ -286,8 +288,6 @@ let WidgetView = widgets.DOMWidgetView.extend({
             this.links = msg.links
             this.nodes = msg.nodes
             this.render()
-        } else if (msg.code === 'enableRescaleOnResize') {
-            this.rescaleOnResize = msg.value
         } else if (msg.code === 'nodeAdded') {
             this.addNode(msg.data)
         } else if (msg.code === 'linkAdded') {
@@ -406,7 +406,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 d.y = Math.round(event.y)
                 widgetView.send({"code": "bendMoved", "linkId": this.id, "bendIndex": d.bendIndex, "x": d.x, "y": d.y});
             } else {
-                //ctrl key not possible because it doesnt activate the drag todo: additional clickable layer over the bend mover
+                //ctrl key not possible because it doesnt activate the drag
                 widgetView.send({
                     "code": "bendClicked",
                     "linkId": this.id,
@@ -601,6 +601,8 @@ let WidgetView = widgets.DOMWidgetView.extend({
     },
 
     updateLink: function (link, animated) {
+
+        //todo check if this.links contain the same data after animating to a different link.
 
         if (!animated) {
             this.deleteLinkById(link.id)
@@ -1158,13 +1160,13 @@ let WidgetView = widgets.DOMWidgetView.extend({
             d3.select(widgetView.svg)
                 .selectAll(".line")
                 .filter(function (data) {
-                    return data.s_id === nodeId || data.t_id === nodeId;
+                    return data.source === nodeId || data.target === nodeId;
                 })
                 .attr("d", function (d) {
-                    if (d.s_id === nodeId) {
+                    if (d.source === nodeId) {
                         d.sx = event.x
                         d.sy = event.y
-                    } else if (d.t_id === nodeId) {
+                    } else if (d.target === nodeId) {
                         d.tx = event.x
                         d.ty = event.y
                     }
