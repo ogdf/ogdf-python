@@ -14,7 +14,7 @@ if (window.require) {
         map: {
             "*" : {
                 "ogdf-python-widget": "nbextensions/ogdf-python-widget/index",
-                "d3": "https://d3js.org/d3.v7.min"
+                "d3": "https://d3js.org/d3.v7.min.js?noext"
             }
         }
     });
