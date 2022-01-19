@@ -80,7 +80,7 @@ class Widget(widgets.DOMWidget):
             self.update_all_nodes()
             self.update_all_links()
         else:
-            print("Your GraphAttributes need to depend on the same Graph in order to work. To completely update the "
+            print("Your GraphAttributes need to depend on the same Graph in order to work. \nTo completely update the "
                   "GraphAttributes use set_graph_attributes(GA)")
 
     def handle_msg(self, *args):

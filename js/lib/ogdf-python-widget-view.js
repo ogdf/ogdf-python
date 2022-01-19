@@ -530,10 +530,20 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 return d.y - d.nodeHeight / 2
             })
             .attr("cx", function (d) {
+                if (widgetView.forceDirected && !widgetView.isNodeMovementEnabled)
+                    d.fx = node.x
+                else if (widgetView.forceDirected)
+                    return
+
                 d.x = node.x
                 return d.x
             })
             .attr("cy", function (d) {
+                if (widgetView.forceDirected && !widgetView.isNodeMovementEnabled)
+                    d.fy = node.y
+                else if (widgetView.forceDirected)
+                    return
+
                 d.y = node.y
                 return d.y
             })
