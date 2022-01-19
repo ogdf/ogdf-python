@@ -1038,7 +1038,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
 
         let radius = nodes_data.length > 0 ? nodes_data[0].nodeWidth / 2 : 0
 
-        d3.select(".everything").remove()
+        d3.select(this.svg).selectAll(".everything").remove()
         //add encompassing group for the zoom
         this.g = svg.append("g").attr("class", "everything");
 
