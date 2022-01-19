@@ -29,6 +29,7 @@ class Widget(widgets.DOMWidget):
 
     # Version of the front-end module containing widget view
     _view_module_version = Unicode('^0.1.0').tag(sync=True)
+
     # Version of the front-end module containing widget model
     _model_module_version = Unicode('^0.1.0').tag(sync=True)
 
@@ -61,7 +62,7 @@ class Widget(widgets.DOMWidget):
     def __init__(self, graph_attributes, debug=False):
         super().__init__()
         self.graph_attributes = graph_attributes
-        self.on_msg(lambda *args: self.handle_msg(args[1]))
+        self.on_msg(self.handle_msg)
         self.myObserver = MyGraphObserver(self.graph_attributes.constGraph(), self)
         self.debug = debug
 
@@ -82,7 +83,8 @@ class Widget(widgets.DOMWidget):
             print("Your GraphAttributes need to depend on the same Graph in order to work. To completely update the "
                   "GraphAttributes use set_graph_attributes(GA)")
 
-    def handle_msg(self, msg):
+    def handle_msg(self, *args):
+        msg = args[1]
         if msg['code'] == 'linkClicked':
             if self.on_link_click_callback is not None:
                 self.on_link_click_callback(self.get_link_from_id(msg['id']), msg['altKey'], msg['ctrlKey'])

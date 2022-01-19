@@ -135,6 +135,12 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 })
                 .attr("y", function (d) {
                     return d.y - d.nodeHeight / 2;
+                })
+                .attr("cx", function (d) {
+                    return d.x;
+                })
+                .attr("cy", function (d) {
+                    return d.y;
                 });
 
             d3.select(widgetView.svg)
@@ -158,7 +164,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
                     return d.target.y;
                 });
 
-            if(widgetView.ticksSinceSync % 5 === 0){
+            if (widgetView.ticksSinceSync % 5 === 0) {
                 widgetView.syncBackend()
                 widgetView.ticksSinceSync = 0
             }
@@ -166,7 +172,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
     },
 
     stopForceLayout: function () {
-        if(!this.forceDirected) return
+        if (!this.forceDirected) return
 
         this.forceDirected = false;
         if (this.simulation != null) {
