@@ -639,11 +639,24 @@ let WidgetView = widgets.DOMWidgetView.extend({
 
         //todo check if this.links contain the same data after animating to a different link.
 
+        let bendMoverActive = false
+        d3.select(this.svg)
+            .selectAll(".bendMover")
+            .filter(function (d) {
+                if(d.id === link.id) bendMoverActive = true
+                return d.id === link.id;
+            }).remove()
+
+        if(bendMoverActive)
+            this.moveLinkBends(link)
+
         if (!animated) {
             this.deleteLinkById(link.id)
             this.addLink(link)
             return
         }
+
+
 
         //artificially add bends to make animation better
         let currentLink
