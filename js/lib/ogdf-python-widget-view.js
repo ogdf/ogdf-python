@@ -2,6 +2,7 @@ let widgets = require('@jupyter-widgets/base');
 let _ = require('lodash');
 let d3 = require("d3");
 require("./style.css");
+//import {constructLink} from "./graph-element-constructor.mjs";
 
 // See widget.py for the kernel counterpart to this file.
 
@@ -91,11 +92,11 @@ let WidgetView = widgets.DOMWidgetView.extend({
         d3.select(this.svg).selectAll(".line").remove()
 
         for (let i = 0; i < this.links.length; i++) {
-            this.constructForceLink(this.links[i])
+            this.constructForceLink(this.links[i], this.line_holder, this, false)
         }
 
         for (let i = 0; i < this.nodes.length; i++) {
-            this.constructNode(this.nodes[i])
+            this.constructNode(this.nodes[i], this.node_holder, this.text_holder, this, false)
         }
 
         this.simulation = d3.forceSimulation().nodes(this.nodes)
@@ -426,14 +427,14 @@ let WidgetView = widgets.DOMWidgetView.extend({
     addNode: function (node) {
         if (this.forceDirected) this.stopForceLayout()
         this.nodes.push(node)
-        this.constructNode(node)
+        this.constructNode(node, this.node_holder, this.text_holder, this, false)
         this.forceConfigChanged()
     },
 
     addLink: function (link) {
         if (this.forceDirected) this.stopForceLayout()
         this.links.push(link)
-        this.constructLink(link)
+        this.constructLink(link, this.line_holder, this.line_text_holder, this.line_click_holder, this, this.clickThickness, false)
         this.forceConfigChanged()
     },
 
@@ -799,10 +800,9 @@ let WidgetView = widgets.DOMWidgetView.extend({
         }, 1);
     },
 
-    constructForceLink(linkData) {
-        let widgetView = this
+    constructForceLink(linkData, line_holder, widgetView, basic) {
 
-        this.line_holder
+        line_holder
             .data([linkData])
             .enter()
             .append("line")
@@ -843,15 +843,15 @@ let WidgetView = widgets.DOMWidgetView.extend({
             })
             .attr("fill", "none")
             .on("click", function (event, d) {
+                if(basic) return
                 widgetView.send({"code": "linkClicked", "id": d.id, "altKey": event.altKey, "ctrlKey": event.ctrlKey});
             });
     },
 
-    constructLink(linkData) {
-        let widgetView = this
+    constructLink(linkData, line_holder, line_text_holder, line_click_holder, widgetView, clickThickness, basic) {
         const line = d3.line()
 
-        this.line_holder
+        line_holder
             .data([linkData])
             .enter()
             .append("path")
@@ -880,28 +880,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
             })
             .attr("fill", "none");
 
-        this.line_click_holder
-            .data([linkData])
-            .enter()
-            .append("path")
-            .attr("class", "line")
-            .attr("id", function (d) {
-                return d.id
-            })
-            .attr("d", function (d) {
-                let points = [[d.sx, d.sy]].concat(d.bends).concat([[d.tx, d.ty]])
-                return line(points)
-            })
-            .attr("stroke", "transparent")
-            .attr("stroke-width", function (d) {
-                return Math.max(d.strokeWidth, widgetView.clickThickness)
-            })
-            .attr("fill", "none")
-            .on("click", function (event, d) {
-                widgetView.send({"code": "linkClicked", "id": d.id, "altKey": event.altKey, "ctrlKey": event.ctrlKey});
-            });
-
-        this.line_text_holder
+        line_text_holder
             .data([linkData])
             .enter()
             .append("text")
@@ -922,12 +901,33 @@ let WidgetView = widgets.DOMWidgetView.extend({
             .attr("transform", function (d) { //<-- use transform it's not a g
                 return "translate(" + d.label_x + "," + d.label_y + ")";
             })
+
+        if (basic) return
+
+        line_click_holder
+            .data([linkData])
+            .enter()
+            .append("path")
+            .attr("class", "line")
+            .attr("id", function (d) {
+                return d.id
+            })
+            .attr("d", function (d) {
+                let points = [[d.sx, d.sy]].concat(d.bends).concat([[d.tx, d.ty]])
+                return line(points)
+            })
+            .attr("stroke", "transparent")
+            .attr("stroke-width", function (d) {
+                return Math.max(d.strokeWidth, clickThickness)
+            })
+            .attr("fill", "none")
+            .on("click", function (event, d) {
+                widgetView.send({"code": "linkClicked", "id": d.id, "altKey": event.altKey, "ctrlKey": event.ctrlKey});
+            })
     },
 
-    constructNode(nodeData) {
-        let widgetView = this
-
-        let node = this.node_holder
+    constructNode(nodeData, node_holder, text_holder, widgetView, basic) {
+        let node = node_holder
             .data([nodeData])
             .enter()
             .append(function (d) {
@@ -972,7 +972,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 return d.strokeWidth
             })
             .on("click", function (event, d) {
-                if (!widgetView.isNodeMovementEnabled) {
+                if (!basic && !widgetView.isNodeMovementEnabled) {
                     widgetView.send({
                         "code": "nodeClicked",
                         "id": d.id,
@@ -982,7 +982,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 }
             })
 
-        let text = this.text_holder
+        let text = text_holder
             .data([nodeData])
             .enter()
             .append("text")
@@ -1004,7 +1004,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 return "translate(" + d.x + "," + d.y + ")";
             })
             .on("click", function (event, d) {
-                if (!widgetView.isNodeMovementEnabled) {
+                if (!basic && !widgetView.isNodeMovementEnabled) {
                     widgetView.send({
                         "code": "nodeClicked",
                         "id": d.id,
@@ -1014,7 +1014,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 }
             })
 
-        if (this.isNodeMovementEnabled) {
+        if (!basic && this.isNodeMovementEnabled) {
             node.call(widgetView.node_drag_handler)
             text.call(widgetView.node_drag_handler)
         }
@@ -1068,7 +1068,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
             .selectAll(".lineText")
 
         for (let i = 0; i < links_data.length; i++) {
-            widgetView.constructLink(links_data[i])
+            widgetView.constructLink(links_data[i], this.line_holder, this.line_text_holder, this.line_click_holder, widgetView, this.clickThickness, false)
         }
 
         this.bendMover_holder = this.g.append("g").attr("class", "bendMover_holder").selectAll("bendMover")
@@ -1088,7 +1088,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
             .selectAll("text")
 
         for (let i = 0; i < nodes_data.length; i++) {
-            widgetView.constructNode(nodes_data[i])
+            widgetView.constructNode(nodes_data[i], this.node_holder, this.text_holder, widgetView, false)
         }
 
         function constructArrowElements(radius) {
@@ -1265,5 +1265,5 @@ let WidgetView = widgets.DOMWidgetView.extend({
 
 module.exports = {
     WidgetModel: WidgetModel,
-    WidgetView: WidgetView
+    WidgetView: WidgetView,
 };

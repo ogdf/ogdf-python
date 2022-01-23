@@ -102,6 +102,56 @@ namespace ogdf_pythonization {
 SVGConf = None
 
 
+def color_to_dict(color):
+    color = {"r": color.red(),
+             "g": color.green(),
+             "b": color.blue(),
+             "a": color.alpha()}
+    return color
+
+
+def node_to_dict(ga, node):
+    return {"id": str(node.index()),
+            "name": str(ga.label(node)),
+            "x": int(ga.x(node) + 0.5),
+            "y": int(ga.y(node) + 0.5),
+            "shape": ga.shape(node),
+            "fillColor": color_to_dict(ga.fillColor(node)),
+            "strokeColor": color_to_dict(ga.strokeColor(node)),
+            "strokeWidth": ga.strokeWidth(node),
+            "nodeWidth": ga.width(node),
+            "nodeHeight": ga.height(node)}
+
+
+def link_to_dict(ga, link):
+    bends = []
+    for i, point in enumerate(ga.bends(link)):
+        bends.append([int(point.m_x + 0.5), int(point.m_y + 0.5)])
+
+    link_dict = {"id": str(link.index()),
+                 "label": str(ga.label(link)),
+                 "source": str(link.source().index()),
+                 "target": str(link.target().index()),
+                 "t_shape": ga.shape(link.target()),
+                 "strokeColor": color_to_dict(ga.strokeColor(link)),
+                 "strokeWidth": ga.strokeWidth(link),
+                 "sx": int(ga.x(link.source()) + 0.5),
+                 "sy": int(ga.y(link.source()) + 0.5),
+                 "tx": int(ga.x(link.target()) + 0.5),
+                 "ty": int(ga.y(link.target()) + 0.5),
+                 "arrow": ga.arrowType(link) == 1,
+                 "bends": bends}
+
+    if len(bends) > 0:
+        link_dict["label_x"] = bends[0][0]
+        link_dict["label_y"] = bends[0][1]
+    else:
+        link_dict["label_x"] = (link_dict["sx"] + link_dict["tx"]) / 2
+        link_dict["label_y"] = (link_dict["sy"] + link_dict["ty"]) / 2
+
+    return link_dict
+
+
 def GraphAttributes_to_html(self):
     # global SVGConf
     # if SVGConf == None:
@@ -130,28 +180,11 @@ def GraphAttributes_to_html(self):
     if isinstance(self, cppyy.gbl.ogdf.GraphAttributes):
         nodes_data = []
         for node in self.constGraph().nodes:
-            nodes_data.append(
-                {"id": str(node.index()), "name": str(node.index()), "x": int(self.x(node) + 0.5),
-                 "y": int(self.y(node) + 0.5)})
+            nodes_data.append(node_to_dict(self, node))
 
         links_data = []
-
-        for edge in self.constGraph().edges:
-            edge_id = str(edge.source().index()) + "_" + str(edge.target().index())
-            prev_x = int(self.x(edge.source()) + 0.5)
-            prev_y = int(self.y(edge.source()) + 0.5)
-
-            for point in self.bends(edge):
-                links_data.append(
-                    {"id": edge_id, "sx": prev_x, "sy": prev_y, "tx": int(point.m_x + 0.5), "ty": int(point.m_y + 0.5)})
-                prev_x = int(point.m_x + 0.5)
-                prev_y = int(point.m_y + 0.5)
-
-            link_dict = {"id": edge_id, "sx": prev_x, "sy": prev_y, "tx": int(self.x(edge.target()) + 0.5),
-                         "ty": int(self.y(edge.target()) + 0.5)}
-            if self.arrowType(edge) == 1:
-                link_dict['arrow'] = True
-            links_data.append(link_dict)
+        for link in self.constGraph().edges:
+            links_data.append(link_to_dict(self, link))
 
         return export_html('basicGraphRepresentation.html', nodes_data, links_data, False)
 
@@ -168,12 +201,12 @@ def export_html(filename, nodes_data, links_data, force_directed):
 
     with open(os.path.join(__location__, filename), 'r') as file:
         data = file.read()
-        data = data.replace("var nodes_data = []", "var nodes_data = " + json.dumps(nodes_data))
-        data = data.replace("var links_data = []", "var links_data = " + json.dumps(links_data))
+        data = data.replace("let nodes_data = []", "let nodes_data = " + json.dumps(nodes_data))
+        data = data.replace("let links_data = []", "let links_data = " + json.dumps(links_data))
         # the G is needed because CSS3 selector doesnt support ID selectors that start with a digit
         data = data.replace("placeholderId", 'G' + uuid.uuid4().hex)
         if not force_directed:
-            data = data.replace("var forceDirected = true;", "var forceDirected = false;")
+            data = data.replace("let forceDirected = true;", "let forceDirected = false;")
         return data
 
 
