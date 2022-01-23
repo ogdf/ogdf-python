@@ -1,6 +1,7 @@
 import cppyy
 import ipywidgets as widgets
 from traitlets import Unicode, Dict, Integer, Float, Bool
+from datetime import datetime
 
 
 # See js/lib/ogdf-python-widget-view.js for the frontend counterpart to this file.
@@ -195,6 +196,13 @@ class Widget(widgets.DOMWidget):
     def update_all_links(self, animated=True):
         for link in self.graph_attributes.constGraph().edges:
             self.update_link(link, animated)
+
+    def download_svg(self, file_name=None):
+        if file_name is None:
+            now = datetime.now()
+            file_name = now.strftime("%d/%m/%Y %H:%M:%S")
+
+        self.send({"code": "downloadSvg", "fileName": file_name})
 
     def svgcoords_to_graphcoords(self, svg_x, svg_y):
         g_x = svg_x / self.zoom - self.x_pos / self.zoom

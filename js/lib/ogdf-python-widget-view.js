@@ -313,11 +313,29 @@ let WidgetView = widgets.DOMWidgetView.extend({
             this.removeAllBendMovers()
         } else if (msg.code === 'removeBendMoversFor') {
             this.removeBendMoversForLink(msg.data)
+        } else if (msg.code === 'downloadSvg') {
+            this.downloadSvg(msg.fileName)
         } else if (msg.code === 'test') {
-            console.log(this.nodes)
+            // this.downloadSvg()
         } else {
             console.log("msg cannot be read: " + msg)
         }
+    },
+
+    downloadSvg: function (fileName) {
+        var svgData = this.svg.outerHTML;
+        if (!svgData.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+            svgData = svgData.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+        }
+        if (!svgData.match(/^<svg[^>]+"http\:\/\/www\.w3\.org\/1999\/xlink"/)) {
+            svgData = svgData.replace(/^<svg/, '<svg xmlns:xlink="http://www.w3.org/1999/xlink"');
+        }
+        var svgBlob = new Blob([svgData], {type: "image/svg+xml;charset=utf-8"});
+        var svgUrl = URL.createObjectURL(svgBlob);
+        var downloadLink = document.createElement("a");
+        downloadLink.href = svgUrl;
+        downloadLink.download = fileName + ".svg";
+        downloadLink.click();
     },
 
     moveLinkBends: function (d) {
@@ -843,7 +861,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
             })
             .attr("fill", "none")
             .on("click", function (event, d) {
-                if(basic) return
+                if (basic) return
                 widgetView.send({"code": "linkClicked", "id": d.id, "altKey": event.altKey, "ctrlKey": event.ctrlKey});
             });
     },
