@@ -27,9 +27,10 @@
         let links_data = []
 
         this.g = svg.append("g").attr("class", "everything");
+        let radius
 
         if (forceDirected) {
-            let radius = 15
+            radius = 15
             constructArrowElements(radius)
             //draw lines for the links
             var link = g.append("g")
@@ -146,7 +147,7 @@
             }
 
         } else {
-            let radius = nodes_data.length > 0 ? nodes_data[0].nodeWidth / 2 : 0
+            radius = nodes_data.length > 0 ? nodes_data[0].nodeWidth / 2 : 0
             constructArrowElements(radius)
             //links
             this.line_holder = this.g.append("g")
@@ -173,7 +174,75 @@
             for (let i = 0; i < nodes_data.length; i++) {
                 constructNode(nodes_data[i], this.node_holder, this.text_holder, this, true)
             }
+        }
 
+        function getInitialTransform(radius, width, height) {
+            let boundingBox = getBoundingBox(nodes_data, links_data)
+
+            const boundingBoxWidth = boundingBox.maxX - boundingBox.minX + radius * 2
+            const boundingBoxHeight = boundingBox.maxY - boundingBox.minY + radius * 2
+
+            let scale = Math.min(width / boundingBoxWidth, height / boundingBoxHeight);
+            let x = width / 2 - (boundingBox.minX + boundingBoxWidth / 2 - radius) * scale;
+            let y = height / 2 - (boundingBox.minY + boundingBoxHeight / 2 - radius) * scale;
+
+            if (nodes_data.length === 1) {
+                scale = 1
+                x = width / 2 - nodes_data[0].x
+                y = height / 2 - nodes_data[0].y
+            }
+
+            return d3.zoomIdentity.translate(x, y).scale(scale)
+        }
+
+        function getBoundingBox(nodes, links) {
+            let boundingBox = {
+                "minX": Number.MAX_VALUE,
+                "maxX": Number.MIN_VALUE,
+                "minY": Number.MAX_VALUE,
+                "maxY": Number.MIN_VALUE,
+            }
+
+            for (let i = 0; i < nodes.length; i++) {
+                if (nodes[i].x < boundingBox.minX) boundingBox.minX = nodes[i].x
+                if (nodes[i].x > boundingBox.maxX) boundingBox.maxX = nodes[i].x
+
+                if (nodes[i].y < boundingBox.minY) boundingBox.minY = nodes[i].y
+                if (nodes[i].y > boundingBox.maxY) boundingBox.maxY = nodes[i].y
+            }
+
+            for (let i = 0; i < links.length; i++) {
+                for (let j = 0; j < links[i].bends.length; j++) {
+                    let bend = links[i].bends[j]
+
+                    if (bend[0] < boundingBox.minX) boundingBox.minX = bend[0]
+                    if (bend[0] > boundingBox.maxX) boundingBox.maxX = bend[0]
+
+                    if (bend[1] < boundingBox.minY) boundingBox.minY = bend[1]
+                    if (bend[1] > boundingBox.maxY) boundingBox.maxY = bend[1]
+                }
+            }
+            return boundingBox
+        }
+
+        function rescaleAllText() {
+            svg.selectAll(".nodeLabel").style("font-size", adaptLabelFontSize)
+        }
+
+        function adaptLabelFontSize(d) {
+            let xPadding, diameter, labelAvailableWidth, labelWidth;
+
+            xPadding = 2;
+            diameter = d.nodeWidth;
+            labelAvailableWidth = diameter - xPadding;
+
+            labelWidth = this.getComputedTextLength();
+
+            if (labelWidth <= labelAvailableWidth) {
+                return '1em';
+            }
+
+            return (labelAvailableWidth / labelWidth - 0.01) + 'em';
         }
 
         function constructLink(linkData, line_holder, line_text_holder, line_click_holder, widgetView, clickThickness, basic) {
@@ -418,14 +487,15 @@
             event.subject.fy = null;
         }
 
-
-        //add zoom capabilities
-        svg.call(d3.zoom()
-            .extent([[0, 0], [width, height]])
-            .on("zoom", zoomed));
+        svg.call(d3.zoom().transform, getInitialTransform(radius, width, height))
+        svg.call(d3.zoom().on("zoom", zoomed));
+        g.attr("transform", getInitialTransform(radius, width, height))
 
         function zoomed({transform}) {
             g.attr("transform", transform);
         }
+
+        rescaleAllText()
+
     });
 </script>
