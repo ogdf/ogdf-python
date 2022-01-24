@@ -487,9 +487,9 @@
             event.subject.fy = null;
         }
 
-        svg.call(d3.zoom().transform, getInitialTransform(radius, width, height))
+        if(!forceDirected) svg.call(d3.zoom().transform, getInitialTransform(radius, width, height))
         svg.call(d3.zoom().on("zoom", zoomed));
-        g.attr("transform", getInitialTransform(radius, width, height))
+        if(!forceDirected) g.attr("transform", getInitialTransform(radius, width, height))
 
         function zoomed({transform}) {
             g.attr("transform", transform);

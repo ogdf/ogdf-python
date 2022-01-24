@@ -99,6 +99,10 @@ let WidgetView = widgets.DOMWidgetView.extend({
             this.constructNode(this.nodes[i], this.node_holder, this.text_holder, this, false)
         }
 
+        setTimeout(function () {
+            widgetView.rescaleAllText()
+        }, 10)
+
         this.simulation = d3.forceSimulation().nodes(this.nodes)
             .on('end', function () {
                 widgetView.syncBackend()
@@ -163,6 +167,11 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 })
                 .attr("y2", function (d) {
                     return d.target.y;
+                })
+                .attr("d", function (d) {
+                    if (d.source === d.target){
+                        return widgetView.getPath(d.source.x, d.source.y, d.target.x, d.target.y)
+                    }
                 });
 
             if (widgetView.ticksSinceSync % 5 === 0) {
@@ -636,18 +645,15 @@ let WidgetView = widgets.DOMWidgetView.extend({
     },
 
     updateLink: function (link, animated) {
-
-        //todo check if this.links contain the same data after animating to a different link.
-
         let bendMoverActive = false
         d3.select(this.svg)
             .selectAll(".bendMover")
             .filter(function (d) {
-                if(d.id === link.id) bendMoverActive = true
+                if (d.id === link.id) bendMoverActive = true
                 return d.id === link.id;
             }).remove()
 
-        if(bendMoverActive)
+        if (bendMoverActive)
             this.moveLinkBends(link)
 
         if (!animated) {
@@ -655,8 +661,6 @@ let WidgetView = widgets.DOMWidgetView.extend({
             this.addLink(link)
             return
         }
-
-
 
         //artificially add bends to make animation better
         let currentLink
@@ -707,6 +711,10 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 d.tx = newLink.tx
                 d.ty = newLink.ty
 
+                if (d.source === d.target && d.bends.length === 0) {
+                    return widgetView.getPath(d.sx, d.sy, d.tx, d.ty)
+                }
+
                 let points = [[d.sx, d.sy]].concat(d.bends).concat([[d.tx, d.ty]])
                 return line(points)
             })
@@ -727,6 +735,11 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 d.bends = link.bends
                 d.tx = link.tx
                 d.ty = link.ty
+
+                if (d.source === d.target && d.bends.length === 0) {
+                    return widgetView.getPath(d.sx, d.sy, d.tx, d.ty)
+                }
+
                 let points = [[d.sx, d.sy]].concat(d.bends).concat([[d.tx, d.ty]])
                 return line(points)
             })
@@ -832,6 +845,36 @@ let WidgetView = widgets.DOMWidgetView.extend({
     },
 
     constructForceLink(linkData, line_holder, widgetView, basic) {
+        if (linkData.source === linkData.target) {
+            line_holder
+                .data([linkData])
+                .enter()
+                .append("path")
+                .attr("class", "line")
+                .attr("id", function (d) {
+                    return d.id
+                })
+                .attr("d", function (d) {
+                    return widgetView.getPath(d.sx, d.sy, d.tx, d.ty)
+                })
+                .attr("stroke", function (d) {
+                    return widgetView.getColorStringFromJson(d.strokeColor)
+                })
+                .attr("stroke-width", function (d) {
+                    return d.strokeWidth
+                })
+                .attr("fill", "none")
+                .on("click", function (event, d) {
+                    if (basic) return
+                    widgetView.send({
+                        "code": "linkClicked",
+                        "id": d.id,
+                        "altKey": event.altKey,
+                        "ctrlKey": event.ctrlKey
+                    });
+                });
+            return
+        }
 
         line_holder
             .data([linkData])
@@ -891,15 +934,19 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 return d.id
             })
             .attr("marker-end", function (d) {
-                if (d.arrow && d.t_shape === 0) {
+                if (d.arrow && d.t_shape === 0 && d.source !== d.target) {
                     return "url(#endSquare)";
-                } else if (d.arrow && d.t_shape !== 0) {
+                } else if (d.arrow && d.t_shape !== 0 && d.source !== d.target) {
                     return "url(#endCircle)";
                 } else {
                     return null;
                 }
             })
             .attr("d", function (d) {
+                if (d.source === d.target && d.bends.length === 0) {
+                    return widgetView.getPath(d.sx, d.sy, d.tx, d.ty)
+                }
+
                 let points = [[d.sx, d.sy]].concat(d.bends).concat([[d.tx, d.ty]])
                 return line(points)
             })
@@ -944,6 +991,10 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 return d.id
             })
             .attr("d", function (d) {
+                if (d.source === d.target && d.bends.length === 0) {
+                    return widgetView.getPath(d.sx, d.sy, d.tx, d.ty)
+                }
+
                 let points = [[d.sx, d.sy]].concat(d.bends).concat([[d.tx, d.ty]])
                 return line(points)
             })
@@ -1053,6 +1104,14 @@ let WidgetView = widgets.DOMWidgetView.extend({
 
     getColorStringFromJson(color) {
         return "rgba(" + color.r + ", " + color.g + ", " + color.b + ", " + color.a + ")"
+    },
+
+    getPath: function (x1, y1, x2, y2) {
+        let xRotation = -45;
+        let largeArc = 1;
+        let drx = 30;
+        let dry = 20;
+        return "M" + x1 + "," + y1 + "A" + drx + "," + dry + " " + xRotation + "," + largeArc + "," + 1 + " " + (x2 + 1) + "," + (y2 + 1);
     },
 
     draw_graph(nodes_data, links_data) {
@@ -1213,9 +1272,13 @@ let WidgetView = widgets.DOMWidgetView.extend({
                     if (d.source === nodeId) {
                         d.sx = event.x
                         d.sy = event.y
-                    } else if (d.target === nodeId) {
+                    }
+                    if (d.target === nodeId) {
                         d.tx = event.x
                         d.ty = event.y
+                    }
+                    if (d.source === d.target && d.bends.length === 0) {
+                        return widgetView.getPath(d.sx, d.sy, d.tx, d.ty);
                     }
                     let points = [[d.sx, d.sy]].concat(d.bends).concat([[d.tx, d.ty]])
                     return line(points)
