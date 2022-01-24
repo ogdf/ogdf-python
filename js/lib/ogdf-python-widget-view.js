@@ -325,7 +325,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
         } else if (msg.code === 'downloadSvg') {
             this.downloadSvg(msg.fileName)
         } else if (msg.code === 'test') {
-            // this.downloadSvg()
+            this.rescaleAllText()
         } else {
             console.log("msg cannot be read: " + msg)
         }
@@ -825,8 +825,6 @@ let WidgetView = widgets.DOMWidgetView.extend({
         if (this.links.length === 0 && this.nodes.length === 0)
             return
 
-        console.log("rendering")
-
         if (this.el.childNodes.length === 0) {
             let svgId = "G" + Math.random().toString(16).slice(2)
 
@@ -839,9 +837,10 @@ let WidgetView = widgets.DOMWidgetView.extend({
         }
 
         this.draw_graph(this.nodes, this.links)
-        setTimeout(() => {
+
+        setTimeout(function () {
             this.rescaleAllText()
-        }, 1);
+        }, 10)
     },
 
     constructForceLink(linkData, line_holder, widgetView, basic) {
