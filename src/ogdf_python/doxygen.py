@@ -39,6 +39,7 @@ def parse_index_xml():
 
 
 def find_all_includes():
+    # set GENERATE_XML = YES in ogdf-doxygen.cfg, delete the doc/html folder and then run make doc
     for ctype in ("class", "struct", "namespace"):
         for compound in DOXYGEN_DATA[ctype].values():
             compound_xml = etree.parse(os.path.join(DOXYGEN_XML_DIR, compound["refid"] + '.xml'))
