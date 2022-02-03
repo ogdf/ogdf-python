@@ -1,4 +1,4 @@
-ogdf-python 0.1.3: Automagic Python Bindings for the Open Graph Drawing Framework
+ogdf-python 0.1.4-dev: Automagic Python Bindings for the Open Graph Drawing Framework
 =====================================================================================
 
 `Original repository <https://github.com/N-Coder/ogdf-python>`_ (GitHub) -

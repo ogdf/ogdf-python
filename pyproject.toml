@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ogdf-python"
-version = "0.1.3"
+version = "0.1.4-dev"
 description = "Automagic Python Bindings for the Open Graph Drawing Framework written in C++"
 authors = ["Simon D. Fink <finksim@fim.uni-passau.de>"]
 license = "Apache-2.0"
