@@ -1,5 +1,5 @@
 import os
-import warnings
+import sys
 
 import cppyy.ll
 from cppyy import include as cppinclude, cppdef, cppexec, nullptr
@@ -16,17 +16,22 @@ elif "OGDF_BUILD_DIR" in os.environ:
     cppyy.add_include_path(os.path.join(BUILD_DIR, "include"))
     cppyy.add_include_path(os.path.join(BUILD_DIR, "..", "include"))
     cppyy.add_library_path(BUILD_DIR)
-else:
-    warnings.warn("ogdf-python couldn't find OGDF. "
-                  "Please set environment variables OGDF_INSTALL_DIR or OGDF_BUILD_DIR.")
 
 cppyy.cppdef("#undef NDEBUG")
-cppyy.include("ogdf/basic/internal/config_autogen.h")
-cppyy.include("ogdf/basic/internal/config.h")
-cppyy.include("ogdf/basic/Graph.h")
-cppyy.include("ogdf/fileformats/GraphIO.h")
+try:
+    cppyy.include("ogdf/basic/internal/config_autogen.h")
+    cppyy.include("ogdf/basic/internal/config.h")
+    cppyy.include("ogdf/basic/Graph.h")
+    cppyy.include("ogdf/fileformats/GraphIO.h")
 
-cppyy.load_library("libOGDF.so")
+    cppyy.load_library("libOGDF")
+except:
+    print(
+        "ogdf-python couldn't load OGDF. "
+        "If you haven't installed OGDF globally to your system, "
+        "please set environment variables OGDF_INSTALL_DIR or OGDF_BUILD_DIR.",
+        file=sys.stderr)
+    raise
 
 import ogdf_python.doxygen
 import ogdf_python.pythonize
