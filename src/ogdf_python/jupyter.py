@@ -2,14 +2,15 @@ import sys
 
 import cppyy
 
-try:
+ip = None
+if "IPython" in sys.modules:
     from IPython import get_ipython
+
+    ip = get_ipython()
+
+if ip is not None:
     from IPython.core.magic import register_cell_magic
-    if not get_ipython():
-        raise ImportError("cell magic can only be used in context where `get_ipython` exists")
-except ImportError:
-    pass
-else:
+
     cppyy.cppdef("""
 #include <sstream>
 #include <streambuf>
