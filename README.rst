@@ -1,44 +1,52 @@
-ogdf-python 0.1.4-dev: Automagic Python Bindings for the Open Graph Drawing Framework
-=====================================================================================
-
-`Original repository <https://github.com/N-Coder/ogdf-python>`_ (GitHub) -
-`Bugtracker and issues <https://github.com/N-Coder/ogdf-python>`_ (GitHub) -
-`PyPi package <https://pypi.python.org/pypi/ogdf-python>`_ (PyPi ``ogdf-python``) -
-`Documentation <https://ogdf-python.readthedocs.io>`_ (Read The Docs).
-
-`Official OGDF website <https://ogdf.net>`_ (ogdf.net) -
-`Public OGDF repository <https://github.com/ogdf/ogdf>`_ (GitHub) -
-`Internal OGDF repository <https://git.tcs.uos.de/ogdf-devs/OGDF>`_ (GitLab) -
-`OGDF Documentation <https://ogdf.github.io/docs/ogdf/>`_ (GitHub / Doxygen) -
-`cppyy Documentation <https://cppyy.readthedocs.io>`_ (Read The Docs).
-
+.. |binder| image:: https://mybinder.org/badge_logo.svg
+ :target: https://mybinder.org/v2/gh/N-Coder/ogdf-python/HEAD?labpath=docs%2Fexamples%2Fsugiyama-simple.ipynb
 .. |(TM)| unicode:: U+2122
+
+ogdf-python 0.1.4-dev: Automagic Python Bindings for the Open Graph Drawing Framework |binder|
+==============================================================================================
 
 ``ogdf-python`` uses the `black magic <http://www.camillescott.org/2019/04/11/cmake-cppyy/>`_
 of the awesome `cppyy <https://bitbucket.org/wlav/cppyy/src/master/>`_ library to automagically generate python bindings
-for the C++ Open Graph Drawing Framework (OGDF).
+for the C++ `Open Graph Drawing Framework (OGDF) <https://ogdf.uos.de/>`_.
 It is available for Python>=3.6 and is Apache2 licensed.
 There are no binding definitions files, no stuff that needs extra compiling, it just works\ |(TM)|, believe me.
 Templates, namespaces, cross-language callbacks and inheritance, pythonic iterators and generators, it's all there.
 If you want to learn more about the magic behind the curtains, read `this article <http://www.camillescott.org/2019/04/11/cmake-cppyy/>`_.
 
+Useful Links
+------------
+`Original repository <https://github.com/N-Coder/ogdf-python>`_ (GitHub) -
+`Bugtracker and issues <https://github.com/N-Coder/ogdf-python>`_ (GitHub) -
+`PyPi package <https://pypi.python.org/pypi/ogdf-python>`_ (PyPi ``ogdf-python``) -
+`Try it out! <https://mybinder.org/v2/gh/N-Coder/ogdf-python/HEAD?labpath=docs%2Fexamples%2Fsugiyama-simple.ipynb>`_ (mybinder.org).
+
+`Official OGDF website <https://ogdf.uos.de/>`_ (ogdf.net) -
+`Public OGDF repository <https://github.com/ogdf/ogdf>`_ (GitHub) -
+`OGDF Documentation <https://ogdf.github.io/docs/ogdf/>`_ (GitHub / Doxygen) -
+`cppyy Documentation <https://cppyy.readthedocs.io>`_ (Read The Docs).
+
+..
+    `Documentation <https://ogdf-python.readthedocs.io>`_ (Read The Docs)
+    `Internal OGDF repository <https://git.tcs.uos.de/ogdf-devs/OGDF>`_ (GitLab)
+
 
 Quickstart
 ----------
 
-First, install the package ``ogdf-python`` package.
-Please note that building ``cppyy`` from sources may take a while.
-If you didn't install OGDF globally on your system,
-either set the ``OGDF_INSTALL_DIR`` to the prefix you configured in ``cmake``,
-or set ``OGDF_BUILD_DIR`` to the subdirectory of your copy of the OGDF repo where your
-`out-of-source build <https://ogdf.github.io/docs/ogdf/md_doc_build.html#autotoc_md4>`_ lives.
+Click here to start an interactive online Jupyter Notebook with an example OGDF graph where you can try out ``ogdf-python``: |binder|
+
+Simply re-run the code cell to see the graph. You can also find further examples next to that Notebook (i.e. via the folder icon on the left).
+To get a similar Jupyter Notebook with a little more compute power running on your local machine, use the following Docker command and open the link to ``localhost``/``127.0.0.1`` that will be printed in your browser:
 
 .. code-block:: bash
 
-    $ pip install ogdf-python
-    $ OGDF_BUILD_DIR=~/ogdf/build-debug python3
+    docker run -ti -p 8888:8888/tcp ncoder/ogdf:latest
+    
+Alternatively, see the instructions `below <#manual-installation>`_ for installing ``ogdf-python`` locally on your machine with ``pip``, but be aware that this requires a local build of the OGDF.
 
-Alternatively, ``ogdf-python`` works very well with Jupyter:
+Usage
+-----
+``ogdf-python`` works very well with Jupyter:
 
 .. code-block:: python
 
@@ -65,10 +73,26 @@ Alternatively, ``ogdf-python`` works very well with Jupyter:
     :alt: SugiyamaLayouted Graph
     :height: 300 px
 
-Read the pitfalls section and check out `docs/examples/pitfalls.ipynb <docs/examples/pitfalls.ipynb>`_
+Read the `pitfalls section <#pitfalls>`_ and check out `docs/examples/pitfalls.ipynb <docs/examples/pitfalls.ipynb>`_
 for the more advanced Sugiyama example from the OGDF docs.
 There is also a bigger example in `docs/examples/ogdf-includes.ipynb <docs/examples/ogdf-includes.ipynb>`_.
 If anything is unclear, check out the python help ``help(ogdf.Graph)`` and read the corresponding OGDF documentation.
+
+Manual Installation
+-------------------
+
+Use pip to install the ``ogdf-python`` package locally on your machine.
+Please note that building ``cppyy`` from sources may take a while.
+Furthermore, you will need a local shared library build (``-DBUILD_SHARED_LIBS=ON``) of the `OGDF <https://ogdf.github.io/doc/ogdf/md_doc_build.html>`_.
+If you didn't install the OGDF globally on your system,
+either set the ``OGDF_INSTALL_DIR`` to the prefix you configured in ``cmake``,
+or set ``OGDF_BUILD_DIR`` to the subdirectory of your copy of the OGDF repo where your
+`out-of-source build <https://ogdf.github.io/doc/ogdf/md_doc_build.html#autotoc_md4>`_ lives.
+
+.. code-block:: bash
+
+    $ pip install ogdf-python
+    $ OGDF_BUILD_DIR=~/ogdf/build-debug python3
 
 ..
     Documentation
