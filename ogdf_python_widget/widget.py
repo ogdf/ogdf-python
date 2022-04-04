@@ -46,7 +46,7 @@ class Widget(widgets.DOMWidget):
     zoom = Float(1).tag(sync=True)
 
     click_thickness = Integer(10).tag(sync=True)
-
+    grid_size = Integer(0).tag(sync=True)
     animation_duration = Integer(1000).tag(sync=True)
 
     force_config = Dict().tag(sync=True)

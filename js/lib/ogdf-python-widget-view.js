@@ -56,6 +56,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
 
         this.clickThickness = this.model.get("click_thickness")
         this.animationDuration = this.model.get("animation_duration")
+        this.gridSize = this.model.get('grid_size');
 
         this.nodes = []
         this.links = []
@@ -75,6 +76,8 @@ let WidgetView = widgets.DOMWidgetView.extend({
         this.model.on('change:click_thickness', this.clickThicknessChanged, this)
 
         this.model.on('change:animation_duration', this.animationDurationChanged, this)
+
+        this.model.on('change:grid_size', this.gridSizeChanged, this)
 
         this.model.on('change:force_config', this.forceConfigChanged, this)
 
@@ -221,6 +224,10 @@ let WidgetView = widgets.DOMWidgetView.extend({
 
     animationDurationChanged: function () {
         this.animationDuration = this.model.get("animation_duration")
+    },
+
+    gridSizeChanged:function () {
+        this.gridSize = this.model.get('grid_size');
     },
 
     clickThicknessChanged: function () {
@@ -1227,6 +1234,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
             d.startX = d.x
             d.startY = d.y
 
+            //makes stroke bigger for dragged node
             d3.select(widgetView.svg)
                 .selectAll(".node")
                 .filter(function (data) {
@@ -1240,34 +1248,47 @@ let WidgetView = widgets.DOMWidgetView.extend({
         }
 
         function dragged_nodes(event, d) {
+            let newX = event.x;
+            let newY = event.y;
+
+            //grid snapping
+            if (widgetView.gridSize !== 0) {
+                newX = widgetView.gridSize * Math.floor((event.x / widgetView.gridSize) + 0.5);
+                newY = widgetView.gridSize * Math.floor((event.y / widgetView.gridSize) + 0.5);
+            }
+
+            //force layout
             if (widgetView.forceDirected) {
-                event.subject.fx = event.x;
-                event.subject.fy = event.y;
+                event.subject.fx = newX;
+                event.subject.fy = newY;
                 return
             }
 
             const nodeId = this.id
             const line = d3.line()
 
+            //move node
             d3.select(widgetView.svg)
                 .selectAll(".node")
                 .filter(function (data) {
                     return data.id === nodeId;
                 })
-                .attr("cx", event.x)
-                .attr("cy", event.y)
-                .attr("x", event.x - d.nodeWidth / 2)
-                .attr("y", event.y - d.nodeHeight / 2);
+                .attr("cx", newX)
+                .attr("cy", newY)
+                .attr("x", newX - d.nodeWidth / 2)
+                .attr("y", newY - d.nodeHeight / 2);
 
+            //move node-label
             d3.select(widgetView.svg)
                 .selectAll("text")
                 .filter(function (data) {
                     return data.id === nodeId;
                 })
                 .attr("transform", function () { //<-- use transform it's not a g
-                    return "translate(" + event.x + "," + event.y + ")";
+                    return "translate(" + newX + "," + newY + ")";
                 });
 
+            //move attached links
             d3.select(widgetView.svg)
                 .selectAll(".line")
                 .filter(function (data) {
@@ -1275,12 +1296,12 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 })
                 .attr("d", function (d) {
                     if (d.source === nodeId) {
-                        d.sx = event.x
-                        d.sy = event.y
+                        d.sx = newX
+                        d.sy = newY
                     }
                     if (d.target === nodeId) {
-                        d.tx = event.x
-                        d.ty = event.y
+                        d.tx = newX
+                        d.ty = newY
                     }
                     if (d.source === d.target && d.bends.length === 0) {
                         return widgetView.getPath(d.sx, d.sy, d.tx, d.ty);
@@ -1293,6 +1314,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
         function dragEnded_nodes(event, d) {
             const nodeId = this.id
 
+            //returns stroke to normal for dragged node
             d3.select(widgetView.svg)
                 .selectAll(".node")
                 .filter(function (data) {
@@ -1320,6 +1342,11 @@ let WidgetView = widgets.DOMWidgetView.extend({
             } else {
                 d.x = Math.round(event.x)
                 d.y = Math.round(event.y)
+
+                if (widgetView.gridSize !== 0) {
+                    d.x = widgetView.gridSize * Math.floor((event.x / widgetView.gridSize) + 0.5);
+                    d.y = widgetView.gridSize * Math.floor((event.y / widgetView.gridSize) + 0.5);
+                }
                 widgetView.send({"code": "nodeMoved", "id": this.id, "x": d.x, "y": d.y});
             }
         }
