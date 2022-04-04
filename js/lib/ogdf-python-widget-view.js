@@ -211,10 +211,10 @@ let WidgetView = widgets.DOMWidgetView.extend({
 
         if (!this.isNodeMovementEnabled) {
             d3.select(this.svg).selectAll(".node").on('mousedown.drag', null)
-            d3.select(this.svg).selectAll("text").on('mousedown.drag', null)
+            d3.select(this.svg).selectAll(".nodeLabel").on('mousedown.drag', null)
         } else {
             d3.select(this.svg).selectAll(".node").call(this.node_drag_handler)
-            d3.select(this.svg).selectAll("text").call(this.node_drag_handler)
+            d3.select(this.svg).selectAll(".nodeLabel").call(this.node_drag_handler)
         }
     },
 
@@ -226,7 +226,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
         this.animationDuration = this.model.get("animation_duration")
     },
 
-    gridSizeChanged:function () {
+    gridSizeChanged: function () {
         this.gridSize = this.model.get('grid_size');
     },
 
@@ -436,6 +436,17 @@ let WidgetView = widgets.DOMWidgetView.extend({
                     let points = [[data.sx, data.sy]].concat(data.bends).concat([[data.tx, data.ty]])
                     return line(points)
                 })
+
+            if (bendIndex === 0) {
+                d3.select(widgetView.svg)
+                    .selectAll(".linkLabel")
+                    .filter(function (data) {
+                        return data.id === edgeId;
+                    })
+                    .attr("transform", function () { //<-- use transform it's not a g
+                        return "translate(" + event.x + "," + event.y + ")";
+                    });
+            }
         }
 
         function dragEnded_bends(event, d) {
@@ -1187,7 +1198,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
 
         this.text_holder = this.g.append("g")
             .attr("class", "text_holder")
-            .selectAll("text")
+            .selectAll(".nodeLabel")
 
         for (let i = 0; i < nodes_data.length; i++) {
             widgetView.constructNode(nodes_data[i], this.node_holder, this.text_holder, widgetView, false)
@@ -1280,7 +1291,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
 
             //move node-label
             d3.select(widgetView.svg)
-                .selectAll("text")
+                .selectAll(".nodeLabel")
                 .filter(function (data) {
                     return data.id === nodeId;
                 })
@@ -1288,6 +1299,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
                     return "translate(" + newX + "," + newY + ")";
                 });
 
+            let labelsToMoveIds = []
             //move attached links
             d3.select(widgetView.svg)
                 .selectAll(".line")
@@ -1303,12 +1315,33 @@ let WidgetView = widgets.DOMWidgetView.extend({
                         d.tx = newX
                         d.ty = newY
                     }
+
+                    if (d.bends.length === 0) {
+                        labelsToMoveIds.push(d.id)
+                    }
+
+                    //selfloop
                     if (d.source === d.target && d.bends.length === 0) {
                         return widgetView.getPath(d.sx, d.sy, d.tx, d.ty);
                     }
+
                     let points = [[d.sx, d.sy]].concat(d.bends).concat([[d.tx, d.ty]])
                     return line(points)
                 })
+
+            //move link-label
+            for (let i = 0; i < labelsToMoveIds.length; i++) {
+                d3.select(widgetView.svg)
+                    .selectAll(".linkLabel")
+                    .filter(function (data) {
+                        return data.id === labelsToMoveIds[i];
+                    })
+                    .attr("transform", function (data) { //<-- use transform it's not a g
+                        let labelX = (data.sx + data.tx) / 2
+                        let labelY = (data.sy + data.ty) / 2
+                        return "translate(" + labelX + "," + labelY + ")";
+                    });
+            }
         }
 
         function dragEnded_nodes(event, d) {
