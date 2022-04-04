@@ -52,6 +52,8 @@ class Widget(widgets.DOMWidget):
     force_config = Dict().tag(sync=True)
 
     rescale_on_resize = Bool(True).tag(sync=True)
+    node_movement_enabled = Bool(False).tag(sync=True)
+
 
     on_node_click_callback = None
     on_link_click_callback = None
@@ -170,9 +172,6 @@ class Widget(widgets.DOMWidget):
     def refresh_graph(self):
         self.send({"code": "clearGraph"})
         self.export_graph()
-
-    def enable_node_movement(self, enable):
-        self.send({"code": "enableNodeMovement", "value": enable})
 
     def move_link(self, link):
         self.send({"code": "moveLink", "data": self.link_to_dict(link)})

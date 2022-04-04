@@ -47,7 +47,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
     initialize: function (parameters) {
         WidgetView.__super__.initialize.call(this, parameters);
 
-        this.isNodeMovementEnabled = false
+        this.isNodeMovementEnabled = this.model.get("node_movement_enabled")
 
         //only for internal use
         this.isTransformCallbackAllowed = true
@@ -77,6 +77,8 @@ let WidgetView = widgets.DOMWidgetView.extend({
         this.model.on('change:animation_duration', this.animationDurationChanged, this)
 
         this.model.on('change:force_config', this.forceConfigChanged, this)
+
+        this.model.on('change:node_movement_enabled', this.nodeMovementChanged, this)
 
         this.ticksSinceSync = 0
 
@@ -169,7 +171,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
                     return d.target.y;
                 })
                 .attr("d", function (d) {
-                    if (d.source === d.target){
+                    if (d.source === d.target) {
                         return widgetView.getPath(d.source.x, d.source.y, d.target.x, d.target.y)
                     }
                 });
@@ -198,6 +200,18 @@ let WidgetView = widgets.DOMWidgetView.extend({
             this.stopForceLayout()
         } else {
             this.startForceLayout(forceConfig)
+        }
+    },
+
+    nodeMovementChanged: function () {
+        this.isNodeMovementEnabled = this.model.get("node_movement_enabled")
+
+        if (!this.isNodeMovementEnabled) {
+            d3.select(this.svg).selectAll(".node").on('mousedown.drag', null)
+            d3.select(this.svg).selectAll("text").on('mousedown.drag', null)
+        } else {
+            d3.select(this.svg).selectAll(".node").call(this.node_drag_handler)
+            d3.select(this.svg).selectAll("text").call(this.node_drag_handler)
         }
     },
 
@@ -290,16 +304,6 @@ let WidgetView = widgets.DOMWidgetView.extend({
     handle_msg: function (msg) {
         if (msg.code === 'clearGraph') {
             this.clearGraph()
-        } else if (msg.code === 'enableNodeMovement') {
-            this.isNodeMovementEnabled = msg.value
-
-            if (!this.isNodeMovementEnabled) {
-                d3.select(this.svg).selectAll(".node").on('mousedown.drag', null);
-                d3.select(this.svg).selectAll("text").on('mousedown.drag', null);
-            } else {
-                d3.select(this.svg).selectAll(".node").call(this.node_drag_handler)
-                d3.select(this.svg).selectAll("text").call(this.node_drag_handler)
-            }
         } else if (msg.code === 'initGraph') {
             this.links = msg.links
             this.nodes = msg.nodes
@@ -838,8 +842,10 @@ let WidgetView = widgets.DOMWidgetView.extend({
 
         this.draw_graph(this.nodes, this.links)
 
+        var widgetView = this
+
         setTimeout(function () {
-            this.rescaleAllText()
+            widgetView.rescaleAllText()
         }, 10)
     },
 
@@ -1095,7 +1101,7 @@ let WidgetView = widgets.DOMWidgetView.extend({
                 }
             })
 
-        if (!basic && this.isNodeMovementEnabled) {
+        if (widgetView.isNodeMovementEnabled) {
             node.call(widgetView.node_drag_handler)
             text.call(widgetView.node_drag_handler)
         }
