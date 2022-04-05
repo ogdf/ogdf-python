@@ -73,7 +73,7 @@ CGA_FIELDS = [
     ("templateCluster", "ogdf::cluster", "const std::string &"),
 ]
 GA_FIELD_NAMES = set(t[0] for t in GA_FIELDS)
-CGA_FIELD_NAMES = set(t[0] for t in GA_FIELDS + CGA_FIELDS)
+CGA_FIELD_NAMES = set(t[0] for t in CGA_FIELDS)
 
 
 def generate_GA_setters():
