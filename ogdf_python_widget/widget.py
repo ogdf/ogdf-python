@@ -54,7 +54,6 @@ class Widget(widgets.DOMWidget):
     rescale_on_resize = Bool(True).tag(sync=True)
     node_movement_enabled = Bool(False).tag(sync=True)
 
-
     on_node_click_callback = None
     on_link_click_callback = None
     on_svg_click_callback = None
@@ -125,12 +124,13 @@ class Widget(widgets.DOMWidget):
             n = self.get_node_from_id(node['id'])
             self.move_node_to(n, node['x'], node['y'])
 
-    def start_force_directed(self, charge_force=-100, force_center_x=None, force_center_y=None, fix_start_position=True):
+    def start_force_directed(self, charge_force=-100, force_center_x=None, force_center_y=None,
+                             fix_start_position=True):
         for link in self.graph_attributes.constGraph().edges:
             self.graph_attributes.bends(link).clear()
 
         if force_center_x is None or force_center_y is None:
-            center_coords = self.svgcoords_to_graphcoords(self.width / 2, self.height / 2)
+            center_coords = self.svgCoords_to_graphCoords(self.width / 2, self.height / 2)
             force_center_x = center_coords['x']
             force_center_y = center_coords['y']
 
@@ -203,7 +203,7 @@ class Widget(widgets.DOMWidget):
 
         self.send({"code": "downloadSvg", "fileName": file_name})
 
-    def svgcoords_to_graphcoords(self, svg_x, svg_y):
+    def svgCoords_to_graphCoords(self, svg_x, svg_y):
         g_x = svg_x / self.zoom - self.x_pos / self.zoom
         g_y = svg_y / self.zoom - self.y_pos / self.zoom
         return {'x': g_x, 'y': g_y}
