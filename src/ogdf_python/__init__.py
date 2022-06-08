@@ -38,6 +38,13 @@ import ogdf_python.pythonize
 import ogdf_python.jupyter
 from cppyy.gbl import ogdf
 
+try:
+    from ogdf_python_widget import _auto_enable
+except ImportError:
+    pass
+else:
+    _auto_enable()
+
 __version__ = "0.1.4-dev"
 __all__ = ["ogdf", "cppinclude", "cppdef", "cppexec", "nullptr", "__version__"]
 __keep_imports = [cppyy,

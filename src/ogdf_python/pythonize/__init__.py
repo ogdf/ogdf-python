@@ -22,11 +22,11 @@ def pythonize_ogdf(klass, name):
     elif name.startswith("GraphObjectContainer"):
         klass.byid = GraphObjectContainer_byindex
         klass.__getitem__ = iterable_getitem
-    elif re.match("S?List(Pure)?", name):
+    elif re.fullmatch("S?List(Pure)?", name):
         klass.__getitem__ = iterable_getitem
-    elif re.match("List(Const)?(Reverse)?Iterator(Base)?(<.+>)?", name):
+    elif re.fullmatch("List(Const)?(Reverse)?Iterator(Base)?(<.+>)?", name):
         klass.__next__ = advance_iterator
-    elif re.match("(Node|Edge|AdjEntry|Cluster|Face)Array", name):
+    elif re.fullmatch("(Node|Edge|AdjEntry|Cluster|Face)Array", name):
         klass.__iter__ = cpp_iterator
         # klass.__str__ = grapharray_str # TODO there is no generic way to get the key list (yet)
 
