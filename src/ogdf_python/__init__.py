@@ -22,6 +22,7 @@ try:
     cppyy.include("ogdf/basic/internal/config_autogen.h")
     cppyy.include("ogdf/basic/internal/config.h")
     cppyy.include("ogdf/basic/Graph.h")
+    cppyy.include("ogdf/cluster/ClusterGraphObserver.h") # otherwise only pre-declared
     cppyy.include("ogdf/fileformats/GraphIO.h")
 
     cppyy.load_library("libOGDF")
