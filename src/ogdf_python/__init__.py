@@ -11,7 +11,7 @@ if "OGDF_INSTALL_DIR" in os.environ:
     INSTALL_DIR = os.path.expanduser(os.getenv("OGDF_INSTALL_DIR"))
     cppyy.add_include_path(os.path.join(INSTALL_DIR, "include"))
     cppyy.add_library_path(os.path.join(INSTALL_DIR, "lib"))
-elif "OGDF_BUILD_DIR" in os.environ:
+if "OGDF_BUILD_DIR" in os.environ:
     BUILD_DIR = os.path.expanduser(os.getenv("OGDF_BUILD_DIR"))
     cppyy.add_include_path(os.path.join(BUILD_DIR, "include"))
     cppyy.add_include_path(os.path.join(BUILD_DIR, "..", "include"))
