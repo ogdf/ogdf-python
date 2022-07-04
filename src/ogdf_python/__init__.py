@@ -54,7 +54,7 @@ except ImportError:
 else:
     _auto_enable()
 
-__version__ = "0.1.4"
+__version__ = "0.1.5-dev"
 __all__ = ["ogdf", "cppinclude", "cppdef", "cppexec", "nullptr", "__version__", "get_ogdf_info"]
 __keep_imports = [cppyy,
                   ogdf_python.doxygen,
