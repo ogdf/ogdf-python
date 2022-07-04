@@ -76,6 +76,7 @@ def pythonize_docstrings(klass, name):
             # print(klass.__cpp_name__, "has no member", mem)
             continue
         try:
+            val.__doc__ = val.__doc__ or ""
             for override in data["members"][mem].values():
                 val.__doc__ += "\n" + DOXYGEN_URL % (data["refid"], override["refid"][len(data["refid"]) + 2:])
         except AttributeError as e:
