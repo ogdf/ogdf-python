@@ -40,6 +40,12 @@ import ogdf_python.pythonize
 import ogdf_python.jupyter
 from cppyy.gbl import ogdf
 
+if ogdf.debugMode:
+    cppyy.cppdef("#undef NDEBUG")
+else:
+    cppyy.cppdef("#define NDEBUG")
+cppyy.include("cassert")
+
 try:
     from ogdf_python_widget import _auto_enable
 except ImportError:
