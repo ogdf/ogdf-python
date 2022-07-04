@@ -38,6 +38,7 @@ except:
 import ogdf_python.doxygen
 import ogdf_python.pythonize
 import ogdf_python.jupyter
+from ogdf_python.info import get_ogdf_info
 from cppyy.gbl import ogdf
 
 if ogdf.debugMode:
@@ -54,7 +55,7 @@ else:
     _auto_enable()
 
 __version__ = "0.1.4-dev"
-__all__ = ["ogdf", "cppinclude", "cppdef", "cppexec", "nullptr", "__version__"]
+__all__ = ["ogdf", "cppinclude", "cppdef", "cppexec", "nullptr", "__version__", "get_ogdf_info"]
 __keep_imports = [cppyy,
                   ogdf_python.doxygen,
                   ogdf_python.pythonize,
