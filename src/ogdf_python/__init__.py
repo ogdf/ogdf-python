@@ -30,7 +30,8 @@ except:
     print(
         "ogdf-python couldn't load OGDF. "
         "If you haven't installed OGDF globally to your system, "
-        "please set environment variables OGDF_INSTALL_DIR or OGDF_BUILD_DIR.",
+        "please set environment variables OGDF_INSTALL_DIR or OGDF_BUILD_DIR. "
+        "The current search path is:\n%s" % cppyy.gbl.gSystem.GetDynamicPath(),
         file=sys.stderr)
     raise
 
