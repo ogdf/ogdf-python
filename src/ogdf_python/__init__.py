@@ -2,6 +2,7 @@ import os
 import sys
 
 import cppyy.ll
+import importlib_resources
 from cppyy import include as cppinclude, cppdef, cppexec, nullptr
 
 cppyy.ll.set_signals_as_exception(True)
@@ -16,22 +17,32 @@ if "OGDF_BUILD_DIR" in os.environ:
     cppyy.add_include_path(os.path.join(BUILD_DIR, "include"))
     cppyy.add_include_path(os.path.join(BUILD_DIR, "..", "include"))
     cppyy.add_library_path(BUILD_DIR)
+try:
+    wheel_inst_dir = importlib_resources.files("ogdf_wheel") / "install"
+    if wheel_inst_dir.is_dir():
+        cppyy.add_library_path(str(wheel_inst_dir / "lib"))
+        cppyy.add_library_path(str(wheel_inst_dir / "bin"))
+        cppyy.add_include_path(str(wheel_inst_dir / "include"))
+except ImportError:
+    pass
 
 cppyy.cppdef("#undef NDEBUG")
 try:
     cppyy.include("ogdf/basic/internal/config_autogen.h")
     cppyy.include("ogdf/basic/internal/config.h")
     cppyy.include("ogdf/basic/Graph.h")
-    cppyy.include("ogdf/cluster/ClusterGraphObserver.h") # otherwise only pre-declared
+    cppyy.include("ogdf/cluster/ClusterGraphObserver.h")  # otherwise only pre-declared
     cppyy.include("ogdf/fileformats/GraphIO.h")
 
-    cppyy.load_library("libOGDF")
+    cppyy.load_library("OGDF")
 except:
     print(
         "ogdf-python couldn't load OGDF. "
         "If you haven't installed OGDF globally to your system, "
         "please set environment variables OGDF_INSTALL_DIR or OGDF_BUILD_DIR. "
-        "The current search path is:\n%s" % cppyy.gbl.gSystem.GetDynamicPath(),
+        "The current search path is:\n%s\n"
+        "The current include path is:\n%s" %
+        (cppyy.gbl.gSystem.GetDynamicPath(), cppyy.gbl.gInterpreter.GetIncludePath()),
         file=sys.stderr)
     raise
 
