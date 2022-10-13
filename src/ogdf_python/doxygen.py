@@ -60,7 +60,10 @@ def find_all_includes():
 # doc strings / help messages##########################################################################################
 
 def pythonize_docstrings(klass, name):
-    data = DOXYGEN_DATA["class"][klass.__cpp_name__.partition("<")[0]]  # TODO do the same for namespace members
+    basename = klass.__cpp_name__.partition("<")[0]
+    if basename not in DOXYGEN_DATA["class"]:
+        return
+    data = DOXYGEN_DATA["class"][basename]  # TODO do the same for namespace members
     url = DOXYGEN_URL % (data["refid"], "")
     try:
         if klass.__doc__:
