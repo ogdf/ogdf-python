@@ -22,7 +22,7 @@ except ImportError:
 else:
     _auto_enable()
 
-__version__ = "0.1.5-dev"
+__version__ = "0.1.5"
 __all__ = ogdf_python.loader.__all__ + ogdf_python.utils.__all__ + ogdf_python.info.__all__
 
 if __name__ == "__main__":
