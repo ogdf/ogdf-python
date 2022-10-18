@@ -9,7 +9,10 @@ from ogdf_python.pythonize.str import *
 
 def pythonize_ogdf(klass, name):
     # print(name, klass)
-    pythonize_docstrings(klass, name)
+    try:
+        pythonize_docstrings(klass, name)
+    except Exception:
+        pass # we ignore if updating the docs fails
 
     if name in ("Graph", "ClusterGraph"):
         klass._repr_html_ = GraphAttributes_to_html

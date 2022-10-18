@@ -139,6 +139,8 @@ def wrap_getattribute(ns):
         except AttributeError as e:
             if hasattr(e, "__helpful__"):
                 raise e
+            if not hasattr(e, "__cpp_name__"):
+                raise e
             msg = e.args[0]
             file = find_include(*ns.__cpp_name__.split("::"), name)
             if file:
