@@ -1,7 +1,10 @@
-import cppyy
+from ogdf_python.loader import *
+
+__all__ = ["get_ogdf_info"]
+
 
 def get_macro(m):
-    cppyy.cppdef("""
+    cppdef("""
 #define STR(str) #str
 #define STRING(str) STR(str)
 namespace get_macro {{
@@ -15,9 +18,10 @@ namespace get_macro {{
         val = val.decode("ascii")
     return val
 
+
 def conf_which(n):
-    w = "which%s"%n
-    cppyy.cppdef("""
+    w = "which%s" % n
+    cppdef("""
 namespace conf_which {{
     std::string {w}() {{
         return ogdf::Configuration::toString(ogdf::Configuration::{w}());
@@ -26,8 +30,8 @@ namespace conf_which {{
 """.format(w=w))
     return getattr(cppyy.gbl.conf_which, w)().decode("ascii")
 
+
 def get_ogdf_info():
-    from ogdf_python import ogdf, cppinclude
     cppinclude("ogdf/basic/System.h")
     # gbl.gSystem.ListLibraries()
     data = {
@@ -70,7 +74,3 @@ def get_ogdf_info():
     if (hasattr(ogdf.System, "peakMemoryUsedByProcess")):
         data["peakMemoryUsedByProcess"] = ogdf.System.peakMemoryUsedByProcess()
     return data
-
-if __name__ == "__main__":
-    from pprint import pprint
-    pprint(get_ogdf_info())
