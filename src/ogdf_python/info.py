@@ -35,7 +35,7 @@ def get_ogdf_info():
     cppinclude("ogdf/basic/System.h")
     # gbl.gSystem.ListLibraries()
     data = {
-        "ogdf_path": cppyy.gbl.gSystem.FindDynamicLibrary(cppyy.gbl.CppyyLegacy.TString("libOGDF"), True),
+        "ogdf_path": cppyy.gbl.gSystem.FindDynamicLibrary(cppyy.gbl.CppyyLegacy.TString("OGDF"), True),
         "ogdf_version": get_macro("OGDF_VERSION").strip('"'),
         "ogdf_debug": get_macro("OGDF_DEBUG") is not None,
         "ogdf_build_debug": ogdf.debugMode,
