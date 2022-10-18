@@ -43,6 +43,10 @@ def pythonize_ogdf(klass, name):
         klass.__str__ = adjEntry_str
         klass.__repr__ = adjEntry_repr
 
+    elif name == "Color":
+        klass.__str__ = lambda self: self.toString().decode("ascii")
+        klass.__repr__ = lambda self: "ogdf.Color(%r)" % str(self)
+
 
 cppyy.py.add_pythonization(pythonize_ogdf, "ogdf")
 cppyy.py.add_pythonization(pythonize_ogdf, "ogdf::internal")
