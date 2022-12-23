@@ -31,11 +31,15 @@ namespace conf_which {{
     return getattr(cppyy.gbl.conf_which, w)().decode("ascii")
 
 
+def get_library_path(name):
+    return cppyy.gbl.gSystem.FindDynamicLibrary(cppyy.gbl.CppyyLegacy.TString(name), True)
+
+
 def get_ogdf_info():
     cppinclude("ogdf/basic/System.h")
     # gbl.gSystem.ListLibraries()
     data = {
-        "ogdf_path": cppyy.gbl.gSystem.FindDynamicLibrary(cppyy.gbl.CppyyLegacy.TString("OGDF"), True),
+        "ogdf_path": get_library_path("OGDF") or get_library_path("libOGDF"),
         "ogdf_version": get_macro("OGDF_VERSION").strip('"'),
         "ogdf_debug": get_macro("OGDF_DEBUG") is not None,
         "ogdf_build_debug": ogdf.debugMode,
@@ -71,6 +75,6 @@ def get_ogdf_info():
         "LPsolver": conf_which("LPSolver"),
         "memoryManager": conf_which("MemoryManager"),
     }
-    if (hasattr(ogdf.System, "peakMemoryUsedByProcess")):
+    if hasattr(ogdf.System, "peakMemoryUsedByProcess"):
         data["peakMemoryUsedByProcess"] = ogdf.System.peakMemoryUsedByProcess()
     return data
