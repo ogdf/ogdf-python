@@ -47,6 +47,11 @@ def pythonize_ogdf(klass, name):
         klass.__str__ = lambda self: self.toString().decode("ascii")
         klass.__repr__ = lambda self: "ogdf.Color(%r)" % str(self)
 
+    elif name == "GraphIO":
+        for key, func in klass.__dict__.items():
+            if key.startswith(("read", "write", "draw")):
+                setattr(klass, key, wrap_GraphIO(func))
+
 
 cppyy.py.add_pythonization(pythonize_ogdf, "ogdf")
 cppyy.py.add_pythonization(pythonize_ogdf, "ogdf::internal")

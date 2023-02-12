@@ -131,6 +131,8 @@ def wrap_getattribute(ns):
 
     @functools.wraps(getattrib)
     def helpful_getattribute(ns, name):
+        if name.startswith("__"):  # do not modify internals
+            return getattrib(ns, name)
         try:
             val = getattrib(ns, name)
             if isinstance(type(val), type(type(ns))):
