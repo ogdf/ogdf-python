@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Poster</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet"/>
+
+    <link type="text/css" rel="stylesheet" href="material-color.css">
+    <link type="text/css" rel="stylesheet" href="jupyter.css">
+    <link type="text/css" rel="stylesheet" href="widgets.css">
+    <link type="text/css" rel="stylesheet" href="style.css">
+
+    <script>
+        window.ZeroMdConfig = {
+            cssUrls: [
+                "https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.min.css",
+                "material-color.css",
+                "jupyter.css",
+                "style.css"
+            ],
+            hostCss: "\
+:host {\
+    display: block;\
+    position: relative;\
+    /*contain: content;*/\
+}\
+:host([hidden]) {\
+    display: none;\
+}"
+        }
+    </script>
+</head>
+<body>
+
+<h1 class="toolbar">
+    <img src="jupyter-wide.svg" style="margin-right: 5px"/>
+    <span>ogdf-python</span>
+    <span style="font-weight: normal; font-size: 60%">
+        Simon D. Fink &amp; Andreas Strobl, University of Passau <img src="upassau.svg"/>
+    </span>
+    <span style="float: right">
+        <img src="ogdf.png"/>
+        +
+        <img src="python.svg"/>
+    </span>
+</h1>
+
+<div class="toolbar" id="menu">
+    <span>File</span>
+    <span>Edit</span>
+    <span>View</span>
+    <span>Run</span>
+    <span>Kernel</span>
+    <span>Settings</span>
+    <span>Help</span>
+    <span style="float: right">Trusted</span>
+</div>
+
+<div class="toolbar toolbar-last">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-icon="ui-components:save">
+        <g xmlns="http://www.w3.org/2000/svg" class="jp-icon3" fill="#616161">
+            <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"></path>
+        </g>
+    </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" data-icon="ui-components:add">
+        <g xmlns="http://www.w3.org/2000/svg" class="jp-icon3" fill="#616161">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"></path>
+        </g>
+    </svg>
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-icon="ui-components:cut">
+        <g xmlns="http://www.w3.org/2000/svg" class="jp-icon3" fill="#616161">
+            <path d="M9.64 7.64c.23-.5.36-1.05.36-1.64 0-2.21-1.79-4-4-4S2 3.79 2 6s1.79 4 4 4c.59 0 1.14-.13 1.64-.36L10 12l-2.36 2.36C7.14 14.13 6.59 14 6 14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4c0-.59-.13-1.14-.36-1.64L12 14l7 7h3v-1L9.64 7.64zM6 8c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm0 12c-1.1 0-2-.89-2-2s.9-2 2-2 2 .89 2 2-.9 2-2 2zm6-7.5c-.28 0-.5-.22-.5-.5s.22-.5.5-.5.5.22.5.5-.22.5-.5.5zM19 3l-6 6 2 2 7-7V3z"></path>
+        </g>
+    </svg>
+    <svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" data-icon="ui-components:copy">
+        <g xmlns="http://www.w3.org/2000/svg" class="jp-icon3" fill="#616161">
+            <path d="M11.9,1H3.2C2.4,1,1.7,1.7,1.7,2.5v10.2h1.5V2.5h8.7V1z M14.1,3.9h-8c-0.8,0-1.5,0.7-1.5,1.5v10.2c0,0.8,0.7,1.5,1.5,1.5h8 c0.8,0,1.5-0.7,1.5-1.5V5.4C15.5,4.6,14.9,3.9,14.1,3.9z M14.1,15.5h-8V5.4h8V15.5z"></path>
+        </g>
+    </svg>
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-icon="ui-components:paste">
+        <g xmlns="http://www.w3.org/2000/svg" class="jp-icon3" fill="#616161">
+            <path d="M19 2h-4.18C14.4.84 13.3 0 12 0c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm7 18H5V4h2v3h10V4h2v16z"></path>
+        </g>
+    </svg>
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-icon="ui-components:run">
+        <g xmlns="http://www.w3.org/2000/svg" class="jp-icon3" fill="#616161">
+            <path d="M8 5v14l11-7z"></path>
+        </g>
+    </svg>
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-icon="ui-components:stop">
+        <g xmlns="http://www.w3.org/2000/svg" class="jp-icon3" fill="#616161">
+            <path d="M0 0h24v24H0z" fill="none"></path>
+            <path d="M6 6h12v12H6z"></path>
+        </g>
+    </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" data-icon="ui-components:refresh">
+        <g xmlns="http://www.w3.org/2000/svg" class="jp-icon3" fill="#616161">
+            <path d="M9 13.5c-2.49 0-4.5-2.01-4.5-4.5S6.51 4.5 9 4.5c1.24 0 2.36.52 3.17 1.33L10 8h5V3l-1.76 1.76C12.15 3.68 10.66 3 9 3 5.69 3 3.01 5.69 3.01 9S5.69 15 9 15c2.97 0 5.43-2.16 5.9-5h-1.52c-.46 2-2.24 3.5-4.38 3.5z"></path>
+        </g>
+    </svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+         data-icon="ui-components:fast-forward">
+        <g xmlns="http://www.w3.org/2000/svg" class="jp-icon3" fill="#616161">
+            <path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"></path>
+        </g>
+    </svg>
+    <select>
+        <option value="code">Code</option>
+    </select>
+
+    <span style="float: right">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" data-icon="ui-components:bug">
+            <g xmlns="http://www.w3.org/2000/svg" class="jp-icon3 jp-icon-selectable" fill="#616161">
+                <path d="M20 8h-2.81c-.45-.78-1.07-1.45-1.82-1.96L17 4.41 15.59 3l-2.17 2.17C12.96 5.06 12.49 5 12 5c-.49 0-.96.06-1.41.17L8.41 3 7 4.41l1.62 1.63C7.88 6.55 7.26 7.22 6.81 8H4v2h2.09c-.05.33-.09.66-.09 1v1H4v2h2v1c0 .34.04.67.09 1H4v2h2.81c1.04 1.79 2.97 3 5.19 3s4.15-1.21 5.19-3H20v-2h-2.09c.05-.33.09-.66.09-1v-1h2v-2h-2v-1c0-.34-.04-.67-.09-1H20V8zm-6 8h-4v-2h4v2zm0-4h-4v-2h4v2z"></path>
+            </g>
+        </svg>
+        <span>Python 3 (ipykernel)</span>
+        <svg viewBox="0 0 250 250">
+            <circle cx="125" cy="125" r="104" stroke="var(--jp-inverse-layout-color3)" stroke-width="20"
+                    fill="none"></circle>
+            <path transform="translate(125,125) scale(.9)" d="M 0 0 v -104 A 104 104 1 0 0 -0.0000 -104.0000 z"
+                  fill="var(--jp-inverse-layout-color3)"></path>
+        </svg>
+    </span>
+</div>
+
+<main>
+    <div class="column">
+        <zero-md class="cell" src="content/intro.md"></zero-md>
+        <div class="split-cell">
+            <pre class="language-python" data-src="content/intro.py"></pre>
+            <pre class="language-cpp" data-src="content/intro.cpp"></pre>
+        </div>
+        <div class="output output-img"><img src="content/intro.svg"/></div>
+
+        <zero-md class="cell" src="content/install.md"></zero-md>
+
+        <zero-md class="cell" src="content/algo.md"></zero-md>
+        <pre class="cell language-python" data-src="content/algo.py"></pre>
+    </div>
+
+    <div class="column">
+        <zero-md class="cell" src="content/dfs.md"></zero-md>
+        <!--<pre class="cell language-python" data-src="content/dfs.py"></pre>-->
+        <div class="output" style="background-color: white">
+            <div class="lm-Widget lm-Panel jupyter-widgets widget-container widget-box widget-hbox">
+                <div class="lm-Widget jupyter-widgets widget-inline-hbox widget-play">
+                    <button class="jupyter-button" data-_extension-text-contrast=""><i class="fa fa-play"></i></button>
+                    <button class="jupyter-button" data-_extension-text-contrast=""><i class="fa fa-stop"></i></button>
+                    <button class="jupyter-button" data-_extension-text-contrast=""><i class="fa fa-retweet"></i>
+                    </button>
+                </div>
+                <div class="lm-Widget jupyter-widgets widget-inline-hbox widget-slider widget-hslider"
+                     style="flex-grow: 1">
+                    <label class="widget-label" style="display: none;" title="null"></label>
+                    <div class="slider-container">
+                        <div class="slider noUi-target noUi-ltr noUi-horizontal noUi-txt-dir-ltr">
+                            <div class="noUi-base">
+                                <div class="noUi-connects"></div>
+                                <div class="noUi-origin" style="transform: translate(-650%); z-index: 4;">
+                                    <div class="noUi-handle noUi-handle-lower" data-handle="0" tabindex="0"
+                                         role="slider" aria-orientation="horizontal" aria-valuemin="0.0"
+                                         aria-valuemax="40" aria-valuenow="14" aria-valuetext="14">
+                                        <div class="noUi-touch-area"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="widget-readout" contenteditable="true" style="">14</div>
+                </div>
+                <button class="lm-Widget jupyter-widgets jupyter-button widget-button" title="New Graph"
+                        data-_extension-text-contrast="">New Graph
+                </button>
+            </div>
+            <div class="output-img" style="margin-top: 5px"><img src="content/dfs2.svg"/></div>
+        </div>
+
+        <zero-md class="cell" src="content/editor.md"></zero-md>
+        <!--<pre class="cell language-python" data-src="content/editor.py"></pre>-->
+        <div class="output output-img" style="overflow: clip">
+            <img src="content/editor.svg" style="scale: 5;translate: -120% -20%"/>
+            <div class="inlay">
+                <b>Selected Vertex 12</b><br/>
+                <table>
+                    <tr><td>ID</td><td>12</td></tr>
+                    <tr><td>Label</td><td>"N12"</td></tr>
+                    <tr><td>Degree</td><td>3</td></tr>
+                    <tr><td>Position</td><td>390, 320</td></tr>
+                    <tr><td>Size</td><td>20 x 20</td></tr>
+                </table>
+                <button class="jupyter-button">Move</button>
+                <button class="jupyter-button">Add Edge</button>
+                <button class="jupyter-button">Delete</button>
+            </div>
+            <div class="inlay inlay-top">
+                <button class="jupyter-button">New Vertex</button>
+            </div>
+        </div>
+
+        <zero-md class="cell" src="content/interact.md"></zero-md>
+        <pre class="cell language-cpp" data-src="content/interact1.cpp"></pre>
+        <pre class="output">Hello World from C++!</pre>
+        <pre class="cell language-python" data-src="content/interact2.py"></pre>
+        <div class="output output-img"><img src="content/interact2.svg"/></div>
+        <pre class="cell language-cpp" data-src="content/interact3.h"></pre>
+        <pre class="cell language-python" data-src="content/interact4.py"></pre>
+        <pre class="output">The node widths are [20.0, 20.0, 20.0, 20.0, 40.0, 20.0, 20.0, 20.0, 20.0]
+The average width is 22</pre>
+
+        <!--
+        <pre class="cell"><code class="language-python">
+# we also have python docs and the C++ doxygen docs linked from there
+help(G.unsplit)
+        </code></pre>
+        <pre class="output">Help on CPPOverload in module cppyy:
+
+unsplit(...)
+    void ogdf::Graph::unsplit(ogdf::node u)
+    void ogdf::Graph::unsplit(ogdf::edge eIn, ogdf::edge eOut)
+    <a href="https://ogdf.github.io/doc/ogdf/classogdf_1_1_graph.html#a1e86ecdfbcf0fbeea55585ca14308037">https://ogdf.github.io/doc/ogdf/classogdf_1_1_graph.html#a1e86ecdfbcf0fbeea55585ca14308037</a>
+    <a href="https://ogdf.github.io/doc/ogdf/classogdf_1_1_graph.html#a14cc6ad7b8ab14513045ec93a5d23adf">https://ogdf.github.io/doc/ogdf/classogdf_1_1_graph.html#a14cc6ad7b8ab14513045ec93a5d23adf</a></pre>
+    -->
+    </div>
+</main>
+
+<footer>
+    ogdf-python &ndash; https://github.com/N-Coder/ogdf-python &ndash; Simon D. Fink &amp; Andreas Strobl, University of Passau, Germany
+    &ndash; finksim@fim.uni-passau.de
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/normalize-whitespace/prism-normalize-whitespace.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/file-highlight/prism-file-highlight.min.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/gh/zerodevx/zero-md@2/dist/zero-md.min.js"></script>
+<script>
+    setTimeout(function () {
+        document.querySelectorAll("pre[data-src-status='loaded']").forEach(function (el) {
+            if (el.innerText != "Loading…") {
+                return;
+            }
+            el.innerText = "";
+            el.removeAttribute("data-src-status")
+        });
+        Prism.fileHighlight()
+    }, 2000)
+</script>
+</body>
+</html>

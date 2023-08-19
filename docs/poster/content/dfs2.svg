@@ -1,0 +1,552 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   version="1.1"
+   viewBox="-453.833 -20.5 384.33334 281"
+   id="svg31"
+   sodipodi:docname="dfs2.svg"
+   width="384.33334"
+   height="281"
+   inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs31" />
+  <sodipodi:namedview
+     id="namedview31"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="3.2627132"
+     inkscape:cx="174.24149"
+     inkscape:cy="151.86747"
+     inkscape:window-width="1920"
+     inkscape:window-height="1043"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg31" />
+  <g
+     id="g1"
+     transform="translate(-49.999656,-50)"
+     style="fill:#969696;fill-opacity:1.0">
+    <polygon
+       points="-93.1787,101.362 -92.2692,105 -100,105 "
+       stroke="#969696"
+       stroke-width="1px"
+       id="polygon1"
+       style="fill:#969696;fill-opacity:1.0" />
+    <path
+       fill="none"
+       d="m -40,90 -60,15"
+       stroke="#969696"
+       stroke-width="1px"
+       id="path1"
+       style="fill:#969696;fill-opacity:1.0" />
+  </g>
+  <g
+     id="g2"
+     transform="translate(-49.999656,-50)"
+     style="fill:#3584e4;stroke:#3584e4">
+    <polygon
+       points="-373.302,125.87 -376.656,127.547 -378.333,120 "
+       stroke="#add8e6"
+       stroke-width="1px"
+       id="polygon2"
+       style="fill:#3584e4;stroke:#3584e4" />
+    <path
+       fill="none"
+       d="m -273.333,250 -50,-20 m 0,0 -55,-110"
+       stroke="#add8e6"
+       stroke-width="1px"
+       id="path2"
+       style="fill:#3584e4;stroke:#3584e4" />
+  </g>
+  <g
+     id="g3"
+     transform="translate(-49.999656,-50)">
+    <polygon
+       points="-355.833,268.125 -355.833,271.875 -363.333,270 "
+       stroke="#00008b"
+       stroke-width="1px"
+       id="polygon3" />
+    <path
+       fill="none"
+       d="m -273.333,250 -50,20 m 0,0 h -40"
+       stroke="#00008b"
+       stroke-width="1px"
+       id="path3" />
+  </g>
+  <g
+     id="g4"
+     transform="translate(-49.999656,-50)"
+     style="fill:#969696;fill-opacity:1.0">
+    <polygon
+       points="-363.133,94.2797 -361.053,97.3998 -368.333,100 "
+       stroke="#969696"
+       stroke-width="1px"
+       id="polygon4"
+       style="fill:#969696;fill-opacity:1.0" />
+    <path
+       fill="none"
+       d="m -170,70 h -50 m 0,0 h -103.333 m 0,0 -45,30"
+       stroke="#969696"
+       stroke-width="1px"
+       id="path4"
+       style="fill:#969696;fill-opacity:1.0" />
+  </g>
+  <g
+     id="g5"
+     transform="translate(-49.999656,-50)"
+     style="fill:#969696;fill-opacity:1.0">
+    <polygon
+       points="-152.815,133.851 -150.472,136.779 -157.5,140 "
+       stroke="#969696"
+       stroke-width="1px"
+       id="polygon5"
+       style="fill:#969696;fill-opacity:1.0" />
+    <path
+       fill="none"
+       d="m -120,110 -37.5,30"
+       stroke="#969696"
+       stroke-width="1px"
+       id="path5"
+       style="fill:#969696;fill-opacity:1.0" />
+  </g>
+  <g
+     id="g6"
+     transform="translate(-49.999656,-50)"
+     style="fill:#c061cb;stroke:#c061cb">
+    <polygon
+       points="-375.082,252.604 -371.867,254.533 -377.333,260 "
+       stroke="#ffc0cb"
+       stroke-width="1px"
+       id="polygon6"
+       style="fill:#c061cb;stroke:#c061cb" />
+    <path
+       fill="none"
+       d="m -323.333,170 -54,90"
+       stroke="#ffc0cb"
+       stroke-width="1px"
+       id="path6"
+       style="fill:#c061cb;stroke:#c061cb" />
+  </g>
+  <g
+     id="g7"
+     transform="translate(-49.999656,-50)">
+    <polygon
+       points="-258.06,164.36 -260.863,166.851 -264.444,160 "
+       stroke="#00008b"
+       stroke-width="1px"
+       id="polygon7" />
+    <path
+       fill="none"
+       d="m -220,210 -44.444,-50"
+       stroke="#00008b"
+       stroke-width="1px"
+       id="path7" />
+  </g>
+  <g
+     id="g8"
+     transform="translate(-49.999656,-50)"
+     style="fill:#2ec27e;stroke:#2ec27e">
+    <polygon
+       points="-297.066,157.474 -295.673,160.955 -303.333,162 "
+       stroke="#90ee90"
+       stroke-width="1px"
+       id="polygon8"
+       style="fill:#2ec27e;stroke:#2ec27e" />
+    <path
+       fill="none"
+       d="m -273.333,150 -30,12"
+       stroke="#90ee90"
+       stroke-width="1px"
+       id="path8"
+       style="fill:#2ec27e;stroke:#2ec27e" />
+  </g>
+  <g
+     id="g9"
+     transform="translate(-49.999656,-50)">
+    <polygon
+       points="-366.704,123.977 -369.356,126.629 -373.333,120 "
+       stroke="#00008b"
+       stroke-width="1px"
+       id="polygon9" />
+    <path
+       fill="none"
+       d="m -323.333,170 -50,-50"
+       stroke="#00008b"
+       stroke-width="1px"
+       id="path9" />
+  </g>
+  <g
+     id="g10"
+     transform="translate(-49.999656,-50)">
+    <polygon
+       points="-197.5,151.875 -197.5,148.125 -190,150 "
+       stroke="#00008b"
+       stroke-width="1px"
+       id="polygon10" />
+    <path
+       fill="none"
+       d="M -273.333,150 H -220 m 0,0 h 30"
+       stroke="#00008b"
+       stroke-width="1px"
+       id="path10" />
+  </g>
+  <g
+     id="g11"
+     transform="translate(-49.999656,-50)"
+     style="fill:#2ec27e;stroke:#2ec27e">
+    <polygon
+       points="-208.306,193.038 -205.425,195.439 -211.667,200 "
+       stroke="#90ee90"
+       stroke-width="1px"
+       id="polygon11"
+       style="fill:#2ec27e;stroke:#2ec27e" />
+    <path
+       fill="none"
+       d="m -170,150 -41.667,50"
+       stroke="#90ee90"
+       stroke-width="1px"
+       id="path11"
+       style="fill:#2ec27e;stroke:#2ec27e" />
+  </g>
+  <g
+     id="g12"
+     transform="translate(-49.999656,-50)"
+     style="fill:#c061cb;stroke:#c061cb">
+    <polygon
+       points="-361.053,282.6 -363.133,285.72 -368.333,280 "
+       stroke="#ffc0cb"
+       stroke-width="1px"
+       id="polygon12"
+       style="fill:#c061cb;stroke:#c061cb" />
+    <path
+       fill="none"
+       d="m -220,210 -53.333,100 m 0,0 h -50 m 0,0 -45,-30"
+       stroke="#ffc0cb"
+       stroke-width="1px"
+       id="path12"
+       style="fill:#c061cb;stroke:#c061cb" />
+  </g>
+  <g
+     id="g13"
+     transform="translate(-49.999656,-50)"
+     style="fill:#969696;fill-opacity:1.0">
+    <polygon
+       points="-150.472,83.2211 -152.815,86.1493 -157.5,80 "
+       stroke="#969696"
+       stroke-width="1px"
+       id="polygon13"
+       style="fill:#969696;fill-opacity:1.0" />
+    <path
+       fill="none"
+       d="M -120,110 -157.5,80"
+       stroke="#969696"
+       stroke-width="1px"
+       id="path13"
+       style="fill:#969696;fill-opacity:1.0" />
+  </g>
+  <g
+     id="g14"
+     transform="translate(-49.999656,-50)"
+     style="fill:#969696;fill-opacity:1.0">
+    <polygon
+       points="-67.7308,85 -66.8213,81.362 -60,85 "
+       stroke="#969696"
+       stroke-width="1px"
+       id="polygon14"
+       style="fill:#969696;fill-opacity:1.0" />
+    <path
+       fill="none"
+       d="m -170,70 h 50 m 0,0 60,15"
+       stroke="#969696"
+       stroke-width="1px"
+       id="path14"
+       style="fill:#969696;fill-opacity:1.0" />
+  </g>
+  <g
+     id="g15"
+     transform="translate(-49.999656,-50)">
+    <polygon
+       points="-245.653,258.378 -246.969,261.889 -253.333,257.5 "
+       stroke="#00008b"
+       stroke-width="1px"
+       id="polygon15" />
+    <path
+       fill="none"
+       d="m -40,90 -80,180 m 0,0 h -100 m 0,0 -33.333,-12.5"
+       stroke="#00008b"
+       stroke-width="1px"
+       id="path15" />
+  </g>
+  <g
+     id="g16"
+     transform="translate(-49.999656,-50)">
+    <polygon
+       points="-311.518,185.366 -314.698,187.354 -317.083,180 "
+       stroke="#00008b"
+       stroke-width="1px"
+       id="polygon16" />
+    <path
+       fill="none"
+       d="m -273.333,250 -43.75,-70"
+       stroke="#00008b"
+       stroke-width="1px"
+       id="path16" />
+  </g>
+  <polygon
+     points="-53.3333,80 -60.4583,77 -58.2083,74 "
+     stroke="#90ee90"
+     stroke-width="1px"
+     id="polygon17"
+     transform="translate(-49.999656,-50)"
+     style="fill:#2ec27e;stroke:#2ec27e" />
+  <path
+     fill="none"
+     d="m -433.33266,60 60,-80 m 0,0 h 203.333 m 0,0 66.6667,50"
+     stroke="#90ee90"
+     stroke-width="1px"
+     id="path17"
+     style="fill:#2ec27e;stroke:#2ec27e" />
+  <g
+     id="g18"
+     transform="translate(-49.999656,-50)">
+    <polygon
+       points="-247.681,201.622 -246.364,198.111 -240,202.5 "
+       stroke="#00008b"
+       stroke-width="1px"
+       id="polygon18" />
+    <path
+       fill="none"
+       d="m -323.333,170 50,20 m 0,0 33.333,12.5"
+       stroke="#00008b"
+       stroke-width="1px"
+       id="path18" />
+  </g>
+  <g
+     id="g19"
+     transform="translate(-49.999656,-50)"
+     style="fill:#2ec27e;stroke:#2ec27e">
+    <polygon
+       points="-255.125,234 -252.875,237 -260,240 "
+       stroke="#90ee90"
+       stroke-width="1px"
+       id="polygon19"
+       style="fill:#2ec27e;stroke:#2ec27e" />
+    <path
+       fill="none"
+       d="m -220,210 -40,30"
+       stroke="#90ee90"
+       stroke-width="1px"
+       id="path19"
+       style="fill:#2ec27e;stroke:#2ec27e" />
+  </g>
+  <g
+     id="g20"
+     transform="translate(-49.999656,-50)"
+     style="fill:#c061cb;stroke:#c061cb">
+    <polygon
+       points="-355.833,108.125 -355.833,111.875 -363.333,110 "
+       stroke="#ffc0cb"
+       stroke-width="1px"
+       id="polygon20"
+       style="fill:#c061cb;stroke:#c061cb" />
+    <path
+       fill="none"
+       d="m -170,150 -50,-40 m 0,0 h -103.333 m 0,0 h -40"
+       stroke="#ffc0cb"
+       stroke-width="1px"
+       id="path20"
+       style="fill:#c061cb;stroke:#c061cb" />
+  </g>
+  <rect
+     x="-109.99966"
+     y="30"
+     width="40"
+     height="20"
+     fill="#ffffff"
+     stroke-width="1px"
+     stroke="#969696"
+     id="rect21" />
+  <text
+     x="-89.999657"
+     y="40"
+     text-anchor="middle"
+     dominant-baseline="middle"
+     font-family="Arial"
+     font-size="10px"
+     fill="#000000"
+     id="text21">(1, -1)</text>
+  <rect
+     x="-189.99965"
+     y="50"
+     width="40"
+     height="20"
+     fill="#ffffff"
+     stroke-width="1px"
+     stroke="#e6e6e6"
+     id="rect22"
+     style="stroke:#969696" />
+  <text
+     x="-169.99965"
+     y="60"
+     text-anchor="middle"
+     dominant-baseline="middle"
+     font-family="Arial"
+     font-size="10px"
+     fill="#000000"
+     id="text22" />
+  <rect
+     x="-393.33301"
+     y="110"
+     width="40"
+     height="20"
+     fill="#ffb6c1"
+     stroke-width="1px"
+     stroke="#000000"
+     id="rect23"
+     style="fill:#ffbe6f" />
+  <text
+     x="-373.33301"
+     y="120"
+     text-anchor="middle"
+     dominant-baseline="middle"
+     font-family="Arial"
+     font-size="10px"
+     fill="#000000"
+     id="text23">(5, 14)</text>
+  <rect
+     x="-289.99966"
+     y="150"
+     width="40"
+     height="20"
+     fill="#ffffff"
+     stroke-width="1px"
+     stroke="#000000"
+     id="rect24" />
+  <text
+     x="-269.99966"
+     y="160"
+     text-anchor="middle"
+     dominant-baseline="middle"
+     font-family="Arial"
+     font-size="10px"
+     fill="#000000"
+     id="text24">(8, 13)</text>
+  <rect
+     x="-343.33301"
+     y="90"
+     width="40"
+     height="20"
+     fill="#ffffff"
+     stroke-width="1px"
+     stroke="#000000"
+     id="rect25" />
+  <text
+     x="-323.33301"
+     y="100"
+     text-anchor="middle"
+     dominant-baseline="middle"
+     font-family="Arial"
+     font-size="10px"
+     fill="#000000"
+     id="text25">(9, 12)</text>
+  <rect
+     x="-453.33301"
+     y="50"
+     width="40"
+     height="20"
+     fill="#ffffff"
+     stroke-width="1px"
+     stroke="#000000"
+     id="rect26" />
+  <text
+     x="-433.33301"
+     y="60"
+     text-anchor="middle"
+     dominant-baseline="middle"
+     font-family="Arial"
+     font-size="10px"
+     fill="#000000"
+     id="text26">(6, 7)</text>
+  <rect
+     x="-239.99965"
+     y="90"
+     width="40"
+     height="20"
+     fill="#ffffff"
+     stroke-width="1px"
+     stroke="#000000"
+     id="rect27" />
+  <text
+     x="-219.99965"
+     y="100"
+     text-anchor="middle"
+     dominant-baseline="middle"
+     font-family="Arial"
+     font-size="10px"
+     fill="#000000"
+     id="text27">(10, 11)</text>
+  <rect
+     x="-453.33301"
+     y="210"
+     width="40"
+     height="20"
+     fill="#ffffff"
+     stroke-width="1px"
+     stroke="#000000"
+     id="rect28" />
+  <text
+     x="-433.33301"
+     y="220"
+     text-anchor="middle"
+     dominant-baseline="middle"
+     font-family="Arial"
+     font-size="10px"
+     fill="#000000"
+     id="text28">(3, 4)</text>
+  <rect
+     x="-239.99965"
+     y="10"
+     width="40"
+     height="20"
+     fill="#ffffff"
+     stroke-width="1px"
+     stroke="#e6e6e6"
+     id="rect29"
+     style="stroke:#969696" />
+  <text
+     x="-219.99965"
+     y="20"
+     text-anchor="middle"
+     dominant-baseline="middle"
+     font-family="Arial"
+     font-size="10px"
+     fill="#000000"
+     id="text29" />
+  <rect
+     x="-343.33301"
+     y="190"
+     width="40"
+     height="20"
+     fill="#ffffff"
+     stroke-width="1px"
+     stroke="#969696"
+     id="rect30" />
+  <text
+     x="-323.33301"
+     y="200"
+     text-anchor="middle"
+     dominant-baseline="middle"
+     font-family="Arial"
+     font-size="10px"
+     fill="#000000"
+     id="text30">(2, -1)</text>
+</svg>

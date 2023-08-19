@@ -1,0 +1,446 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   version="1.1"
+   viewBox="-60.5 -60.5 121 121"
+   id="svg25"
+   sodipodi:docname="interact2.svg"
+   width="121"
+   height="121"
+   inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs25" />
+  <sodipodi:namedview
+     id="namedview25"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="3.9773756"
+     inkscape:cx="60.467008"
+     inkscape:cy="60.467008"
+     inkscape:window-width="1920"
+     inkscape:window-height="1043"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg25" />
+  <g
+     id="g16"
+     transform="translate(-50,-50)">
+    <g
+       id="g1">
+      <polygon
+         points="35,-1.25 40,0 35,1.25 "
+         stroke="#000000"
+         stroke-width="1px"
+         id="polygon1" />
+      <path
+         fill="none"
+         d="M 0,0 H 40"
+         stroke="#000000"
+         stroke-width="1px"
+         id="path1" />
+    </g>
+    <g
+       id="g2">
+      <polygon
+         points="85,-1.25 90,0 85,1.25 "
+         stroke="#000000"
+         stroke-width="1px"
+         id="polygon2" />
+      <path
+         fill="none"
+         d="M 50,0 H 90"
+         stroke="#000000"
+         stroke-width="1px"
+         id="path2" />
+    </g>
+    <g
+       id="g3">
+      <polygon
+         points="15,1.25 10,0 15,-1.25 "
+         stroke="#000000"
+         stroke-width="1px"
+         id="polygon3" />
+      <path
+         fill="none"
+         d="M 100,0 H 10"
+         stroke="#000000"
+         stroke-width="1px"
+         id="path3" />
+    </g>
+    <g
+       id="g4">
+      <polygon
+         points="1.25,35 0,40 -1.25,35 "
+         stroke="#000000"
+         stroke-width="1px"
+         id="polygon4" />
+      <path
+         fill="none"
+         d="M 0,0 V 35"
+         stroke="#000000"
+         stroke-width="1px"
+         id="path4" />
+    </g>
+    <g
+       id="g5">
+      <polygon
+         points="22.5,48.125 30,50 22.5,51.875 "
+         stroke="#000000"
+         stroke-width="1px"
+         id="polygon5" />
+      <path
+         fill="none"
+         d="M 0,50 H 30"
+         stroke="#000000"
+         stroke-width="1px"
+         id="path5" />
+    </g>
+    <g
+       id="g6">
+      <polygon
+         points="51.875,22.5 50,30 48.125,22.5 "
+         stroke="#000000"
+         stroke-width="1px"
+         id="polygon6" />
+      <path
+         fill="none"
+         d="M 50,0 V 22.5"
+         stroke="#000000"
+         stroke-width="1px"
+         id="path6" />
+    </g>
+    <g
+       id="g7">
+      <polygon
+         points="82.5,48.125 90,50 82.5,51.875 "
+         stroke="#000000"
+         stroke-width="1px"
+         id="polygon7" />
+      <path
+         fill="none"
+         d="M 50,50 H 90"
+         stroke="#000000"
+         stroke-width="1px"
+         id="path7" />
+    </g>
+    <g
+       id="g8">
+      <polygon
+         points="101.25,35 100,40 98.75,35 "
+         stroke="#000000"
+         stroke-width="1px"
+         id="polygon8" />
+      <path
+         fill="none"
+         d="M 100,0 V 35"
+         stroke="#000000"
+         stroke-width="1px"
+         id="path8" />
+    </g>
+    <g
+       id="g9">
+      <polygon
+         points="15,51.25 10,50 15,48.75 "
+         stroke="#000000"
+         stroke-width="1px"
+         id="polygon9" />
+      <path
+         fill="none"
+         d="M 100,50 H 10"
+         stroke="#000000"
+         stroke-width="1px"
+         id="path9" />
+    </g>
+    <g
+       id="g10">
+      <polygon
+         points="1.25,85 0,90 -1.25,85 "
+         stroke="#000000"
+         stroke-width="1px"
+         id="polygon10" />
+      <path
+         fill="none"
+         d="M 0,50 V 85"
+         stroke="#000000"
+         stroke-width="1px"
+         id="path10" />
+    </g>
+    <g
+       id="g11">
+      <polygon
+         points="35,98.75 40,100 35,101.25 "
+         stroke="#000000"
+         stroke-width="1px"
+         id="polygon11" />
+      <path
+         fill="none"
+         d="M 0,100 H 40"
+         stroke="#000000"
+         stroke-width="1px"
+         id="path11" />
+    </g>
+    <g
+       id="g12">
+      <polygon
+         points="51.875,82.5 50,90 48.125,82.5 "
+         stroke="#000000"
+         stroke-width="1px"
+         id="polygon12" />
+      <path
+         fill="none"
+         d="M 50,50 V 82.5"
+         stroke="#000000"
+         stroke-width="1px"
+         id="path12" />
+    </g>
+    <g
+       id="g13">
+      <polygon
+         points="85,98.75 90,100 85,101.25 "
+         stroke="#000000"
+         stroke-width="1px"
+         id="polygon13" />
+      <path
+         fill="none"
+         d="M 50,100 H 90"
+         stroke="#000000"
+         stroke-width="1px"
+         id="path13" />
+    </g>
+    <g
+       id="g14">
+      <polygon
+         points="101.25,85 100,90 98.75,85 "
+         stroke="#000000"
+         stroke-width="1px"
+         id="polygon14" />
+      <path
+         fill="none"
+         d="M 100,50 V 85"
+         stroke="#000000"
+         stroke-width="1px"
+         id="path14" />
+    </g>
+    <g
+       id="g15">
+      <polygon
+         points="15,101.25 10,100 15,98.75 "
+         stroke="#000000"
+         stroke-width="1px"
+         id="polygon15" />
+      <path
+         fill="none"
+         d="M 100,100 H 10"
+         stroke="#000000"
+         stroke-width="1px"
+         id="path15" />
+    </g>
+  </g>
+  <g
+     id="g17"
+     transform="translate(-50,-50)">
+    <rect
+       x="-10"
+       y="-10"
+       width="20"
+       height="20"
+       fill="#ffffff"
+       stroke-width="1px"
+       stroke="#000000"
+       id="rect16" />
+    <text
+       x="0"
+       y="0"
+       text-anchor="middle"
+       dominant-baseline="middle"
+       font-family="Arial"
+       font-size="10px"
+       fill="#000000"
+       id="text16">0</text>
+  </g>
+  <g
+     id="g18"
+     transform="translate(-50,-50)">
+    <rect
+       x="40"
+       y="-10"
+       width="20"
+       height="20"
+       fill="#ffffff"
+       stroke-width="1px"
+       stroke="#000000"
+       id="rect17" />
+    <text
+       x="50"
+       y="0"
+       text-anchor="middle"
+       dominant-baseline="middle"
+       font-family="Arial"
+       font-size="10px"
+       fill="#000000"
+       id="text17">1</text>
+  </g>
+  <g
+     id="g19"
+     transform="translate(-50,-50)">
+    <rect
+       x="90"
+       y="-10"
+       width="20"
+       height="20"
+       fill="#ffffff"
+       stroke-width="1px"
+       stroke="#000000"
+       id="rect18" />
+    <text
+       x="100"
+       y="0"
+       text-anchor="middle"
+       dominant-baseline="middle"
+       font-family="Arial"
+       font-size="10px"
+       fill="#000000"
+       id="text18">2</text>
+  </g>
+  <g
+     id="g20"
+     transform="translate(-50,-50)">
+    <rect
+       x="-10"
+       y="40"
+       width="20"
+       height="20"
+       fill="#ffffff"
+       stroke-width="1px"
+       stroke="#000000"
+       id="rect19" />
+    <text
+       x="0"
+       y="50"
+       text-anchor="middle"
+       dominant-baseline="middle"
+       font-family="Arial"
+       font-size="10px"
+       fill="#000000"
+       id="text19">3</text>
+  </g>
+  <g
+     id="g21"
+     transform="translate(-50,-50)">
+    <rect
+       x="30"
+       y="30"
+       width="40"
+       height="40"
+       fill="#ffffff"
+       stroke-width="1px"
+       stroke="#000000"
+       id="rect20" />
+    <text
+       x="50"
+       y="50"
+       text-anchor="middle"
+       dominant-baseline="middle"
+       font-family="Arial"
+       font-size="10px"
+       fill="#000000"
+       id="text20">4</text>
+  </g>
+  <g
+     id="g22"
+     transform="translate(-50,-50)">
+    <rect
+       x="90"
+       y="40"
+       width="20"
+       height="20"
+       fill="#ffffff"
+       stroke-width="1px"
+       stroke="#000000"
+       id="rect21" />
+    <text
+       x="100"
+       y="50"
+       text-anchor="middle"
+       dominant-baseline="middle"
+       font-family="Arial"
+       font-size="10px"
+       fill="#000000"
+       id="text21">5</text>
+  </g>
+  <g
+     id="g23"
+     transform="translate(-50,-50)">
+    <rect
+       x="-10"
+       y="90"
+       width="20"
+       height="20"
+       fill="#ffffff"
+       stroke-width="1px"
+       stroke="#000000"
+       id="rect22" />
+    <text
+       x="0"
+       y="100"
+       text-anchor="middle"
+       dominant-baseline="middle"
+       font-family="Arial"
+       font-size="10px"
+       fill="#000000"
+       id="text22">6</text>
+  </g>
+  <g
+     id="g24"
+     transform="translate(-50,-50)">
+    <rect
+       x="40"
+       y="90"
+       width="20"
+       height="20"
+       fill="#ffffff"
+       stroke-width="1px"
+       stroke="#000000"
+       id="rect23" />
+    <text
+       x="50"
+       y="100"
+       text-anchor="middle"
+       dominant-baseline="middle"
+       font-family="Arial"
+       font-size="10px"
+       fill="#000000"
+       id="text23">7</text>
+  </g>
+  <g
+     id="g25"
+     transform="translate(-50,-50)">
+    <rect
+       x="90"
+       y="90"
+       width="20"
+       height="20"
+       fill="#ffffff"
+       stroke-width="1px"
+       stroke="#000000"
+       id="rect24" />
+    <text
+       x="100"
+       y="100"
+       text-anchor="middle"
+       dominant-baseline="middle"
+       font-family="Arial"
+       font-size="10px"
+       fill="#000000"
+       id="text24">8</text>
+  </g>
+</svg>
