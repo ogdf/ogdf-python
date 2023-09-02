@@ -15,10 +15,10 @@ def pythonize_ogdf(klass, name):
         pass  # we ignore if updating the docs fails
 
     if name in ("Graph", "ClusterGraph"):
-        klass._repr_html_ = GraphAttributes_to_html
+        klass._repr_svg_ = GraphAttributes_to_svg
     elif name in ("GraphAttributes", "ClusterGraphAttributes"):
         replace_GraphAttributes(klass, name)
-        klass._repr_html_ = GraphAttributes_to_html
+        klass._repr_svg_ = GraphAttributes_to_svg
 
     # TODO setitem?
     # TODO array slicing

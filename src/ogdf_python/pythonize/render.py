@@ -68,7 +68,7 @@ def wrap_GraphIO(func):
     return wrapper
 
 
-def GraphAttributes_to_html(self):
+def GraphAttributes_to_svg(self):
     global SVGConf
     if SVGConf is None:
         SVGConf = cppyy.gbl.ogdf.GraphIO.SVGSettings()

@@ -15,12 +15,12 @@ __keep_imports = [
     ogdf_python.jupyter,
 ]
 
-try:
-    from ogdf_python_widget import _auto_enable
-except ImportError:
-    pass
-else:
-    _auto_enable()
-
 __version__ = "0.1.5"
 __all__ = ogdf_python.loader.__all__ + ogdf_python.utils.__all__ + ogdf_python.info.__all__
+
+try:
+    from ogdf_python.matplotlib import *
+
+    __all__ += ogdf_python.matplotlib.__all__
+except ImportError:
+    pass
