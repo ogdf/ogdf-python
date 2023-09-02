@@ -27,7 +27,7 @@
 \title{odgf-python -- A Python Interface for the Open Graph Drawing~Framework%
   \thanks{Funded by the Deutsche Forschungsgemeinschaft (German Research Foundation, DFG) under grant RU-1903/3-1.}
 }
-\author{Simon D. Fink, Andreas Strobl}
+\author{Simon D. Fink\orcidID{0000-0002-2754-1195}, Andreas Strobl}
 \institute{University of Passau, Faculty for Mathematics and Computer Science, Germany\\\email{\{finksim,strobland\}@fim.uni-passau.de}}
 \date{}
 
@@ -40,7 +40,7 @@ The Open Graph Drawing Framework (OGDF) is a C++ library that contains a vast am
 While the library is powerful, it is also not easily accessible for new users and the nature of C++ makes implementing even simple algorithms cumbersome to non-experts.
 The \texttt{odgf-python} project remedies these problems by making the full functionality of the OGDF available from Python, providing a visual way to iteratively develop graph algorithms.
 
-\keywords {OGDF \and graph algorithms \and Python \and Jupyter Notebooks}
+\keywords {OGDF \and Graph Algorithms \and Python \and Jupyter Notebooks}
 \end{abstract}
 
 
@@ -49,9 +49,10 @@ automatic graph drawing.
 While the library is powerful, it is also not easily accessible for new users and the nature of C++ makes implementing even simple algorithms cumbersome to non-experts.
 New C++ projects require non-trivial set-up and distinct code-compile-execute iterations make it hard to incrementally develop a new algorithm.
 This is because they separate the code from its results and there is no easy way to debug and visually analyze the current state of the program.
+
 Many of these issues have been resolved within the Python ecosystem \cite{per-tcc-21}.
 The \texttt{odgf-python}\footnote{\url{https://github.com/N-Coder/ogdf-python}} project remedies these problems also for the OGDF by making its full functionality available from Python.
-A similar approach has recently been taken to make the Computational Geometry Algorithms Library CGAL more accessible \cite{gfh-cmm-22}.
+A similar approach has recently been taken to make the Computational Geometry Algorithms Library (CGAL) more accessible \cite{gfh-cmm-22}.
 A Python interface greatly reduces the overhead and complications when using a library for the first time and unlocks a large ecosystem
 of other libraries and tools, for example the interactive computing Notebooks provided by Project Jupyter \cite{krp-jn-16}.
 These Notebooks allow iteratively developing algorithms and visualize their results inline right next to their code \cite{per-tcc-21}.
@@ -68,7 +69,7 @@ interactive visualization of algorithms for teaching, and
 flexible user interfaces for domain-specific applications.
 
 Internally, \texttt{ogdf-python} uses the \texttt{cppyy} library \cite{ld-hpp-16,kvl-eaa-23} to automatically generate python bindings for the C++ OGDF library.
-One of the main advantages of this library is that there is no need for explicitly declared bindings or interfaces.
+One of the main advantages of \texttt{cppyy} is that there is no need for explicitly declared bindings or interfaces.
 This makes \texttt{ogdf-python} future-proof by being automatically compatible with future versions of the OGDF without the need for adaptions or manual updates to declarations.
 The \texttt{cppyy} library also allows for arbitrary C++ code to be loaded and called from Python.
 This allows for variables, functions and even classes to be created and used in either language.
