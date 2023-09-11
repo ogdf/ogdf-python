@@ -9,7 +9,7 @@ __all__ = ["MatplotlibGraph", "MatplotlibGraphEditor", "GraphEditorLayout"]
 
 with as_file(files(__package__).joinpath("rendering.h")) as header:
     cppinclude(header)
-cppinclude("Python.h")
+# cppinclude("Python.h")
 
 
 def display_GraphAttributes(self):

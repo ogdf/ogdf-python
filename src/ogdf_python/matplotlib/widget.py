@@ -1,4 +1,5 @@
 from matplotlib import patheffects as patheffects
+from matplotlib.backend_bases import MouseButton
 
 from ogdf_python.loader import *
 from ogdf_python.matplotlib.artist import NodeArtist, EdgeArtist
@@ -35,6 +36,7 @@ class MatplotlibGraph(ogdf.GraphObserver):
             self.hide_spines()
 
         self._on_pick_cid = ax.figure.canvas.mpl_connect('pick_event', self._on_pick)
+        self._on_click_cid = ax.figure.canvas.mpl_connect('button_press_event', self._on_click)
         self._last_pick_mouse_event = None
 
     def cleared(self):
@@ -60,21 +62,41 @@ class MatplotlibGraph(ogdf.GraphObserver):
         a = self.nodes[n] = NodeArtist(n, self.GA)
         self.ax.add_patch(a)
         self.ax.add_artist(a.label)
+        self.ax.figure.canvas.draw_idle()
 
     def edgeAdded(self, e):
-        a = self.edges[e] = EdgeArtist(e, self.GA)
-        self.ax.add_patch(a)
-        self.ax.add_artist(a.label)
-        self.ax.add_patch(a.src_arr)
-        self.ax.add_patch(a.tgt_arr)
+        cid = None
+
+        # we need to defer drawing as not all attributes can already be accessed in the
+        # edgeAdded callback
+        def addedge(arg):
+            nonlocal cid
+            if cid is None:
+                return
+            self.ax.figure.canvas.mpl_disconnect(cid)
+            cid = None
+            a = self.edges[e] = EdgeArtist(e, self.GA)
+            self.ax.add_patch(a)
+            self.ax.add_artist(a.label)
+            self.ax.add_patch(a.src_arr)
+            self.ax.add_patch(a.tgt_arr)
+
+        cid = self.ax.figure.canvas.mpl_connect('draw_event', addedge)
+        self.ax.figure.canvas.draw_idle()
 
     def reInit(self):
         pass
 
     def _on_pick(self, event):
-        if self._last_pick_mouse_event == event.mouseevent:
+        # me = event.mouseevent
+        # print('%s click pick: artist=%s, button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
+        #       ('double' if me.dblclick else 'single', event.artist, me.button,
+        #        me.x, me.y, me.xdata, me.ydata))
+        if event.mouseevent.button != MouseButton.LEFT:
+            return
+        elif self._last_pick_mouse_event == event.mouseevent:
             return  # ignore multiple picks from the same click
-        if isinstance(event.artist, NodeArtist):
+        elif isinstance(event.artist, NodeArtist):
             self.on_node_click(event.artist.node, event)
         elif isinstance(event.artist, EdgeArtist):
             self.on_edge_click(event.artist.edge, event)
@@ -83,10 +105,21 @@ class MatplotlibGraph(ogdf.GraphObserver):
         self._last_pick_mouse_event = event.mouseevent
         return
 
+    def _on_click(self, event):
+        if self._last_pick_mouse_event == event:
+            return  # ignore multiple click if it resulted in a pick
+        # print('%s click: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
+        #       ('double' if event.dblclick else 'single', event.button,
+        #        event.x, event.y, event.xdata, event.ydata))
+        self.on_background_click(event)
+
     def on_edge_click(self, edge, event):
         pass
 
     def on_node_click(self, node, event):
+        pass
+
+    def on_background_click(self, event):
         pass
 
     def apply_style(self):
@@ -116,6 +149,7 @@ class MatplotlibGraphEditor(MatplotlibGraph):
         self.selected = None
         self.dragging = False
 
+        self.ax.figure.canvas.mpl_connect('key_press_event', self._on_key)
         self.ax.figure.canvas.mpl_connect('button_release_event', self._on_release)
         self.ax.figure.canvas.mpl_connect('motion_notify_event', self._on_motion)
 
@@ -125,6 +159,8 @@ class MatplotlibGraphEditor(MatplotlibGraph):
         super().nodeDeleted(node)
 
     def edgeDeleted(self, edge):
+        if isinstance(self.selected, EdgeArtist) and self.selected.edge == edge:
+            self.unselect()
         super().edgeDeleted(edge)
 
     def unselect(self, notify=True):
@@ -145,13 +181,45 @@ class MatplotlibGraphEditor(MatplotlibGraph):
         self.on_selection_changed()
         self.ax.figure.canvas.draw_idle()
 
+    def on_background_click(self, event):
+        super().on_background_click(event)
+        if event.dblclick:
+            n = self.GA.constGraph().newNode()
+            self.GA.label[n] = f"N{n.index()}"
+            self.GA.x[n] = event.xdata
+            self.GA.y[n] = event.ydata
+            self.nodes[n].update_attributes(self.GA)
+            self.select(self.nodes[n])
+            return
+
     def on_selection_changed(self):
+        pass
+
+    def on_node_moved(self, node):
         pass
 
     def on_node_click(self, node, event):
         super().on_node_click(node, event)
+        if isinstance(self.selected, NodeArtist) and self.selected != event.artist and \
+                "ctrl" in event.mouseevent.modifiers:
+            self.GA.constGraph().newEdge(self.selected.node, event.artist.node)
+            return
+
         self.dragging = True
         self.select(event.artist)
+
+    def on_edge_click(self, edge, event):
+        super().on_edge_click(edge, event)
+        print("edge click")
+        self.dragging = False
+        self.select(event.artist)
+
+    def _on_key(self, event):
+        if event.key == "delete":
+            if isinstance(self.selected, NodeArtist):
+                self.GA.constGraph().delNode(self.selected.node)
+            elif isinstance(self.selected, EdgeArtist):
+                self.GA.constGraph().delEdge(self.selected.edge)
 
     def _on_release(self, event):
         self.dragging = False
@@ -166,4 +234,5 @@ class MatplotlibGraphEditor(MatplotlibGraph):
         for adj in node.adjEntries:
             self.edges[adj.theEdge()].update_attributes(self.GA)
 
+        self.on_node_moved(node)
         self.ax.figure.canvas.draw_idle()
