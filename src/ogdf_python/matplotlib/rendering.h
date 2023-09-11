@@ -236,4 +236,46 @@ namespace ogdf {
 		}
 		return points;
 	}
+
+    double closestPointOnLine(const DPolyline &line, const DPoint &x, DPoint &out) {
+        if (line.size() == 0) {
+            return std::numeric_limits<double>::quiet_NaN();
+        } else if (line.size() == 1) {
+            out = line.front();
+            return out.distance(x);
+        }
+        auto it = line.begin();
+        auto p1 = *it;
+        it++;
+        double minDist = std::numeric_limits<double>::infinity();
+        for (auto p2 = *it; it != line.end(); it++) {
+            // https://stackoverflow.com/a/10984080/805569
+            p2 = *it;
+            auto d = p2 - p1;
+            auto r = (d * (x - p1)) / d.normSquared();
+
+            if (r < 0) {
+                auto l = (x - p1).normSquared();
+                if (l < minDist) {
+                    minDist = l;
+                    out = p1;
+                }
+            } else if (r > 1) {
+                auto l = (x - p2).normSquared();
+                if (l < minDist) {
+                    minDist = l;
+                    out = p2;
+                }
+            } else {
+                auto y = p1 + r * d;
+                auto l = (x - y).normSquared();
+                if (l < minDist) {
+                    minDist = l;
+                    out = y;
+                }
+            }
+            p1 = p2;
+        }
+        return minDist;
+    }
 };

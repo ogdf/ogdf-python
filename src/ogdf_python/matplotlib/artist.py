@@ -86,6 +86,8 @@ class NodeArtist(PathPatch):
 
 
 class EdgeArtist(PathPatch):
+    PICK_DISTANCE = 10
+
     def __init__(self, edge, GA, **kwargs):
         self.edge = edge
         attrs = self.calc_attributes(GA)
@@ -131,7 +133,7 @@ class EdgeArtist(PathPatch):
             edgecolor=color(GA.strokeColor[self.edge]),
             linestyle=strokeType(GA.strokeType[self.edge]),
             linewidth=GA.strokeWidth[self.edge],
-            picker=max(GA.strokeWidth[self.edge], 10),
+            picker=self._should_pick,
         )
 
     def calc_arrow_attributes(self, GA):
@@ -148,7 +150,21 @@ class EdgeArtist(PathPatch):
             (GA.y[self.edge.source()] + GA.y[self.edge.target()]) / 2)
         src_arr = ogdf.DPolygon() if ogdf.isArrowEnabled(GA, self.edge.adjSource()) else nullptr
         tgt_arr = ogdf.DPolygon() if ogdf.isArrowEnabled(GA, self.edge.adjTarget()) else nullptr
-        poly = ogdf.drawEdge(self.edge, GA, self.label_pos, src_arr, tgt_arr)
+        self.poly = ogdf.drawEdge(self.edge, GA, self.label_pos, src_arr, tgt_arr)
+        self.bbox = self.poly.getBoundingBox()
         self.src_arr.get_path().vertices = np.asarray(dPolylineToPathVertices(src_arr) if src_arr else [] + [(0, 0)], float)
         self.tgt_arr.get_path().vertices = np.asarray(dPolylineToPathVertices(tgt_arr) if tgt_arr else [] + [(0, 0)], float)
-        return dPolylineToPath(poly)
+        return dPolylineToPath(self.poly)
+
+    def _should_pick(self, artist, event):
+        x, y = event.xdata, event.ydata
+        if not self.bbox.p1().m_x - self.PICK_DISTANCE <= x <= self.bbox.p2().m_x + self.PICK_DISTANCE:
+            return False, None
+        if not self.bbox.p1().m_y - self.PICK_DISTANCE <= y <= self.bbox.p2().m_y + self.PICK_DISTANCE:
+            return False, None
+        out = ogdf.DPoint()
+        dist = ogdf.closestPointOnLine(self.poly, ogdf.DPoint(x, y), out)
+        if dist <= self.PICK_DISTANCE:
+            return True, {"point": out, "dist": dist}
+        else:
+            return False, None
