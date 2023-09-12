@@ -14,8 +14,10 @@ def pythonize_ogdf(klass, name):
     except Exception:
         pass  # we ignore if updating the docs fails
 
-    if name in ("Graph", "ClusterGraph"):
-        klass._repr_svg_ = GraphAttributes_to_svg
+    if name == "Graph":
+        klass._repr_svg_ = Graph_to_svg
+    elif name == "ClusterGraph":
+        klass._repr_svg_ = ClusterGraph_to_svg
     elif name in ("GraphAttributes", "ClusterGraphAttributes"):
         replace_GraphAttributes(klass, name)
         klass._repr_svg_ = GraphAttributes_to_svg

@@ -68,6 +68,30 @@ def wrap_GraphIO(func):
     return wrapper
 
 
+def renderGraph(G):
+    cppyy.include("ogdf/planarity/PlanarizationGridLayout.h")
+    ogdf = cppyy.gbl.ogdf
+    GA = ogdf.GraphAttributes(G, ogdf.GraphAttributes.all)
+    ogdf.PlanarizationGridLayout().call(GA)
+    for n in G.nodes:
+        GA.label[n] = str(n.index())
+    return GA
+
+
+def renderClusterGraph(CG):
+    cppyy.include("ogdf/cluster/ClusterPlanarizationLayout.h")
+    ogdf = cppyy.gbl.ogdf
+    CGA = ogdf.ClusterGraphAttributes(CG, ogdf.ClusterGraphAttributes.all)
+    cppyy.gbl.ogdf_pythonization.BeginCaptureStdout()
+    try:
+        ogdf.ClusterPlanarizationLayout().call(CG.getGraph(), CGA, CG)
+    finally:
+        stdout = cppyy.gbl.ogdf_pythonization.EndCaptureStdout().decode("utf8", "replace").strip()
+    for n in CG.getGraph().nodes:
+        CGA.label[n] = str(n.index())
+    return CGA
+
+
 def GraphAttributes_to_svg(self):
     global SVGConf
     if SVGConf is None:
@@ -80,3 +104,11 @@ def GraphAttributes_to_svg(self):
         cppyy.gbl.ogdf.GraphIO.drawSVG(self, os, SVGConf)
         os.close()
         return f.read()
+
+
+def Graph_to_svg(self):
+    return GraphAttributes_to_svg(renderGraph(self))
+
+
+def ClusterGraph_to_svg(self):
+    return GraphAttributes_to_svg(renderClusterGraph(self))
