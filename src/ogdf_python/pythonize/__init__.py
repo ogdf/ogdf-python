@@ -4,7 +4,7 @@ from ogdf_python.doxygen import pythonize_docstrings, wrap_getattribute
 from ogdf_python.pythonize.container import *
 from ogdf_python.pythonize.graph_attributes import *
 from ogdf_python.pythonize.render import *
-from ogdf_python.pythonize.str import *
+from ogdf_python.pythonize.string import *
 
 
 def pythonize_ogdf(klass, name):
