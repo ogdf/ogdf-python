@@ -25,13 +25,21 @@ def pythonize_ogdf(klass, name):
     elif name.startswith("GraphObjectContainer"):
         klass.byid = GraphObjectContainer_byindex
         klass.__getitem__ = iterable_getitem
-    elif re.fullmatch("S?List(Pure)?", name):
+        klass.__str__ = lambda self: "[%s]" % ", ".join(str(i) for i in self)
+        klass.__repr__ = lambda self: "%s([%s])" % (type(self).__name__, ", ".join(repr(i) for i in self))
+    elif re.fullmatch("S?List(Pure)?(<.+>)?", name):
         klass.__getitem__ = iterable_getitem
+        klass.__str__ = lambda self: "[%s]" % ", ".join(str(i) for i in self)
+        klass.__repr__ = lambda self: "%s([%s])" % (type(self).__name__, ", ".join(repr(i) for i in self))
     elif re.fullmatch("List(Const)?(Reverse)?Iterator(Base)?(<.+>)?", name):
         klass.__next__ = advance_iterator
-    elif re.fullmatch("(Node|Edge|AdjEntry|Cluster|Face)Array", name):
+    elif re.fullmatch("(Node|Edge|AdjEntry|Cluster|Face)Array(<.+>)?", name):
         klass.__iter__ = cpp_iterator
-        # klass.__str__ = grapharray_str # TODO there is no generic way to get the key list (yet)
+        klass.keys = ArrayKeys[name.partition("Array")[0]]
+        klass.asdict = lambda self: {k: self[k] for k in self.keys()}
+        klass.__str__ = lambda self: str(self.asdict())
+        klass.__repr__ = lambda self: "%s(%r)" % (type(self).__name__, self.asdict())
+    # TODO NodeSet et al.
 
     elif name == "NodeElement":
         klass.__str__ = node_str

@@ -43,3 +43,18 @@ def iterable_getitem(self, key):
                 return e
     else:
         raise TypeError("Invalid argument type %s." % type(key))
+
+
+def get_adjentry_array_keys(aea):
+    for e in aea.graphOf().edges:
+        yield e.adjSource()
+        yield e.adjTarget()
+
+
+ArrayKeys = {
+    "Node": lambda na: na.graphOf().nodes,
+    "Edge": lambda ea: ea.graphOf().edges,
+    "AdjEntry": get_adjentry_array_keys,
+    "Cluster": lambda ca: ca.graphOf().clusters,
+    "Face": lambda fa: fa.embeddingOf().faces,
+}
