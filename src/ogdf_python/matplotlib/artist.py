@@ -158,6 +158,8 @@ class EdgeArtist(PathPatch):
 
     def _should_pick(self, artist, event):
         x, y = event.xdata, event.ydata
+        if not x and x != 0:
+            return False, None
         if not self.bbox.p1().m_x - self.PICK_DISTANCE <= x <= self.bbox.p2().m_x + self.PICK_DISTANCE:
             return False, None
         if not self.bbox.p1().m_y - self.PICK_DISTANCE <= y <= self.bbox.p2().m_y + self.PICK_DISTANCE:

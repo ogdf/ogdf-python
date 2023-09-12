@@ -3,15 +3,34 @@ from matplotlib.backend_bases import MouseButton
 
 from ogdf_python.loader import *
 from ogdf_python.matplotlib.artist import NodeArtist, EdgeArtist
+from ogdf_python.matplotlib.util import new_figure
 
 
-class MatplotlibGraph(ogdf.GraphObserver):
+class SimpleGraphObserver(ogdf.GraphObserver):
+    def cleared(self):
+        pass
+
+    def nodeAdded(self, n):
+        pass
+
+    def edgeAdded(self, e):
+        pass
+
+    def nodeDeleted(self, node):
+        pass
+
+    def edgeDeleted(self, edge):
+        pass
+
+    def reInit(self):
+        pass
+
+
+class MatplotlibGraph:
     def __init__(self, GA, ax=None, apply_style=True, hide_spines=True):
-        super().__init__(GA.constGraph())
         self.GA = GA
         if ax is None:
-            import matplotlib.pyplot as plt
-            self.ax = ax = plt.gca()
+            self.ax = ax = new_figure().subplots()
         else:
             self.ax = ax
         G = GA.constGraph()
@@ -37,7 +56,14 @@ class MatplotlibGraph(ogdf.GraphObserver):
 
         self._on_pick_cid = ax.figure.canvas.mpl_connect('pick_event', self._on_pick)
         self._on_click_cid = ax.figure.canvas.mpl_connect('button_press_event', self._on_click)
+        self._on_close_cid = ax.figure.canvas.mpl_connect('close_event', self._on_close)
         self._last_pick_mouse_event = None
+
+        # cppyy is somewhat picky when it comes to deriving from GraphObserver
+        # so we try to keep this class as simple as possible
+        self._graph_observer = SimpleGraphObserver(G)
+        for m in ["cleared", "nodeDeleted", "edgeDeleted", "nodeAdded", "edgeAdded", "reInit"]:
+            setattr(self._graph_observer, m, getattr(self, m))
 
     def cleared(self):
         for na in self.nodes.values():
@@ -85,7 +111,10 @@ class MatplotlibGraph(ogdf.GraphObserver):
         self.ax.figure.canvas.draw_idle()
 
     def reInit(self):
-        pass
+        self.cleared()
+
+    def _on_close(self, event):
+        del self._graph_observer
 
     def _on_pick(self, event):
         # me = event.mouseevent
