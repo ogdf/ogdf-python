@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Poster</title>
+    <title>Teaser</title>
 
     <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet"/>
@@ -11,6 +11,17 @@
     <link type="text/css" rel="stylesheet" href="jupyter.css">
     <link type="text/css" rel="stylesheet" href="widgets.css">
     <link type="text/css" rel="stylesheet" href="style.css">
+
+    <style>
+        @page {
+            size: 1920px 1080px; /*4:3 XGA*/
+            margin: 0;
+        }
+
+        .cell:before, .split-cell:before, .output:before {
+            top: 1em;
+        }
+    </style>
 
     <script>
         window.ZeroMdConfig = {
@@ -38,7 +49,7 @@
     <img src="jupyter-wide.svg" style="margin-right: 5px"/>
     <span>ogdf-python</span>
     <span style="font-weight: normal; font-size: 60%">
-        Simon D. Fink &amp; Andreas Strobl, University of Passau <img src="upassau.svg"/>
+        Simon D. Fink &amp; Andreas Strobl <img src="upassau.svg"/>
     </span>
     <span style="float: right">
         <img src="ogdf.png"/>
@@ -128,22 +139,16 @@
 
 <main>
     <div class="column">
-        <zero-md class="cell" src="content/intro.md"></zero-md>
-        <div class="split-cell">
-            <pre class="language-python" data-src="content/intro.py"></pre>
-            <pre class="language-cpp" data-src="content/intro.cpp"></pre>
-        </div>
-        <div class="output output-img"><img src="content/intro.svg"/></div>
-
-        <zero-md class="cell" src="content/install.md"></zero-md>
-
-        <zero-md class="cell" src="content/algo.md"></zero-md>
-        <pre class="cell language-python" data-src="content/algo.py"></pre>
+        <pre class="cell language-python" data-src="content/intro2.py"></pre>
+        <div class="output output-img"><img src="content/intro.svg" style="height: 220px"/></div>
     </div>
 
     <div class="column">
-        <zero-md class="cell" src="content/dfs.md"></zero-md>
-        <!--<pre class="cell language-python" data-src="content/dfs.py"></pre>-->
+        <pre class="cell">
+            <code class="language-python">
+                display(DFSWidget(step=14))
+            </code>
+        </pre>
         <div class="output" style="background-color: white">
             <div class="lm-Widget lm-Panel jupyter-widgets widget-container widget-box widget-hbox">
                 <div class="lm-Widget jupyter-widgets widget-inline-hbox widget-play">
@@ -175,59 +180,52 @@
                         data-_extension-text-contrast="">New Graph
                 </button>
             </div>
-            <div class="output-img" style="margin-top: 5px"><img src="content/dfs2.svg"/></div>
+            <div class="output-img" style="margin-top: 5px"><img src="content/dfs2.svg" style="height: 200px"/></div>
         </div>
 
-        <zero-md class="cell" src="content/editor.md"></zero-md>
-        <!--<pre class="cell language-python" data-src="content/editor.py"></pre>-->
-        <div class="output output-img" style="overflow: clip">
-            <img src="content/editor.svg" style="scale: 5;translate: -120% -20%"/>
+        <pre class="cell">
+            <code class="language-python">
+                display(GraphEditorWidget(G))
+            </code>
+        </pre>
+        <div class="output" style="text-align: center; padding: 0 !important;">
+            <div style="width: 100%; height: 100%; overflow: clip; padding: 0; margin: 0; background: #edf0f5;">
+                <img src="content/editor.svg" style="scale: 4; translate: -135% -15%; height: 220px"/>
+            </div>
             <div class="inlay">
                 <b>Selected Vertex 12</b><br/>
                 <table>
-                    <tr><td>ID</td><td>12</td></tr>
-                    <tr><td>Label</td><td>"N12"</td></tr>
-                    <tr><td>Degree</td><td>3</td></tr>
-                    <tr><td>Position</td><td>390, 320</td></tr>
-                    <tr><td>Size</td><td>20 x 20</td></tr>
+                    <tr>
+                        <td>ID</td>
+                        <td>12</td>
+                    </tr>
+                    <tr>
+                        <td>Label</td>
+                        <td>"N12"</td>
+                    </tr>
+                    <tr>
+                        <td>Degree</td>
+                        <td>3</td>
+                    </tr>
+                    <tr>
+                        <td>Position</td>
+                        <td>390, 320</td>
+                    </tr>
+                    <tr>
+                        <td>Size</td>
+                        <td>20 x 20</td>
+                    </tr>
                 </table>
                 <button class="jupyter-button">Move</button>
                 <button class="jupyter-button">Add Edge</button>
                 <button class="jupyter-button">Delete</button>
             </div>
-            <div class="inlay inlay-top">
-                <button class="jupyter-button">New Vertex</button>
-            </div>
         </div>
-
-        <zero-md class="cell" src="content/interact.md"></zero-md>
-        <pre class="cell language-cpp" data-src="content/interact1.cpp"></pre>
-        <pre class="output">Hello World from C++!</pre>
-        <pre class="cell language-python" data-src="content/interact2.py"></pre>
-        <div class="output output-img"><img src="content/interact2.svg"/></div>
-        <pre class="cell language-cpp" data-src="content/interact3.h"></pre>
-        <pre class="cell language-python" data-src="content/interact4.py"></pre>
-        <pre class="output">The node widths are [20.0, 20.0, 20.0, 20.0, 40.0, 20.0, 20.0, 20.0, 20.0]
-The average width is 22</pre>
-
-        <!--
-        <pre class="cell"><code class="language-python">
-# we also have python docs and the C++ doxygen docs linked from there
-help(G.unsplit)
-        </code></pre>
-        <pre class="output">Help on CPPOverload in module cppyy:
-
-unsplit(...)
-    void ogdf::Graph::unsplit(ogdf::node u)
-    void ogdf::Graph::unsplit(ogdf::edge eIn, ogdf::edge eOut)
-    <a href="https://ogdf.github.io/doc/ogdf/classogdf_1_1_graph.html#a1e86ecdfbcf0fbeea55585ca14308037">https://ogdf.github.io/doc/ogdf/classogdf_1_1_graph.html#a1e86ecdfbcf0fbeea55585ca14308037</a>
-    <a href="https://ogdf.github.io/doc/ogdf/classogdf_1_1_graph.html#a14cc6ad7b8ab14513045ec93a5d23adf">https://ogdf.github.io/doc/ogdf/classogdf_1_1_graph.html#a14cc6ad7b8ab14513045ec93a5d23adf</a></pre>
-    -->
     </div>
 </main>
 
-<footer>
-    ogdf-python &ndash; https://github.com/ogdf/ogdf-python &ndash; Simon D. Fink &amp; Andreas Strobl, University of Passau, Germany
+<footer style="height: 30px; padding: 5px 0">
+    ogdf-python &ndash; https://github.com/ogdf/ogdf-python &ndash; University of Passau, Germany
     &ndash; finksim@fim.uni-passau.de
 </footer>
 
