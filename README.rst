@@ -36,13 +36,16 @@ Quickstart
 Click here to start an interactive online Jupyter Notebook with an example OGDF graph where you can try out ``ogdf-python``: |binder|
 
 Simply re-run the code cell to see the graph. You can also find further examples next to that Notebook (i.e. via the folder icon on the left).
-To get a similar Jupyter Notebook with a little more compute power running on your local machine, use the following Docker command and open the link to ``localhost``/``127.0.0.1`` that will be printed in your browser:
+To get a similar Jupyter Notebook with a little more compute power running on your local machine, use the following install command and open the link to ``localhost``/``127.0.0.1`` that will be printed in your browser:
 
 .. code-block:: bash
 
-    docker run -ti -p 8888:8888/tcp ncoder/ogdf:latest
-    
-Alternatively, see the instructions `below <#manual-installation>`_ for installing ``ogdf-python`` locally on your machine with ``pip``, but be aware that this requires a local build of the OGDF.
+    pip install ogdf-python[quickstart]
+    jupyter lab
+
+The optional ``[quickstart]`` pulls in matplotlib and jupyter lab as well as a ready-to-use binary build of the OGDF via `ogdf-wheel <https://github.com/ogdf/ogdf-wheel>`_.
+Please not that downloading and installing all dependencies (especially building ``cppyy``) may take a moment.
+Alternatively, see the instructions `below <#manual-installation>`_ for installing ``ogdf-python`` without this if you want to use your own local build of the OGDF.
 
 Usage
 -----
@@ -50,9 +53,10 @@ Usage
 
 .. code-block:: python
 
-    %env OGDF_BUILD_DIR=~/ogdf/build-debug
+    # %matplotlib widget
+    # uncomment the above line if you want the interactive display
 
-    from ogdf_python import ogdf, cppinclude
+    from ogdf_python import *
     cppinclude("ogdf/basic/graph_generators/randomized.h")
     cppinclude("ogdf/layered/SugiyamaLayout.h")
 
@@ -78,8 +82,8 @@ for the more advanced Sugiyama example from the OGDF docs.
 There is also a bigger example in `docs/examples/ogdf-includes.ipynb <docs/examples/ogdf-includes.ipynb>`_.
 If anything is unclear, check out the python help ``help(ogdf.Graph)`` and read the corresponding OGDF documentation.
 
-Manual Installation
--------------------
+Installation without ogdf-wheel
+-------------------------------
 
 Use pip to install the ``ogdf-python`` package locally on your machine.
 Please note that building ``cppyy`` from sources may take a while.
@@ -93,16 +97,6 @@ or set ``OGDF_BUILD_DIR`` to the subdirectory of your copy of the OGDF repo wher
 
     $ pip install ogdf-python
     $ OGDF_BUILD_DIR=~/ogdf/build-debug python3
-
-..
-    Documentation
-    -------------
-    TODO use ``help(ogdf.Graph)`` and sphinx autodoc
-
-..
-    Load Custom Code
-    ----------------
-    TODO
 
 Pitfalls
 --------
@@ -146,3 +140,10 @@ the reverse order of their initialization.
         del CGA
         del CG
         del G
+
+There seems to be memory leak in the Jupyter Lab server which causes it to use large amounts of memory
+over time while working with ogdf-python. On Linux, the following command can be used to limit this memory usage:
+
+.. code-block:: bash
+
+    systemd-run --scope -p MemoryMax=5G --user -- jupyter notebook
