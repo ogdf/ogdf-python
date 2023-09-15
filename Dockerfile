@@ -1,9 +1,9 @@
 # Docker container for running OGDF Jupyter notebooks on mybinder.org
 # based on https://mybinder.readthedocs.io/en/latest/tutorials/dockerfile.html
 
-FROM ncoder/ogdf:2022.02-dogwood
+FROM python:3.11
 
-RUN pip install --no-cache-dir notebook jupyterhub jupyterlab
+RUN pip install --no-cache-dir ogdf-python[quickstart]
 
 ARG NB_USER=jovyan
 ARG NB_UID=1000

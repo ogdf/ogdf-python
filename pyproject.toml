@@ -34,8 +34,16 @@ classifiers = [
 ]
 
 dependencies = [
-    "cppyy>=2",
+    "cppyy>=2,<3",
     "importlib-resources>=1",
+]
+
+[project.optional-dependencies]
+quickstart = [
+    "jupyterlab",
+    "ipympl",
+    "matplotlib",
+    "ogdf-wheel",
 ]
 
 [build-system]
