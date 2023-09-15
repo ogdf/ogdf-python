@@ -36,6 +36,7 @@ class MatplotlibGraph:
         G = GA.constGraph()
         self.nodes = {}  # TODO ogdf.NodeArray["PyObject*"](G, typed_nullptr("PyObject"))
         self.edges = {}
+        # TODO clusters
 
         for n in G.nodes:
             a = self.nodes[n] = NodeArtist(n, GA)
@@ -169,6 +170,17 @@ class MatplotlibGraph:
         self.ax.spines['bottom'].set_visible(False)
         self.ax.figure.subplots_adjust(left=0, right=1, top=1, bottom=0)
         self.ax.figure.canvas.draw_idle()
+
+    def update_all(self, GA):
+        for na in self.nodes.values():
+            na.update_attributes(GA)
+        for ea in self.edges.values():
+            ea.update_attributes(GA)
+        self.ax.figure.canvas.draw_idle()
+
+    def _ipython_display_(self):
+        from IPython.core.display_functions import display
+        return display(self.ax.figure.canvas)
 
 
 class MatplotlibGraphEditor(MatplotlibGraph):

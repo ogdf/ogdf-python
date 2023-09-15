@@ -81,7 +81,7 @@ class NodeArtist(PathPatch):
             )
         else:
             poly = ogdf.DPolyline()
-            ogdf.drawPolygonShape(GA.shape[self.node], x, y, w, h, poly)
+            ogdf.python_matplotlib.drawPolygonShape(GA.shape[self.node], x, y, w, h, poly)
             return dPolylineToPath(poly, closed=True)
 
 
@@ -148,10 +148,10 @@ class EdgeArtist(PathPatch):
         self.label_pos = ogdf.DPoint(
             (GA.x[self.edge.source()] + GA.x[self.edge.target()]) / 2,
             (GA.y[self.edge.source()] + GA.y[self.edge.target()]) / 2)
-        src_arr = ogdf.DPolygon() if ogdf.isArrowEnabled(GA, self.edge.adjSource()) else nullptr
-        tgt_arr = ogdf.DPolygon() if ogdf.isArrowEnabled(GA, self.edge.adjTarget()) else nullptr
-        self.poly = ogdf.drawEdge(self.edge, GA, self.label_pos, src_arr, tgt_arr)
-        self.bbox = self.poly.getBoundingBox()
+        src_arr = ogdf.DPolygon() if ogdf.python_matplotlib.isArrowEnabled(GA, self.edge.adjSource()) else nullptr
+        tgt_arr = ogdf.DPolygon() if ogdf.python_matplotlib.isArrowEnabled(GA, self.edge.adjTarget()) else nullptr
+        self.poly = ogdf.python_matplotlib.drawEdge(self.edge, GA, self.label_pos, src_arr, tgt_arr)
+        self.bbox = ogdf.python_matplotlib.getBoundingBox(self.poly)
         self.src_arr.get_path().vertices = np.asarray(dPolylineToPathVertices(src_arr) if src_arr else [] + [(0, 0)], float)
         self.tgt_arr.get_path().vertices = np.asarray(dPolylineToPathVertices(tgt_arr) if tgt_arr else [] + [(0, 0)], float)
         return dPolylineToPath(self.poly)
@@ -165,7 +165,7 @@ class EdgeArtist(PathPatch):
         if not self.bbox.p1().m_y - self.PICK_DISTANCE <= y <= self.bbox.p2().m_y + self.PICK_DISTANCE:
             return False, None
         out = ogdf.DPoint()
-        dist = ogdf.closestPointOnLine(self.poly, ogdf.DPoint(x, y), out)
+        dist = ogdf.python_matplotlib.closestPointOnLine(self.poly, ogdf.DPoint(x, y), out)
         if dist <= self.PICK_DISTANCE:
             return True, {"point": out, "dist": dist}
         else:
