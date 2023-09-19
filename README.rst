@@ -2,7 +2,7 @@
  :target: https://mybinder.org/v2/gh/N-Coder/ogdf-python/HEAD?labpath=docs%2Fexamples%2Fsugiyama-simple.ipynb
 .. |(TM)| unicode:: U+2122
 
-ogdf-python 0.2.1-dev: Automagic Python Bindings for the Open Graph Drawing Framework |binder|
+ogdf-python 0.2.1: Automagic Python Bindings for the Open Graph Drawing Framework |binder|
 ==============================================================================================
 
 ``ogdf-python`` uses the `black magic <http://www.camillescott.org/2019/04/11/cmake-cppyy/>`_
