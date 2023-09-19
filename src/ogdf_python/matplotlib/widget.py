@@ -69,7 +69,7 @@ class MatplotlibGraph:
     def cleared(self):
         for na in self.nodes.values():
             na.remove()
-        for ea in self.edge.values():
+        for ea in self.edges.values():
             ea.remove()
         self.nodes.clear()
         self.edges.clear()
