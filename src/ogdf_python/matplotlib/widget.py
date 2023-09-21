@@ -1,3 +1,6 @@
+import functools
+import traceback
+
 from matplotlib import patheffects as patheffects
 from matplotlib.backend_bases import MouseButton
 
@@ -6,28 +9,21 @@ from ogdf_python.matplotlib.artist import NodeArtist, EdgeArtist
 from ogdf_python.matplotlib.util import new_figure
 
 
-class SimpleGraphObserver(ogdf.GraphObserver):
-    def cleared(self):
-        pass
+def catch_exception(wrapped):
+    @functools.wraps(wrapped)
+    def fun(*args, **kwargs):
+        try:
+            wrapped(*args, **kwargs)
+        except Exception:
+            traceback.print_exc()
+            pass
 
-    def nodeAdded(self, n):
-        pass
-
-    def edgeAdded(self, e):
-        pass
-
-    def nodeDeleted(self, node):
-        pass
-
-    def edgeDeleted(self, edge):
-        pass
-
-    def reInit(self):
-        pass
+    return fun
 
 
-class MatplotlibGraph:
+class MatplotlibGraph(ogdf.GraphObserver):
     def __init__(self, GA, ax=None, apply_style=True, hide_spines=True):
+        super().__init__(GA.constGraph())
         self.GA = GA
         if ax is None:
             self.ax = ax = new_figure().subplots()
@@ -57,15 +53,12 @@ class MatplotlibGraph:
 
         self._on_pick_cid = ax.figure.canvas.mpl_connect('pick_event', self._on_pick)
         self._on_click_cid = ax.figure.canvas.mpl_connect('button_press_event', self._on_click)
-        self._on_close_cid = ax.figure.canvas.mpl_connect('close_event', self._on_close)
         self._last_pick_mouse_event = None
 
-        # cppyy is somewhat picky when it comes to deriving from GraphObserver
-        # so we try to keep this class as simple as possible
-        self._graph_observer = SimpleGraphObserver(G)
-        for m in ["cleared", "nodeDeleted", "edgeDeleted", "nodeAdded", "edgeAdded", "reInit"]:
-            setattr(self._graph_observer, m, getattr(self, m))
+    def __del__(self):
+        ogdf.GraphObserver.__destruct__(self)
 
+    @catch_exception
     def cleared(self):
         for na in self.nodes.values():
             na.remove()
@@ -75,33 +68,49 @@ class MatplotlibGraph:
         self.edges.clear()
         self.ax.figure.canvas.draw_idle()
 
+    @catch_exception
     def nodeDeleted(self, node):
+        if node not in self.nodes:
+            return
         self.nodes[node].remove()
         del self.nodes[node]
         self.ax.figure.canvas.draw_idle()
 
+    @catch_exception
     def edgeDeleted(self, edge):
+        if edge not in self.edges:
+            return
         self.edges[edge].remove()
         del self.edges[edge]
         self.ax.figure.canvas.draw_idle()
 
-    def nodeAdded(self, n):
-        a = self.nodes[n] = NodeArtist(n, self.GA)
+    @catch_exception
+    def nodeAdded(self, node):
+        a = self.nodes[node] = NodeArtist(node, self.GA)
         self.ax.add_patch(a)
         self.ax.add_artist(a.label)
         self.ax.figure.canvas.draw_idle()
 
-    def edgeAdded(self, e):
+    @catch_exception
+    def edgeAdded(self, edge):
         cid = None
+        index = edge.index
 
         # we need to defer drawing as not all attributes can already be accessed in the
         # edgeAdded callback
+        @catch_exception
         def addedge(arg):
             nonlocal cid
             if cid is None:
                 return
             self.ax.figure.canvas.mpl_disconnect(cid)
             cid = None
+            try:
+                e = self.GA.constGraph().edges.byid(index)
+            except IndexError:
+                return
+            if not e or e in self.edges:
+                return
             a = self.edges[e] = EdgeArtist(e, self.GA)
             self.ax.add_patch(a)
             self.ax.add_artist(a.label)
@@ -111,11 +120,9 @@ class MatplotlibGraph:
         cid = self.ax.figure.canvas.mpl_connect('draw_event', addedge)
         self.ax.figure.canvas.draw_idle()
 
+    @catch_exception
     def reInit(self):
         self.cleared()
-
-    def _on_close(self, event):
-        del self._graph_observer
 
     def _on_pick(self, event):
         # me = event.mouseevent
