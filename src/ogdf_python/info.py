@@ -1,6 +1,6 @@
 from ogdf_python.loader import *
 
-__all__ = ["get_ogdf_info"]
+__all__ = ["get_ogdf_info", "get_macro", "get_library_path", "get_include_path", "get_ogdf_include_path"]
 
 
 def get_macro(m):
@@ -31,16 +31,34 @@ namespace conf_which {{
     return getattr(cppyy.gbl.conf_which, w)().decode("ascii")
 
 
-def get_library_path(name):
+def get_library_path(name=None):
+    if name is None:
+        return get_library_path("OGDF") or get_library_path("libOGDF")
     return cppyy.gbl.gSystem.FindDynamicLibrary(cppyy.gbl.CppyyLegacy.TString(name), True)
 
 
+def get_ogdf_include_path():
+    include = "ogdf/basic/Graph.h"
+    return get_include_path(include).removesuffix(include)
+
+
+def get_include_path(name="ogdf/basic/Graph.h"):
+    import ctypes
+    s = ctypes.c_char_p()
+    if cppyy.gbl.gSystem.IsFileInIncludePath(name, s):
+        return s.value.decode()
+    else:
+        return None
+
+
 def get_ogdf_info():
+    from ogdf_python import __version__
     cppinclude("ogdf/basic/System.h")
-    # gbl.gSystem.ListLibraries()
     data = {
-        "ogdf_path": get_library_path("OGDF") or get_library_path("libOGDF"),
+        "ogdf_path": get_library_path() or "unknown",
+        "ogdf_include_path": get_ogdf_include_path() or "unknown",
         "ogdf_version": get_macro("OGDF_VERSION").strip('"'),
+        "ogdf_python_version": __version__,
         "ogdf_debug": get_macro("OGDF_DEBUG") is not None,
         "ogdf_build_debug": ogdf.debugMode,
         "debug": get_macro("NDEBUG") is None,
