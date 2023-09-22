@@ -94,7 +94,7 @@ class MatplotlibGraph(ogdf.GraphObserver):
     @catch_exception
     def edgeAdded(self, edge):
         cid = None
-        index = edge.index
+        index = edge.index()
 
         # we need to defer drawing as not all attributes can already be accessed in the
         # edgeAdded callback
@@ -105,11 +105,9 @@ class MatplotlibGraph(ogdf.GraphObserver):
                 return
             self.ax.figure.canvas.mpl_disconnect(cid)
             cid = None
-            try:
-                e = self.GA.constGraph().edges.byid(index)
-            except IndexError:
-                return
-            if not e or e in self.edges:
+
+            e = self.GA.constGraph().edges.byid(index)
+            if e in self.edges:
                 return
             a = self.edges[e] = EdgeArtist(e, self.GA)
             self.ax.add_patch(a)
