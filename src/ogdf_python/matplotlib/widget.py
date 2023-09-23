@@ -55,6 +55,14 @@ class MatplotlibGraph(ogdf.GraphObserver):
         self._on_click_cid = ax.figure.canvas.mpl_connect('button_press_event', self._on_click)
         self._last_pick_mouse_event = None
 
+        def update(*args, **kwargs):
+            self.update_all()
+
+        fig = self.ax.figure
+        fig.canvas.toolbar.toolitems = [fig.canvas.toolbar.toolitems, ("Update", "Update the Graph", "refresh", "update_graph")]
+        fig.canvas.toolbar.update_graph = update
+        fig.canvas.toolbar_visible = 'visible'
+
     def __del__(self):
         ogdf.GraphObserver.__destruct__(self)
 
@@ -176,7 +184,11 @@ class MatplotlibGraph(ogdf.GraphObserver):
         self.ax.figure.subplots_adjust(left=0, right=1, top=1, bottom=0)
         self.ax.figure.canvas.draw_idle()
 
-    def update_all(self, GA):
+    def update_all(self, GA=None):
+        if GA is None:
+            GA = self.GA
+        else:
+            self.GA = GA
         for na in self.nodes.values():
             na.update_attributes(GA)
         for ea in self.edges.values():
