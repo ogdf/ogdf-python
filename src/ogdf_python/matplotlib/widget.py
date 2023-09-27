@@ -55,14 +55,6 @@ class MatplotlibGraph(ogdf.GraphObserver):
         self._on_click_cid = ax.figure.canvas.mpl_connect('button_press_event', self._on_click)
         self._last_pick_mouse_event = None
 
-        def update(*args, **kwargs):
-            self.update_all()
-
-        fig = self.ax.figure
-        fig.canvas.toolbar.toolitems = [fig.canvas.toolbar.toolitems, ("Update", "Update the Graph", "refresh", "update_graph")]
-        fig.canvas.toolbar.update_graph = update
-        fig.canvas.toolbar_visible = 'visible'
-
     def __del__(self):
         ogdf.GraphObserver.__destruct__(self)
 
@@ -172,9 +164,13 @@ class MatplotlibGraph(ogdf.GraphObserver):
         fig.canvas.header_visible = False
         fig.canvas.footer_visible = False
         fig.canvas.capture_scroll = True
-        # fig.canvas.layout.min_height = '400px'
-        # fig.canvas.layout.min_width = '100%'
-        # fig.canvas.layout.width = '100%'
+
+        def update(*args, **kwargs):
+            self.update_all()
+
+        fig.canvas.toolbar.update_ogdf_graph = update
+        fig.canvas.toolbar.toolitems = [*fig.canvas.toolbar.toolitems, ("Update", "Update the Graph", "refresh", "update_ogdf_graph")]
+        fig.canvas.toolbar_visible = 'visible'
 
     def hide_spines(self):
         self.ax.spines['right'].set_visible(False)
