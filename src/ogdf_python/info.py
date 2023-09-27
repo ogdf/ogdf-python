@@ -39,7 +39,10 @@ def get_library_path(name=None):
 
 def get_ogdf_include_path():
     include = "ogdf/basic/Graph.h"
-    return get_include_path(include).removesuffix(include)
+    path = get_include_path(include)
+    if path:
+        path = path.removesuffix(include)
+    return path
 
 
 def get_include_path(name="ogdf/basic/Graph.h"):
