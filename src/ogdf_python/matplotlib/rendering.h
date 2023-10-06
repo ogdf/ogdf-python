@@ -331,7 +331,7 @@ namespace ogdf {
 				end.m_y = y - sign * size;
 		
 				append({end.m_x, y, end.m_x - size / 4, y - size * sign,
-				        end.m_x + size / 4, y - size * sign}, poly);
+				        end.m_x + size / 4, y - size * sign, end.m_x, y}, poly);
 			} else {
 				// identify the position of the tip
 				double slope = dy / dx;
@@ -368,7 +368,7 @@ namespace ogdf {
 				double x3 = mx + size / 4 * dy2;
 				double y3 = my - size / 4 * dx2;
 		
-				append({end.m_x, end.m_y, x2, y2, x3, y3}, poly);
+				append({end.m_x, end.m_y, x2, y2, x3, y3, end.m_x, end.m_y}, poly);
 			}
 
 			return poly;
@@ -491,6 +491,72 @@ namespace ogdf {
 				p1 = p2;
 			}
 			return minDist;
+		}
+
+		double closestPointOnEdge(const GraphAttributes &GA, edge e, const DPoint &x, DPoint &out) {
+			DPoint p1 = GA.point(e->source()), p2;
+			double minDist = std::numeric_limits<double>::infinity();
+			auto handle = [&](const DPoint &n) {
+				// https://stackoverflow.com/a/10984080/805569
+				p2 = n;
+				auto d = p2 - p1;
+				auto r = (d * (x - p1)) / normSquared(d);
+
+				if (r < 0) {
+					auto l = normSquared(x - p1);
+					if (l < minDist) {
+						minDist = l;
+						out = p1;
+					}
+				} else if (r > 1) {
+					auto l = normSquared(x - p2);
+					if (l < minDist) {
+						minDist = l;
+						out = p2;
+					}
+				} else {
+					auto y = p1 + r * d;
+					auto l = normSquared(x - y);
+					if (l < minDist) {
+						minDist = l;
+						out = y;
+					}
+				}
+				p1 = p2;
+			};
+			for (auto n: GA.bends(e)) {
+				handle(n);
+			}
+			handle(GA.point(e->target()));
+			return minDist;
+		}
+
+		edge findClosestEdge(const GraphAttributes &GA, const DPoint &x, DPoint &out) {
+			DPoint cur;
+			edge res = nullptr;
+			double minDist = std::numeric_limits<double>::infinity();
+			for (edge e: GA.constGraph().edges) {
+				double d = closestPointOnEdge(GA, e, x, cur);
+				if (d < minDist) {
+					res = e;
+					minDist = d;
+					out = cur;
+				}
+			}
+			return res;
+		}
+
+		node findClosestNode(const GraphAttributes &GA, const DPoint &x) {
+			node res = nullptr;
+			double minDist = std::numeric_limits<double>::infinity();
+			for (node n: GA.constGraph().nodes) {
+				double d = normSquared(x - GA.point(n));
+				if (d < minDist) {
+					res = n;
+					minDist = d;
+				}
+			}
+			return res;
 		}
 	}
 }

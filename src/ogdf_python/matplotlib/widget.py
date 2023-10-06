@@ -1,12 +1,16 @@
 import functools
 import traceback
+from collections import defaultdict
 
 from matplotlib import patheffects as patheffects
+from matplotlib.axes import Axes
 from matplotlib.backend_bases import MouseButton
+from matplotlib.collections import *
+from matplotlib.text import Text
 
 from ogdf_python.loader import *
 from ogdf_python.matplotlib.artist import NodeArtist, EdgeArtist
-from ogdf_python.matplotlib.util import new_figure
+from ogdf_python.matplotlib.util import *
 
 
 def catch_exception(wrapped):
@@ -21,19 +25,95 @@ def catch_exception(wrapped):
     return fun
 
 
-class MatplotlibGraph(ogdf.GraphObserver):
-    def __init__(self, GA, ax=None, apply_style=True, hide_spines=True):
-        super().__init__(GA.constGraph())
+class BaseMatplotlibGraph:
+    ax = None
+
+    def __init__(self, apply_style=True, hide_spines=True):
+        if apply_style:
+            self.apply_style()
+        if hide_spines:
+            self.hide_spines()
+
+        self._on_pick_cid = self.ax.figure.canvas.mpl_connect('pick_event', self._on_pick)
+        self._on_click_cid = self.ax.figure.canvas.mpl_connect('button_press_event', self._on_click)
+        self._last_pick_mouse_event = None
+
+    def _on_pick(self, event):
+        # me = event.mouseevent
+        # print('%s click pick: artist=%s, button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
+        #       ('double' if me.dblclick else 'single', event.artist, me.button,
+        #        me.x, me.y, me.xdata, me.ydata))
+        if event.mouseevent.button != MouseButton.LEFT:
+            return
+        elif self._last_pick_mouse_event == event.mouseevent:
+            return  # ignore multiple picks from the same click
+        elif isinstance(event.artist, NodeArtist):
+            self.on_node_click(event.artist.node, event)
+        elif isinstance(event.artist, EdgeArtist):
+            self.on_edge_click(event.artist.edge, event)
+        else:
+            return
+        self._last_pick_mouse_event = event.mouseevent
+        return
+
+    def _on_click(self, event):
+        if self._last_pick_mouse_event == event:
+            return  # ignore multiple click if it resulted in a pick
+        # print('%s click: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
+        #       ('double' if event.dblclick else 'single', event.button,
+        #        event.x, event.y, event.xdata, event.ydata))
+        self.on_background_click(event)
+
+    def on_edge_click(self, edge, event):
+        pass
+
+    def on_node_click(self, node, event):
+        pass
+
+    def on_background_click(self, event):
+        pass
+
+    def apply_style(self):
+        self.ax.set_aspect(1, anchor="C", adjustable="datalim")
+        self.ax.autoscale()
+        fig = self.ax.figure
+        fig.canvas.header_visible = False
+        fig.canvas.footer_visible = False
+        fig.canvas.capture_scroll = True
+
+        if fig.canvas.toolbar and hasattr(self, "update_all"):
+            def update(*args, **kwargs):
+                self.update_all()
+
+            fig.canvas.toolbar.update_ogdf_graph = update
+            fig.canvas.toolbar.toolitems = [*fig.canvas.toolbar.toolitems, ("Update", "Update the Graph", "refresh", "update_ogdf_graph")]
+            fig.canvas.toolbar_visible = 'visible'
+
+    def hide_spines(self):
+        self.ax.spines['right'].set_visible(False)
+        self.ax.spines['top'].set_visible(False)
+        self.ax.spines['left'].set_visible(False)
+        self.ax.spines['bottom'].set_visible(False)
+        self.ax.figure.subplots_adjust(left=0, right=1, top=1, bottom=0)
+        self.ax.figure.canvas.draw_idle()
+
+    def _ipython_display_(self):
+        from IPython.core.display_functions import display
+        return display(self.ax.figure.canvas)
+
+
+class MatplotlibGraph(BaseMatplotlibGraph, ogdf.GraphObserver):
+    def __init__(self, GA, ax=None, **kwargs):
         self.GA = GA
         if ax is None:
-            self.ax = ax = new_figure().subplots()
-        else:
-            self.ax = ax
+            ax = new_figure().subplots()
+        self.ax: Axes = ax
         G = GA.constGraph()
-        self.nodes = {}  # TODO ogdf.NodeArray["PyObject*"](G, typed_nullptr("PyObject"))
-        self.edges = {}
-        # TODO clusters
 
+        # TODO ogdf.NodeArray["PyObject*"](G, typed_nullptr("PyObject"))
+        # TODO clusters
+        self.nodes = {}
+        self.edges = {}
         for n in G.nodes:
             a = self.nodes[n] = NodeArtist(n, GA)
             ax.add_patch(a)
@@ -46,14 +126,8 @@ class MatplotlibGraph(ogdf.GraphObserver):
             ax.add_patch(a.src_arr)
             ax.add_patch(a.tgt_arr)
 
-        if apply_style:
-            self.apply_style()
-        if hide_spines:
-            self.hide_spines()
-
-        self._on_pick_cid = ax.figure.canvas.mpl_connect('pick_event', self._on_pick)
-        self._on_click_cid = ax.figure.canvas.mpl_connect('button_press_event', self._on_click)
-        self._last_pick_mouse_event = None
+        BaseMatplotlibGraph.__init__(self, **kwargs)
+        ogdf.GraphObserver.__init__(self, GA.constGraph())
 
     def __del__(self):
         ogdf.GraphObserver.__destruct__(self)
@@ -122,64 +196,6 @@ class MatplotlibGraph(ogdf.GraphObserver):
     def reInit(self):
         self.cleared()
 
-    def _on_pick(self, event):
-        # me = event.mouseevent
-        # print('%s click pick: artist=%s, button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
-        #       ('double' if me.dblclick else 'single', event.artist, me.button,
-        #        me.x, me.y, me.xdata, me.ydata))
-        if event.mouseevent.button != MouseButton.LEFT:
-            return
-        elif self._last_pick_mouse_event == event.mouseevent:
-            return  # ignore multiple picks from the same click
-        elif isinstance(event.artist, NodeArtist):
-            self.on_node_click(event.artist.node, event)
-        elif isinstance(event.artist, EdgeArtist):
-            self.on_edge_click(event.artist.edge, event)
-        else:
-            return
-        self._last_pick_mouse_event = event.mouseevent
-        return
-
-    def _on_click(self, event):
-        if self._last_pick_mouse_event == event:
-            return  # ignore multiple click if it resulted in a pick
-        # print('%s click: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
-        #       ('double' if event.dblclick else 'single', event.button,
-        #        event.x, event.y, event.xdata, event.ydata))
-        self.on_background_click(event)
-
-    def on_edge_click(self, edge, event):
-        pass
-
-    def on_node_click(self, node, event):
-        pass
-
-    def on_background_click(self, event):
-        pass
-
-    def apply_style(self):
-        self.ax.set_aspect(1, anchor="C", adjustable="datalim")
-        self.ax.autoscale()
-        fig = self.ax.figure
-        fig.canvas.header_visible = False
-        fig.canvas.footer_visible = False
-        fig.canvas.capture_scroll = True
-
-        def update(*args, **kwargs):
-            self.update_all()
-
-        fig.canvas.toolbar.update_ogdf_graph = update
-        fig.canvas.toolbar.toolitems = [*fig.canvas.toolbar.toolitems, ("Update", "Update the Graph", "refresh", "update_ogdf_graph")]
-        fig.canvas.toolbar_visible = 'visible'
-
-    def hide_spines(self):
-        self.ax.spines['right'].set_visible(False)
-        self.ax.spines['top'].set_visible(False)
-        self.ax.spines['left'].set_visible(False)
-        self.ax.spines['bottom'].set_visible(False)
-        self.ax.figure.subplots_adjust(left=0, right=1, top=1, bottom=0)
-        self.ax.figure.canvas.draw_idle()
-
     def update_all(self, GA=None):
         if GA is None:
             GA = self.GA
@@ -191,9 +207,104 @@ class MatplotlibGraph(ogdf.GraphObserver):
             ea.update_attributes(GA)
         self.ax.figure.canvas.draw_idle()
 
-    def _ipython_display_(self):
-        from IPython.core.display_functions import display
-        return display(self.ax.figure.canvas)
+
+class HugeMatplotlibGraph(BaseMatplotlibGraph):
+    EDGE_CLICK_WIDTH_PX = 10
+
+    def __init__(self, GA, ax=None, add_node_labels=False, add_edge_labels=False, **kwargs):
+        self.GA = GA
+        if ax is None:
+            ax = new_figure().subplots()
+        self.ax: Axes = ax
+        G = GA.constGraph()
+
+        self.nodes_styles = defaultdict(list)
+        for n in G.nodes:
+            self.nodes_styles[NodeStyle.from_GA(GA, n)].append(n)
+        for style, nodes in self.nodes_styles.items():
+            # shape = get_node_shape(0, 0, style.width, style.height, style.shape)
+            # offsets = [(GA.x[n], GA.y[n]) for n in nodes]
+            paths = [get_node_shape(GA.x[n], GA.y[n], GA.width[n], GA.height[n], GA.shape[n]) for n in nodes]
+            d = {k + 's': v for k, v in style.asdict().items() if v}  # and k not in {"shape", "width", "height"}
+            ax.add_collection(PathCollection(
+                paths=paths, zorder=200, **d))
+
+        self.label_pos = ogdf.EdgeArray[ogdf.DPoint](G)
+        self.edge_styles = defaultdict(list)
+        for e in G.edges:
+            self.edge_styles[EdgeStyle.from_GA(GA, e)].append(e)
+        for style, edges in self.edge_styles.items():
+            paths = [get_edge_path(GA, e, label_pos=self.label_pos[e], closed=True) for e in edges]
+            d = {k + 's': v for k, v in style.asdict().items() if v}
+            ax.add_collection(PathCollection(
+                paths=paths, zorder=100, facecolors=d.get("edgecolors", None), **d))
+
+        self.node_labels = {}
+        self.auto_node_labels = add_node_labels
+        if add_node_labels:
+            for n in G.nodes:
+                self.add_node_label(n)
+
+        self.edge_labels = {}
+        self.auto_edge_labels = add_edge_labels
+        if add_edge_labels:
+            for e in G.edges:
+                self.add_edge_label(e)
+
+        self._on_click_cid = self.ax.figure.canvas.mpl_connect('button_press_event', self._on_click)
+
+        BaseMatplotlibGraph.__init__(self, **kwargs)
+        # TODO updates
+        # TODO highlight selected
+
+    def _on_click(self, event):
+        # print('%s click: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
+        #       ('double' if event.dblclick else 'single', event.button,
+        #        event.x, event.y, event.xdata, event.ydata))
+        if event.button != MouseButton.LEFT:
+            return
+        t = self.ax.transData.inverted()
+        a, _ = t.transform([0, 0])
+        b, _ = t.transform([self.EDGE_CLICK_WIDTH_PX, self.EDGE_CLICK_WIDTH_PX])
+        edge_width = abs(a - b)
+        o, d, p = find_closest(self.GA, event.xdata, event.ydata, edge_width)
+        # print(edge_width, o, d, p.m_x if p else 0, p.m_y if p else 0)
+        if not o:
+            # print("bg")
+            self.on_background_click(event)
+        elif isinstance(o, ogdf.NodeElement):
+            # print("node", o)
+            self.on_node_click(o, event)
+        elif isinstance(o, ogdf.EdgeElement):
+            # print("edge", o)
+            # if self.point:
+            #     self.point.remove()
+            # self.point = self.ax.scatter([p.m_x], [p.m_y])
+            self.on_edge_click(o, event)
+        else:
+            print(f"Clicked on a weird {type(o)} object {o!r}")
+
+    def add_edge_label(self, e):
+        GA = self.GA
+        self.edge_labels[e] = t = Text(
+            x=self.label_pos[e].m_x, y=self.label_pos[e].m_y,
+            text=GA.label[e],
+            color=color(GA.strokeColor[e]),
+            verticalalignment='center', horizontalalignment='center',
+            zorder=300,
+        )
+        self.ax.add_artist(t)
+
+    def add_node_label(self, n):
+        GA = self.GA
+        self.node_labels[n] = t = Text(
+            x=GA.x[n], y=GA.y[n],
+            text=GA.label[n],
+            color=color(GA.strokeColor[n]),
+            verticalalignment='center', horizontalalignment='center',
+            zorder=300,
+        )
+        self.ax.add_artist(t)
 
 
 class MatplotlibGraphEditor(MatplotlibGraph):
@@ -264,7 +375,6 @@ class MatplotlibGraphEditor(MatplotlibGraph):
 
     def on_edge_click(self, edge, event):
         super().on_edge_click(edge, event)
-        print("edge click")
         self.dragging = False
         self.select(event.artist)
 

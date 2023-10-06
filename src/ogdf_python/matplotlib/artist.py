@@ -2,7 +2,6 @@ import numpy as np
 from matplotlib.patches import PathPatch
 from matplotlib.path import Path
 from matplotlib.text import Text
-from matplotlib.transforms import Affine2D
 
 from ogdf_python.loader import *
 from ogdf_python.matplotlib.util import *
@@ -10,18 +9,19 @@ from ogdf_python.matplotlib.util import *
 
 class NodeArtist(PathPatch):
     def __init__(self, node, GA, **kwargs):
-        self.node = node
+        self.node = n = node
         attrs = self.calc_attributes(GA)
         attrs.update(**kwargs)
-        super().__init__(self.calc_path(GA), **attrs)
+        path = get_node_shape(GA.x[n], GA.y[n], GA.width[n], GA.height[n], GA.shape[n])
+        super().__init__(path, **attrs)
         # TODO use collection for nodes with the same shape?
 
         self.label = Text(
-            x=GA.x[self.node], y=GA.y[self.node],
+            x=GA.x[n], y=GA.y[n],
             # xy=(GA.x[self.node],GA.y[self.node]),
             # xytext=(GA.xLabel[self.node],GA.yLabel[self.node]),
-            text=GA.label[self.node],
-            color=color(GA.strokeColor[self.node]),
+            text=GA.label[n],
+            color=color(GA.strokeColor[n]),
             verticalalignment='center', horizontalalignment='center',
             zorder=300,
         )
@@ -33,56 +33,21 @@ class NodeArtist(PathPatch):
 
     def update_attributes(self, GA):
         attrs = self.calc_attributes(GA)
-        path = self.calc_path(GA)
+        n = self.node
+        path = get_node_shape(GA.x[n], GA.y[n], GA.width[n], GA.height[n], GA.shape[n])
         self.set(**attrs, path=path)
         self.label.set(
-            x=GA.x[self.node], y=GA.y[self.node],
-            text=GA.label[self.node],
-            color=color(GA.strokeColor[self.node]),
+            x=GA.x[n], y=GA.y[n],
+            text=GA.label[n],
+            color=color(GA.strokeColor[n]),
         )
 
     def calc_attributes(self, GA):
-        return dict(
-            edgecolor=color(GA.strokeColor[self.node]),
-            facecolor=color(GA.fillColor[self.node]),
-            fill=True, zorder=200,  # TODO fillBgColor
-            hatch=fillPattern(GA.fillPattern[self.node]),
-            linestyle=strokeType(GA.strokeType[self.node]),
-            linewidth=GA.strokeWidth[self.node],
-            picker=True,
-        )
-
-    def calc_path(self, GA):
-        x = GA.x[self.node]
-        y = GA.y[self.node]
-        w = GA.width[self.node]
-        h = GA.height[self.node]
-        if GA.shape[self.node] == ogdf.Shape.Ellipse:
-            circ = Path.unit_circle()
-            trans = Affine2D()
-            trans.scale(w, h)
-            trans.translate(x, y)
-            return circ.transformed(trans)
-        elif GA.shape[self.node] == ogdf.Shape.RoundedRect:
-            b = min(w, h) * 0.1
-            return Path(
-                [(x - w / 2, y - h / 2 + b),
-                 (x - w / 2, y + h / 2 - b),
-                 (x - w / 2, y + h / 2), (x - w / 2 + b, y + h / 2),
-                 (x + w / 2 - b, y + h / 2),
-                 (x + w / 2, y + h / 2), (x + w / 2, y + h / 2 - b),
-                 (x + w / 2, y - h / 2 + b),
-                 (x + w / 2, y - h / 2), (x + w / 2 - b, y - h / 2),
-                 (x - w / 2 + b, y - h / 2),
-                 (x - w / 2, y - h / 2), (x - w / 2, y - h / 2 + b),
-                 (0, 0)],
-                [Path.MOVETO, Path.LINETO, Path.CURVE3, Path.CURVE3, Path.LINETO, Path.CURVE3, Path.CURVE3, Path.LINETO, Path.CURVE3, Path.CURVE3, Path.LINETO,
-                 Path.CURVE3, Path.CURVE3, Path.CLOSEPOLY]
-            )
-        else:
-            poly = ogdf.DPolyline()
-            ogdf.python_matplotlib.drawPolygonShape(GA.shape[self.node], x, y, w, h, poly)
-            return dPolylineToPath(poly, closed=True)
+        d = NodeStyle.dict_from_GA(GA, self.node)
+        d["fill"] = True
+        d["zorder"] = 200
+        d["picker"] = True
+        return d
 
 
 class EdgeArtist(PathPatch):
@@ -128,21 +93,17 @@ class EdgeArtist(PathPatch):
         )
 
     def calc_attributes(self, GA):
-        return dict(
-            fill=False, zorder=100,
-            edgecolor=color(GA.strokeColor[self.edge]),
-            linestyle=strokeType(GA.strokeType[self.edge]),
-            linewidth=GA.strokeWidth[self.edge],
-            picker=self._should_pick,
-        )
+        d = EdgeStyle.dict_from_GA(GA, self.edge)
+        d["fill"] = False
+        d["zorder"] = 100
+        d["picker"] = self._should_pick
+        return d
 
     def calc_arrow_attributes(self, GA):
-        return dict(
-            fill=True, zorder=100,
-            edgecolor=color(GA.strokeColor[self.edge]),
-            facecolor=color(GA.strokeColor[self.edge]),
-            linewidth=GA.strokeWidth[self.edge],
-        )
+        d = EdgeStyle.dict_from_GA(GA, self.edge)
+        d["fill"] = True
+        d["zorder"] = 100
+        return d
 
     def calc_path(self, GA):
         self.label_pos = ogdf.DPoint(
