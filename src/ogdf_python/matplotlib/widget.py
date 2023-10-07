@@ -456,5 +456,9 @@ class MatplotlibGraphEditor(MatplotlibGraph):
         for adj in node.adjEntries:
             self.update_edge(adj.theEdge())
 
+        style, idx = self.node_styles[node]
+        path = self.style_nodes[style].paths[idx]
+        self.selected_artist.set_path(path)
+
         self.on_node_moved(node)
         self.ax.figure.canvas.draw_idle()

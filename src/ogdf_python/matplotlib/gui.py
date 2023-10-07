@@ -1,6 +1,6 @@
 import ipywidgets
 
-from ogdf_python.matplotlib.artist import NodeArtist
+from ogdf_python import ogdf
 from ogdf_python.matplotlib.util import new_figure
 from ogdf_python.matplotlib.widget import MatplotlibGraphEditor
 
@@ -88,29 +88,31 @@ class GraphEditorLayout(ipywidgets.GridBox):
         self.on_selection_changed()
 
     def on_node_moved(self, node):
-        if not isinstance(self.widget.selected, NodeArtist) or self.widget.selected.node != node:
-            return
-        GA = self.widget.GA
-        self.values["position"].value = f"{GA.x[node]:.1f}, {GA.y[node]:.1f}"
+        if self.widget.selected == node:
+            GA = self.widget.GA
+            self.values["position"].value = f"{GA.x[node]:.1f}, {GA.y[node]:.1f}"
 
     def on_size_changed(self, x):
-        self.widget.GA.width[self.widget.selected.node] = self.values["width"].value
-        self.widget.GA.height[self.widget.selected.node] = self.values["height"].value
-        self.widget.selected.update_attributes(self.widget.GA)
+        node = self.widget.selected
+        self.widget.GA.width[node] = self.values["width"].value
+        self.widget.GA.height[node] = self.values["height"].value
+        self.widget.update_node(node)
         self.fig.canvas.draw_idle()
 
     def on_label_changed(self, x):
         value = self.values["label"].value
-        self.widget.GA.label[self.widget.selected.node] = value
-        self.widget.selected.label.set_text(value)
+        node = self.widget.selected
+        self.widget.GA.label[node] = value
+        if node in self.widget.node_labels:
+            self.widget.node_labels[node].set_text(value)
         self.fig.canvas.draw_idle()
 
     def on_delete_clicked(self, btn):
-        self.widget.GA.constGraph().delNode(self.widget.selected.node)
+        self.widget.GA.constGraph().delNode(self.widget.selected)
 
     def on_selection_changed(self):
-        if isinstance(self.widget.selected, NodeArtist):
-            node = self.widget.selected.node
+        if isinstance(self.widget.selected, ogdf.NodeElement):
+            node = self.widget.selected
             GA = self.widget.GA
             self.pane.layout.visibility = 'visible'
             self.title.value = f"Selected Vertex {node.index()}"
@@ -118,7 +120,6 @@ class GraphEditorLayout(ipywidgets.GridBox):
             self.values["label"].value = str(GA.label[node])
             self.values["degree"].value = f"{node.degree()} ({node.indeg()} + {node.outdeg()})"
             self.values["position"].value = f"{GA.x[node]:.1f}, {GA.y[node]:.1f}"
-            self.values["width"].value = GA.width[node]
-            self.values["height"].value = GA.height[node]
+            self.values["width"].value, self.values["height"].value = GA.width[node], GA.height[node]
         else:
             self.pane.layout.visibility = 'hidden'
