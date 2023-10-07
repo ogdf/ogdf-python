@@ -1,15 +1,14 @@
 import functools
 import traceback
-from collections import defaultdict
+from typing import Dict, Tuple
 
-from matplotlib import patheffects as patheffects
+import numpy as np
+from itertools import chain
 from matplotlib.axes import Axes
 from matplotlib.backend_bases import MouseButton
-from matplotlib.collections import *
 from matplotlib.text import Text
 
 from ogdf_python.loader import *
-from ogdf_python.matplotlib.artist import NodeArtist, EdgeArtist
 from ogdf_python.matplotlib.util import *
 
 
@@ -25,237 +24,54 @@ def catch_exception(wrapped):
     return fun
 
 
-class BaseMatplotlibGraph:
-    ax = None
+class MatplotlibGraph(ogdf.GraphObserver):
+    EDGE_CLICK_WIDTH_PX = 10
 
-    def __init__(self, apply_style=True, hide_spines=True):
+    def __init__(self, GA, ax=None, add_nodes=True, add_edges=True,
+                 auto_node_labels=None, auto_edge_labels=None, apply_style=True, hide_spines=True):
+        self.GA = GA
+        if ax is None:
+            ax = new_figure().subplots()
+        self.ax: Axes = ax
+        G = GA.constGraph()
+
+        if auto_node_labels is None:
+            auto_node_labels = G.numberOfNodes() < 100
+        if auto_edge_labels is None:
+            auto_edge_labels = auto_node_labels
+        self.node_labels: Dict[ogdf.node, Text] = dict()
+        self.auto_node_labels: bool = auto_node_labels
+        self.edge_labels: Dict[ogdf.edge, Text] = dict()
+        self.auto_edge_labels: bool = auto_edge_labels
+
+        # node -> (style, index)
+        self.node_styles: Dict[ogdf.node, Tuple[NodeStyle, int]] = dict()
+        # style -> (nodes, paths, collection, hatch_collection)
+        self.style_nodes: Dict[NodeStyle, StyledElementCollection] = dict()
+
+        # edge -> (style, index)
+        self.edge_styles: Dict[ogdf.edge, Tuple[EdgeStyle, int]] = dict()
+        # style -> (edges, paths, collection)
+        self.style_edges: Dict[EdgeStyle, StyledElementCollection] = dict()
+
+        self.label_pos = ogdf.EdgeArray[ogdf.DPoint](G)
+
+        if add_nodes:
+            for n in G.nodes:
+                self.add_node(n)
+        if add_edges:
+            for e in G.edges:
+                self.add_edge(e)
+        for col in chain((s.coll for s in self.style_nodes.values()), (s.coll for s in self.style_edges.values())):
+            self.ax.update_datalim(col.get_datalim(self.ax.transData).get_points())
+
         if apply_style:
             self.apply_style()
         if hide_spines:
             self.hide_spines()
 
-        self._on_pick_cid = self.ax.figure.canvas.mpl_connect('pick_event', self._on_pick)
         self._on_click_cid = self.ax.figure.canvas.mpl_connect('button_press_event', self._on_click)
-        self._last_pick_mouse_event = None
-
-    def _on_pick(self, event):
-        # me = event.mouseevent
-        # print('%s click pick: artist=%s, button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
-        #       ('double' if me.dblclick else 'single', event.artist, me.button,
-        #        me.x, me.y, me.xdata, me.ydata))
-        if event.mouseevent.button != MouseButton.LEFT:
-            return
-        elif self._last_pick_mouse_event == event.mouseevent:
-            return  # ignore multiple picks from the same click
-        elif isinstance(event.artist, NodeArtist):
-            self.on_node_click(event.artist.node, event)
-        elif isinstance(event.artist, EdgeArtist):
-            self.on_edge_click(event.artist.edge, event)
-        else:
-            return
-        self._last_pick_mouse_event = event.mouseevent
-        return
-
-    def _on_click(self, event):
-        if self._last_pick_mouse_event == event:
-            return  # ignore multiple click if it resulted in a pick
-        # print('%s click: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
-        #       ('double' if event.dblclick else 'single', event.button,
-        #        event.x, event.y, event.xdata, event.ydata))
-        self.on_background_click(event)
-
-    def on_edge_click(self, edge, event):
-        pass
-
-    def on_node_click(self, node, event):
-        pass
-
-    def on_background_click(self, event):
-        pass
-
-    def apply_style(self):
-        self.ax.set_aspect(1, anchor="C", adjustable="datalim")
-        self.ax.autoscale()
-        fig = self.ax.figure
-        fig.canvas.header_visible = False
-        fig.canvas.footer_visible = False
-        fig.canvas.capture_scroll = True
-
-        if fig.canvas.toolbar and hasattr(self, "update_all"):
-            def update(*args, **kwargs):
-                self.update_all()
-
-            fig.canvas.toolbar.update_ogdf_graph = update
-            fig.canvas.toolbar.toolitems = [*fig.canvas.toolbar.toolitems, ("Update", "Update the Graph", "refresh", "update_ogdf_graph")]
-            fig.canvas.toolbar_visible = 'visible'
-
-    def hide_spines(self):
-        self.ax.spines['right'].set_visible(False)
-        self.ax.spines['top'].set_visible(False)
-        self.ax.spines['left'].set_visible(False)
-        self.ax.spines['bottom'].set_visible(False)
-        self.ax.figure.subplots_adjust(left=0, right=1, top=1, bottom=0)
-        self.ax.figure.canvas.draw_idle()
-
-    def _ipython_display_(self):
-        from IPython.core.display_functions import display
-        return display(self.ax.figure.canvas)
-
-
-class MatplotlibGraph(BaseMatplotlibGraph, ogdf.GraphObserver):
-    def __init__(self, GA, ax=None, **kwargs):
-        self.GA = GA
-        if ax is None:
-            ax = new_figure().subplots()
-        self.ax: Axes = ax
-        G = GA.constGraph()
-
-        # TODO ogdf.NodeArray["PyObject*"](G, typed_nullptr("PyObject"))
-        # TODO clusters
-        self.nodes = {}
-        self.edges = {}
-        for n in G.nodes:
-            a = self.nodes[n] = NodeArtist(n, GA)
-            ax.add_patch(a)
-            ax.add_artist(a.label)
-        for e in G.edges:
-            a = self.edges[e] = EdgeArtist(e, GA)
-            ax.add_patch(a)
-            ax.add_artist(a.label)
-            # if len(a.src_arr.get_path().vertices) >= 2:
-            ax.add_patch(a.src_arr)
-            ax.add_patch(a.tgt_arr)
-
-        BaseMatplotlibGraph.__init__(self, **kwargs)
-        ogdf.GraphObserver.__init__(self, GA.constGraph())
-
-    def __del__(self):
-        ogdf.GraphObserver.__destruct__(self)
-
-    @catch_exception
-    def cleared(self):
-        for na in self.nodes.values():
-            na.remove()
-        for ea in self.edges.values():
-            ea.remove()
-        self.nodes.clear()
-        self.edges.clear()
-        self.ax.figure.canvas.draw_idle()
-
-    @catch_exception
-    def nodeDeleted(self, node):
-        if node not in self.nodes:
-            return
-        self.nodes[node].remove()
-        del self.nodes[node]
-        self.ax.figure.canvas.draw_idle()
-
-    @catch_exception
-    def edgeDeleted(self, edge):
-        if edge not in self.edges:
-            return
-        self.edges[edge].remove()
-        del self.edges[edge]
-        self.ax.figure.canvas.draw_idle()
-
-    @catch_exception
-    def nodeAdded(self, node):
-        a = self.nodes[node] = NodeArtist(node, self.GA)
-        self.ax.add_patch(a)
-        self.ax.add_artist(a.label)
-        self.ax.figure.canvas.draw_idle()
-
-    @catch_exception
-    def edgeAdded(self, edge):
-        cid = None
-        index = edge.index()
-
-        # we need to defer drawing as not all attributes can already be accessed in the
-        # edgeAdded callback
-        @catch_exception
-        def addedge(arg):
-            nonlocal cid
-            if cid is None:
-                return
-            self.ax.figure.canvas.mpl_disconnect(cid)
-            cid = None
-
-            e = self.GA.constGraph().edges.byid(index)
-            if e in self.edges:
-                return
-            a = self.edges[e] = EdgeArtist(e, self.GA)
-            self.ax.add_patch(a)
-            self.ax.add_artist(a.label)
-            self.ax.add_patch(a.src_arr)
-            self.ax.add_patch(a.tgt_arr)
-
-        cid = self.ax.figure.canvas.mpl_connect('draw_event', addedge)
-        self.ax.figure.canvas.draw_idle()
-
-    @catch_exception
-    def reInit(self):
-        self.cleared()
-
-    def update_all(self, GA=None):
-        if GA is None:
-            GA = self.GA
-        else:
-            self.GA = GA
-        for na in self.nodes.values():
-            na.update_attributes(GA)
-        for ea in self.edges.values():
-            ea.update_attributes(GA)
-        self.ax.figure.canvas.draw_idle()
-
-
-class HugeMatplotlibGraph(BaseMatplotlibGraph):
-    EDGE_CLICK_WIDTH_PX = 10
-
-    def __init__(self, GA, ax=None, add_node_labels=False, add_edge_labels=False, **kwargs):
-        self.GA = GA
-        if ax is None:
-            ax = new_figure().subplots()
-        self.ax: Axes = ax
-        G = GA.constGraph()
-
-        self.nodes_styles = defaultdict(list)
-        for n in G.nodes:
-            self.nodes_styles[NodeStyle.from_GA(GA, n)].append(n)
-        for style, nodes in self.nodes_styles.items():
-            # shape = get_node_shape(0, 0, style.width, style.height, style.shape)
-            # offsets = [(GA.x[n], GA.y[n]) for n in nodes]
-            paths = [get_node_shape(GA.x[n], GA.y[n], GA.width[n], GA.height[n], GA.shape[n]) for n in nodes]
-            d = {k + 's': v for k, v in style.asdict().items() if v}  # and k not in {"shape", "width", "height"}
-            ax.add_collection(PathCollection(
-                paths=paths, zorder=200, **d))
-
-        self.label_pos = ogdf.EdgeArray[ogdf.DPoint](G)
-        self.edge_styles = defaultdict(list)
-        for e in G.edges:
-            self.edge_styles[EdgeStyle.from_GA(GA, e)].append(e)
-        for style, edges in self.edge_styles.items():
-            paths = [get_edge_path(GA, e, label_pos=self.label_pos[e], closed=True) for e in edges]
-            d = {k + 's': v for k, v in style.asdict().items() if v}
-            ax.add_collection(PathCollection(
-                paths=paths, zorder=100, facecolors=d.get("edgecolors", None), **d))
-
-        self.node_labels = {}
-        self.auto_node_labels = add_node_labels
-        if add_node_labels:
-            for n in G.nodes:
-                self.add_node_label(n)
-
-        self.edge_labels = {}
-        self.auto_edge_labels = add_edge_labels
-        if add_edge_labels:
-            for e in G.edges:
-                self.add_edge_label(e)
-
-        self._on_click_cid = self.ax.figure.canvas.mpl_connect('button_press_event', self._on_click)
-
-        BaseMatplotlibGraph.__init__(self, **kwargs)
-        # TODO updates
-        # TODO highlight selected
+        super().__init__(GA.constGraph())
 
     def _on_click(self, event):
         # print('%s click: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
@@ -287,27 +103,247 @@ class HugeMatplotlibGraph(BaseMatplotlibGraph):
         else:
             print(f"Clicked on a weird {type(o)} object {o!r}")
 
-    def add_edge_label(self, e):
+    def on_edge_click(self, edge, event):
+        pass
+
+    def on_node_click(self, node, event):
+        pass
+
+    def on_background_click(self, event):
+        pass
+
+    def update_all(self):
+        for n in self.GA.constGraph().nodes:
+            if n in self.node_styles:
+                self.update_node(n)
+        for e in self.GA.constGraph().edges:
+            if e in self.edge_styles:
+                self.update_edge(e)
+
+    def apply_style(self):
+        self.ax.set_aspect(1, anchor="C", adjustable="datalim")
+        self.ax.autoscale()
+        fig = self.ax.figure
+        fig.canvas.header_visible = False
+        fig.canvas.footer_visible = False
+        fig.canvas.capture_scroll = False
+
+        if fig.canvas.toolbar:
+            def update(*args, **kwargs):
+                self.update_all()
+
+            fig.canvas.toolbar.update_ogdf_graph = update
+            fig.canvas.toolbar.toolitems = [*fig.canvas.toolbar.toolitems, ("Update", "Update the Graph", "refresh", "update_ogdf_graph")]
+            fig.canvas.toolbar_visible = 'visible'
+
+    def hide_spines(self):
+        self.ax.spines['right'].set_visible(False)
+        self.ax.spines['top'].set_visible(False)
+        self.ax.spines['left'].set_visible(False)
+        self.ax.spines['bottom'].set_visible(False)
+        self.ax.figure.subplots_adjust(left=0, right=1, top=1, bottom=0)
+        self.ax.figure.canvas.draw_idle()
+
+    def _ipython_display_(self):
+        from IPython.core.display_functions import display
+        return display(self.ax.figure.canvas)
+
+    #######################################################
+
+    def __del__(self):
+        ogdf.GraphObserver.__destruct__(self)
+
+    @catch_exception
+    def cleared(self):
+        for r in chain(self.node_labels, self.edge_labels, self.style_nodes, self.style_edges):
+            r.remove()
+        self.node_labels.clear()
+        self.edge_labels.clear()
+        self.node_styles.clear()
+        self.style_nodes.clear()
+        self.edge_styles.clear()
+        self.style_edges.clear()
+        self.ax.figure.canvas.draw_idle()
+
+    @catch_exception
+    def nodeDeleted(self, node):
+        if node not in self.node_styles:
+            return
+        self.remove_node(node)
+
+    @catch_exception
+    def edgeDeleted(self, edge):
+        if edge not in self.edge_styles:
+            return
+        self.remove_edge(edge)
+
+    @catch_exception
+    def nodeAdded(self, node):
+        self.add_node(node)
+        self.ax.figure.canvas.draw_idle()
+
+    @catch_exception
+    def edgeAdded(self, edge):
+        cid = None
+        index = edge.index()
+
+        # we need to defer drawing as not all attributes can already be accessed in the
+        # edgeAdded callback
+        @catch_exception
+        def addedge(arg):
+            nonlocal cid
+            if cid is None:
+                return
+            self.ax.figure.canvas.mpl_disconnect(cid)
+            cid = None
+
+            e = self.GA.constGraph().edges.byid(index)
+            if e in self.edge_styles:
+                return
+            self.add_edge(e)
+
+        cid = self.ax.figure.canvas.mpl_connect('draw_event', addedge)
+        self.ax.figure.canvas.draw_idle()
+
+    @catch_exception
+    def reInit(self):
+        self.cleared()
+
+    #######################################################
+
+    def add_node(self, n, label=None):
         GA = self.GA
-        self.edge_labels[e] = t = Text(
-            x=self.label_pos[e].m_x, y=self.label_pos[e].m_y,
-            text=GA.label[e],
-            color=color(GA.strokeColor[e]),
-            verticalalignment='center', horizontalalignment='center',
-            zorder=300,
-        )
-        self.ax.add_artist(t)
+        style = NodeStyle.from_GA(GA, n)
+        if style not in self.style_nodes:
+            paths = []
+            coll = self.style_nodes[style] = StyledElementCollection(
+                [], paths, style.create_collection(paths), style.create_hatch_collection(paths)
+            )
+            self.ax.add_collection(coll.coll)
+            if coll.hatch_coll:
+                self.ax.add_collection(coll.hatch_coll)
+        else:
+            coll = self.style_nodes[style]
+
+        path = get_node_shape(GA.x[n], GA.y[n], GA.width[n], GA.height[n], GA.shape[n])
+        idx = coll.add_elem(n, path)
+        self.node_styles[n] = (style, idx)
+        assert coll.elems[idx] == n
+
+        if (label is None and self.auto_node_labels) or label:
+            self.add_node_label(n)
 
     def add_node_label(self, n):
         GA = self.GA
-        self.node_labels[n] = t = Text(
-            x=GA.x[n], y=GA.y[n],
-            text=GA.label[n],
-            color=color(GA.strokeColor[n]),
-            verticalalignment='center', horizontalalignment='center',
-            zorder=300,
-        )
+        self.node_labels[n] = t = self.node_styles[n][0].create_text(
+            GA.label[n], GA.x[n], GA.y[n])
         self.ax.add_artist(t)
+
+    def remove_node(self, n):
+        label = self.node_labels.pop(n, None)
+        if label:
+            label.remove()
+
+        if n not in self.node_styles:
+            return
+        style, idx = self.node_styles.pop(n)
+        coll = self.style_nodes[style]
+        assert coll.elems[idx] == n
+        chgd = coll.remove_elem(idx)
+        if chgd:
+            self.node_styles[chgd] = (style, idx)
+            assert coll.elems[idx] == chgd
+        elif not coll.paths:
+            coll.remove()
+            del self.style_nodes[style]
+
+    def update_node(self, n):
+        GA = self.GA
+        new_style = NodeStyle.from_GA(GA, n)
+        old_style, idx = self.node_styles[n]
+        label = self.node_labels.get(n, None)
+        if new_style == old_style:
+            if label:
+                label.set_text(GA.label[n])
+            coll = self.style_nodes[new_style]
+            assert coll.elems[idx] == n
+            path = get_node_shape(GA.x[n], GA.y[n], GA.width[n], GA.height[n], GA.shape[n])
+            if not np.array_equal(coll.paths[idx].vertices, path.vertices):
+                coll.paths[idx] = path
+                coll.set_stale()
+                if label:
+                    label.set_x(GA.x[n])
+                    label.set_y(GA.y[n])
+        else:
+            self.remove_node(n)
+            self.add_node(n, bool(label))
+
+    #######################################################
+
+    def add_edge(self, e, label=None):
+        GA = self.GA
+        style = EdgeStyle.from_GA(GA, e)
+        if style not in self.style_edges:
+            paths = []
+            coll = self.style_edges[style] = StyledElementCollection(
+                [], paths, style.create_collection(paths), None
+            )
+            self.ax.add_collection(coll.coll)
+        else:
+            coll = self.style_edges[style]
+
+        path = get_edge_path(GA, e, self.label_pos[e], True)
+        idx = coll.add_elem(e, path)
+        self.edge_styles[e] = (style, idx)
+        assert coll.elems[idx] == e
+
+        if (label is None and self.auto_edge_labels) or label:
+            self.add_edge_label(e)
+
+    def add_edge_label(self, e):
+        GA = self.GA
+        self.edge_labels[e] = t = self.edge_styles[e][0].create_text(
+            GA.label[e], self.label_pos[e].m_x, self.label_pos[e].m_y)
+        self.ax.add_artist(t)
+
+    def remove_edge(self, e):
+        label = self.edge_labels.pop(e, None)
+        if label:
+            label.remove()
+
+        if e not in self.edge_styles:
+            return
+        style, idx = self.edge_styles.pop(e)
+        coll = self.style_edges[style]
+        assert coll.elems[idx] == e
+        chgd = coll.remove_elem(idx)
+        if chgd:
+            self.edge_styles[chgd] = (style, idx)
+            assert coll.elems[idx] == chgd
+        elif not coll.paths:
+            coll.remove()
+            del self.style_edges[style]
+
+    def update_edge(self, e):
+        GA = self.GA
+        new_style = EdgeStyle.from_GA(GA, e)
+        old_style, idx = self.edge_styles[e]
+        label = self.edge_labels.get(e, None)
+        if new_style == old_style:
+            if label:
+                label.set_text(GA.label[e])
+            coll = self.style_edges[new_style]
+            assert coll.elems[idx] == e
+            path = get_edge_path(GA, e, self.label_pos[e], True)
+            if not np.array_equal(coll.paths[idx].vertices, path.vertices):
+                coll.paths[idx] = path
+                coll.set_stale()
+                if label:
+                    label.set_x(self.label_pos[e].m_x)
+                    label.set_y(self.label_pos[e].m_y)
+        else:
+            self.remove_edge(e)
+            self.add_edge(e, bool(label))
 
 
 class MatplotlibGraphEditor(MatplotlibGraph):
@@ -315,6 +351,7 @@ class MatplotlibGraphEditor(MatplotlibGraph):
         super().__init__(*args, **kwargs)
 
         self.selected = None
+        self.selected_artist = None
         self.dragging = False
 
         self.ax.figure.canvas.mpl_connect('key_press_event', self._on_key)
@@ -322,42 +359,43 @@ class MatplotlibGraphEditor(MatplotlibGraph):
         self.ax.figure.canvas.mpl_connect('motion_notify_event', self._on_motion)
 
     def nodeDeleted(self, node):
-        if isinstance(self.selected, NodeArtist) and self.selected.node == node:
+        if self.selected == node:
             self.unselect()
         super().nodeDeleted(node)
 
     def edgeDeleted(self, edge):
-        if isinstance(self.selected, EdgeArtist) and self.selected.edge == edge:
+        if self.selected == edge:
             self.unselect()
         super().edgeDeleted(edge)
 
     def unselect(self, notify=True):
         if self.selected is None:
             return
-        self.selected.set_path_effects([patheffects.Normal()])
+        # self.selected.set_path_effects([patheffects.Normal()])
         self.selected = None
 
         if notify:
             self.on_selection_changed()
         self.ax.figure.canvas.draw_idle()
 
-    def select(self, artist):
+    def select(self, elem):
         self.unselect(notify=False)
-        self.selected = artist
-        artist.set_path_effects([patheffects.withStroke(linewidth=5, foreground='blue')])
+        self.selected = elem
+        # elem.set_path_effects([patheffects.withStroke(linewidth=5, foreground='blue')])
 
         self.on_selection_changed()
         self.ax.figure.canvas.draw_idle()
 
     def on_background_click(self, event):
         super().on_background_click(event)
+        self.dragging = False
         if event.dblclick:
             n = self.GA.constGraph().newNode()
             self.GA.label[n] = f"N{n.index()}"
             self.GA.x[n] = event.xdata
             self.GA.y[n] = event.ydata
-            self.nodes[n].update_attributes(self.GA)
-            self.select(self.nodes[n])
+            self.update_node(n)
+            self.select(n)
             return
 
     def on_selection_changed(self):
@@ -368,38 +406,38 @@ class MatplotlibGraphEditor(MatplotlibGraph):
 
     def on_node_click(self, node, event):
         super().on_node_click(node, event)
-        if isinstance(self.selected, NodeArtist) and self.selected != event.artist and \
-                "ctrl" in event.mouseevent.modifiers:
-            self.GA.constGraph().newEdge(self.selected.node, event.artist.node)
+        if isinstance(self.selected, ogdf.NodeElement) and self.selected != node and \
+                "ctrl" in event.modifiers:
+            self.GA.constGraph().newEdge(self.selected, node)
             return
 
         self.dragging = True
-        self.select(event.artist)
+        self.select(node)
 
     def on_edge_click(self, edge, event):
         super().on_edge_click(edge, event)
         self.dragging = False
-        self.select(event.artist)
+        self.select(edge)
 
     def _on_key(self, event):
         if event.key == "delete":
-            if isinstance(self.selected, NodeArtist):
-                self.GA.constGraph().delNode(self.selected.node)
-            elif isinstance(self.selected, EdgeArtist):
-                self.GA.constGraph().delEdge(self.selected.edge)
+            if isinstance(self.selected, ogdf.NodeElement):
+                self.GA.constGraph().delNode(self.selected)
+            elif isinstance(self.selected, ogdf.EdgeElement):
+                self.GA.constGraph().delEdge(self.selected)
 
     def _on_release(self, event):
         self.dragging = False
 
     def _on_motion(self, event):
-        if not self.dragging or not isinstance(self.selected, NodeArtist):
+        if not self.dragging or not self.selected or not isinstance(self.selected, ogdf.NodeElement):
             return
-        node = self.selected.node
+        node = self.selected
         self.GA.x[node] = event.xdata
         self.GA.y[node] = event.ydata
-        self.selected.update_attributes(self.GA)
+        self.update_node(node)
         for adj in node.adjEntries:
-            self.edges[adj.theEdge()].update_attributes(self.GA)
+            self.update_edge(adj.theEdge())
 
         self.on_node_moved(node)
         self.ax.figure.canvas.draw_idle()
