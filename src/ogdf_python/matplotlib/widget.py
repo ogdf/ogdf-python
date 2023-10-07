@@ -4,8 +4,10 @@ from typing import Dict, Tuple
 
 import numpy as np
 from itertools import chain
+from matplotlib import patheffects
 from matplotlib.axes import Axes
 from matplotlib.backend_bases import MouseButton
+from matplotlib.patches import PathPatch
 from matplotlib.text import Text
 
 from ogdf_python.loader import *
@@ -155,15 +157,16 @@ class MatplotlibGraph(ogdf.GraphObserver):
 
     @catch_exception
     def cleared(self):
-        for r in chain(self.node_labels, self.edge_labels, self.style_nodes, self.style_edges):
-            r.remove()
+        # for r in chain(self.node_labels.values(), self.edge_labels.values(),
+        #                self.style_nodes.values(), self.style_edges.values()):
+        #     r.remove()
+        self.ax.clear()
         self.node_labels.clear()
         self.edge_labels.clear()
         self.node_styles.clear()
         self.style_nodes.clear()
         self.edge_styles.clear()
         self.style_edges.clear()
-        self.ax.figure.canvas.draw_idle()
 
     @catch_exception
     def nodeDeleted(self, node):
@@ -371,8 +374,10 @@ class MatplotlibGraphEditor(MatplotlibGraph):
     def unselect(self, notify=True):
         if self.selected is None:
             return
-        # self.selected.set_path_effects([patheffects.Normal()])
         self.selected = None
+        if self.selected_artist is not None:
+            self.selected_artist.remove()
+            self.selected_artist = None
 
         if notify:
             self.on_selection_changed()
@@ -381,7 +386,18 @@ class MatplotlibGraphEditor(MatplotlibGraph):
     def select(self, elem):
         self.unselect(notify=False)
         self.selected = elem
-        # elem.set_path_effects([patheffects.withStroke(linewidth=5, foreground='blue')])
+        if isinstance(elem, ogdf.NodeElement):
+            style, idx = self.node_styles[elem]
+            path = self.style_nodes[style].paths[idx]
+        else:
+            assert isinstance(elem, ogdf.EdgeElement)
+            style, idx = self.edge_styles[elem]
+            path = self.style_edges[style].paths[idx]
+        self.selected_artist = PathPatch(
+            path, fill=False,
+            edgecolor=style.edgecolor, linestyle=style.linestyle, linewidth=style.linewidth,
+            path_effects=[patheffects.withStroke(linewidth=5, foreground='blue')])
+        self.ax.add_artist(self.selected_artist)
 
         self.on_selection_changed()
         self.ax.figure.canvas.draw_idle()
@@ -396,7 +412,8 @@ class MatplotlibGraphEditor(MatplotlibGraph):
             self.GA.y[n] = event.ydata
             self.update_node(n)
             self.select(n)
-            return
+        elif "ctrl" not in event.modifiers:
+            self.unselect()
 
     def on_selection_changed(self):
         pass
