@@ -263,6 +263,8 @@ class HugeMatplotlibGraph(BaseMatplotlibGraph):
         #        event.x, event.y, event.xdata, event.ydata))
         if event.button != MouseButton.LEFT:
             return
+        if self.ax.figure.canvas.toolbar.mode:  # PAN / ZOOM are truthy
+            return
         t = self.ax.transData.inverted()
         a, _ = t.transform([0, 0])
         b, _ = t.transform([self.EDGE_CLICK_WIDTH_PX, self.EDGE_CLICK_WIDTH_PX])
@@ -277,6 +279,7 @@ class HugeMatplotlibGraph(BaseMatplotlibGraph):
             self.on_node_click(o, event)
         elif isinstance(o, ogdf.EdgeElement):
             # print("edge", o)
+            # self.point = getattr(self, "point", None)
             # if self.point:
             #     self.point.remove()
             # self.point = self.ax.scatter([p.m_x], [p.m_y])
