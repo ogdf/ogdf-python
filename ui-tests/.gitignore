@@ -1,0 +1,22 @@
+*.cjs
+*.mjs
+
+*.bundle.*
+lib/
+node_modules/
+*.log
+.eslintcache
+.stylelintcache
+*.egg-info/
+.ipynb_checkpoints
+*.tsbuildinfo
+
+# Integration tests
+test-results/
+playwright-report/
+
+# OSX files
+.DS_Store
+
+# Yarn cache
+.yarn/
