@@ -12,22 +12,10 @@ with as_file(files(__package__).joinpath("rendering.h")) as header:
 
 
 def repr_mimebundle_GraphAttributes(self, *args, **kwargs):
-    from IPython.core.interactiveshell import InteractiveShell
-
-    if not InteractiveShell.initialized():
-        return {"text/plain": repr(self)}, {}
-
-    from ogdf_python.matplotlib.widget import MatplotlibGraph
     fig = new_figure()
     ax = fig.subplots()
     fig.graph = MatplotlibGraph(self, ax)
-    data, meta = InteractiveShell.instance().display_formatter.format(fig.canvas, *args, **kwargs)
-    if not data:
-        # object handled itself through display, don't proceed
-        return data, meta
-    else:
-        data["text/plain"] = repr(self)
-        return data, meta
+    return fig.graph._repr_mimebundle_(*args, **kwargs)
 
 
 def repr_mimebundle_Graph(self, *args, **kwargs):

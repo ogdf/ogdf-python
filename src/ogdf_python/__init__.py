@@ -19,8 +19,8 @@ __version__ = "0.2.4-dev"
 __all__ = ogdf_python.loader.__all__ + ogdf_python.utils.__all__ + ogdf_python.info.__all__
 
 try:
-    from ogdf_python.matplotlib import *
-
-    __all__ += ogdf_python.matplotlib.__all__
+    import matplotlib
 except ImportError:
     pass
+else:
+    from ogdf_python.matplotlib import *

@@ -251,8 +251,22 @@ def find_closest(GA, x, y, edge_dist=10):
 
 def new_figure(num=None) -> Figure:
     import matplotlib.pyplot as plt
+    from matplotlib import _pylab_helpers
     with plt.ioff():
-        old_fig = plt.gcf()
+        old_fig = None
+        manager = _pylab_helpers.Gcf.get_active()
+        if manager is not None:
+            old_fig = manager.canvas.figure
+
         fig = plt.figure(num)
-        plt.figure(old_fig)
+
+        if old_fig is not None:
+            plt.figure(old_fig)
     return fig
+
+
+# ensure that backend is loaded and doesn't reset any configs (esp. is_interactive)
+# when being loaded for the first time
+import matplotlib.pyplot as plt
+
+plt.close(new_figure())

@@ -31,6 +31,7 @@ class MatplotlibGraph(ogdf.GraphObserver):
 
     def __init__(self, GA, ax=None, add_nodes=True, add_edges=True,
                  auto_node_labels=None, auto_edge_labels=None, apply_style=True, hide_spines=True):
+        super().__init__(GA.constGraph())
         self.GA = GA
         if ax is None:
             ax = new_figure().subplots()
@@ -73,7 +74,9 @@ class MatplotlibGraph(ogdf.GraphObserver):
             self.hide_spines()
 
         self._on_click_cid = self.ax.figure.canvas.mpl_connect('button_press_event', self._on_click)
-        super().__init__(GA.constGraph())
+
+    def __del__(self):
+        self.__destruct__()
 
     def _on_click(self, event):
         # print('%s click: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
@@ -125,6 +128,7 @@ class MatplotlibGraph(ogdf.GraphObserver):
     def apply_style(self):
         self.ax.set_aspect(1, anchor="C", adjustable="datalim")
         self.ax.autoscale()
+        self.ax.invert_yaxis()
         fig = self.ax.figure
         fig.canvas.header_visible = False
         fig.canvas.footer_visible = False
@@ -146,14 +150,28 @@ class MatplotlibGraph(ogdf.GraphObserver):
         self.ax.figure.subplots_adjust(left=0, right=1, top=1, bottom=0)
         self.ax.figure.canvas.draw_idle()
 
-    def _ipython_display_(self):
-        from IPython.core.display_functions import display
-        return display(self.ax.figure.canvas)
+    def _repr_mimebundle_(self, *args, **kwargs):
+        from IPython.core.interactiveshell import InteractiveShell
+
+        if not InteractiveShell.initialized():
+            return {"text/plain": repr(self)}, {}
+
+        fmt = InteractiveShell.instance().display_formatter
+        display_en = fmt.ipython_display_formatter.enabled
+        fmt.ipython_display_formatter.enabled = False
+        try:
+            data, meta = fmt.format(self.ax.figure.canvas, *args, **kwargs)
+            # print("canvas", list(data.keys()) if data else "none")
+            if list(data.keys()) != ["text/plain"] and data:
+                return data, meta
+            else:
+                data, meta = fmt.format(self.ax.figure, *args, **kwargs)
+                # print("figure", list(data.keys()) if data else "none")
+                return data, meta
+        finally:
+            fmt.ipython_display_formatter.enabled = display_en
 
     #######################################################
-
-    def __del__(self):
-        ogdf.GraphObserver.__destruct__(self)
 
     @catch_exception
     def cleared(self):
