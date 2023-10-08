@@ -1,8 +1,8 @@
 import os
-import sys
 
 import cppyy.ll
 import importlib_resources
+import sys
 
 cppyy.ll.set_signals_as_exception(True)
 cppyy.add_include_path(os.path.dirname(os.path.realpath(__file__)))
@@ -50,6 +50,19 @@ if cppyy.gbl.ogdf.debugMode:
 else:
     cppyy.cppdef("#define NDEBUG")
 cppyy.include("cassert")
+
+# inheriting from GraphObserver for the first time causes some weird logging
+# silence that
+import tempfile
+
+cppyy.gbl.gSystem.RedirectOutput(tempfile.mktemp(), "w")
+
+
+class _Inherit(cppyy.gbl.ogdf.GraphObserver):
+    pass
+
+
+cppyy.gbl.gSystem.RedirectOutput(cppyy.ll.cast['char*'](0), "a")
 
 # Load re-exports
 from cppyy import include as cppinclude, cppdef, cppexec, nullptr
