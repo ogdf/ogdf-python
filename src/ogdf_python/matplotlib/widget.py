@@ -128,6 +128,7 @@ class MatplotlibGraph(ogdf.GraphObserver):
         pass
 
     def update_all(self, autoscale=True):
+        self.process_additions()
         for n in self.GA.constGraph().nodes:
             if n in self.node_styles:
                 self.update_node(n)
@@ -138,6 +139,7 @@ class MatplotlibGraph(ogdf.GraphObserver):
             for col in chain((s.coll for s in self.style_nodes.values()), (s.coll for s in self.style_edges.values())):
                 self.ax.update_datalim(col.get_datalim(self.ax.transData).get_points())
             self.ax.autoscale_view()
+        self.ax.figure.canvas.draw_idle()
 
     def apply_style(self):
         self.ax.set_aspect(1, anchor="C", adjustable="datalim")
@@ -190,7 +192,11 @@ class MatplotlibGraph(ogdf.GraphObserver):
     #######################################################
 
     def process_additions(self):
-        for t, i in self.pending_additions:
+        if not self.pending_additions:
+            return
+        pa, self.pending_additions = self.pending_additions, []
+
+        for t, i in pa:
             if t == "node":
                 cont, my_cont, fun = self.GA.constGraph().nodes, self.node_styles, self.add_node
             else:
@@ -212,9 +218,7 @@ class MatplotlibGraph(ogdf.GraphObserver):
                 print(f"Could not add new {t} {i} ({obj}): {e}", sys.stderr)
                 traceback.print_exc()
 
-        if self.pending_additions:
-            self.pending_additions.clear()
-            self.ax.figure.canvas.draw_idle()
+        self.ax.figure.canvas.draw_idle()
 
     @catch_exception
     def cleared(self):
