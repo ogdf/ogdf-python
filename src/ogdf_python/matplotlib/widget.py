@@ -141,7 +141,7 @@ class MatplotlibGraph(ogdf.GraphObserver):
 
     def apply_style(self):
         self.ax.set_aspect(1, anchor="C", adjustable="datalim")
-        self.ax.update_datalim([(-100, -100), (100, 100)])
+        self.ax.update_datalim([(0, 0), (100, 100)])
         self.ax.autoscale()
         self.ax.invert_yaxis()
         fig = self.ax.figure
@@ -223,7 +223,7 @@ class MatplotlibGraph(ogdf.GraphObserver):
         #     r.remove()
         self.ax.clear()
         # sensible default
-        self.ax.update_datalim([(-100, -100), (100, 100)])
+        self.ax.update_datalim([(0, 0), (100, 100)])
         self.ax.autoscale_view()
         self.node_labels.clear()
         self.edge_labels.clear()
