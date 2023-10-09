@@ -1,8 +1,9 @@
 import functools
 import traceback
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 
 import numpy as np
+import sys
 from itertools import chain
 from matplotlib import patheffects
 from matplotlib.axes import Axes
@@ -58,6 +59,11 @@ class MatplotlibGraph(ogdf.GraphObserver):
         self.style_edges: Dict[EdgeStyle, StyledElementCollection] = dict()
 
         self.label_pos = ogdf.EdgeArray[ogdf.DPoint](G)
+        self.pending_additions: List[Tuple[str, int]] = []
+        self.addition_timer = ax.figure.canvas.new_timer()
+        self.addition_timer.add_callback(self.process_additions)
+        self.addition_timer.interval = 100
+        self.addition_timer.single_shot = True
 
         if add_nodes:
             for n in G.nodes:
@@ -74,8 +80,10 @@ class MatplotlibGraph(ogdf.GraphObserver):
             self.hide_spines()
 
         self._on_click_cid = self.ax.figure.canvas.mpl_connect('button_press_event', self._on_click)
+        self.ax.figure.canvas.mpl_connect('close_event', lambda e: self.addition_timer.stop())
 
     def __del__(self):
+        self.addition_timer.stop()
         self.__destruct__()
 
     def _on_click(self, event):
@@ -173,6 +181,33 @@ class MatplotlibGraph(ogdf.GraphObserver):
 
     #######################################################
 
+    def process_additions(self):
+        for t, i in self.pending_additions:
+            if t == "node":
+                cont, my_cont, fun = self.GA.constGraph().nodes, self.node_styles, self.add_node
+            else:
+                assert t == "edge"
+                cont, my_cont, fun = self.GA.constGraph().edges, self.edge_styles, self.add_edge
+
+            try:
+                obj = cont.byid(i)
+            except LookupError:
+                continue
+
+            if not obj or obj in my_cont:
+                # no longer exists or already added
+                continue
+
+            try:
+                fun(obj)
+            except Exception as e:
+                print(f"Could not add new {t} {i} ({obj}): {e}", sys.stderr)
+                traceback.print_exc()
+
+        if self.pending_additions:
+            self.pending_additions.clear()
+            self.ax.figure.canvas.draw_idle()
+
     @catch_exception
     def cleared(self):
         # for r in chain(self.node_labels.values(), self.edge_labels.values(),
@@ -200,31 +235,13 @@ class MatplotlibGraph(ogdf.GraphObserver):
 
     @catch_exception
     def nodeAdded(self, node):
-        self.add_node(node)
-        self.ax.figure.canvas.draw_idle()
+        self.pending_additions.append(("node", node.index()))
+        self.addition_timer.start()
 
     @catch_exception
     def edgeAdded(self, edge):
-        cid = None
-        index = edge.index()
-
-        # we need to defer drawing as not all attributes can already be accessed in the
-        # edgeAdded callback
-        @catch_exception
-        def addedge(arg):
-            nonlocal cid
-            if cid is None:
-                return
-            self.ax.figure.canvas.mpl_disconnect(cid)
-            cid = None
-
-            e = self.GA.constGraph().edges.byid(index)
-            if e in self.edge_styles:
-                return
-            self.add_edge(e)
-
-        cid = self.ax.figure.canvas.mpl_connect('draw_event', addedge)
-        self.ax.figure.canvas.draw_idle()
+        self.pending_additions.append(("edge", edge.index()))
+        self.addition_timer.start()
 
     @catch_exception
     def reInit(self):
