@@ -21,6 +21,7 @@ def catch_exception(wrapped):
         try:
             wrapped(*args, **kwargs)
         except Exception:
+            # traceback.print_stack()
             traceback.print_exc()
             pass
 
@@ -71,8 +72,9 @@ class MatplotlibGraph(ogdf.GraphObserver):
         if add_edges:
             for e in G.edges:
                 self.add_edge(e)
-        for col in chain((s.coll for s in self.style_nodes.values()), (s.coll for s in self.style_edges.values())):
-            self.ax.update_datalim(col.get_datalim(self.ax.transData).get_points())
+        if add_nodes or add_edges:
+            for col in chain((s.coll for s in self.style_nodes.values()), (s.coll for s in self.style_edges.values())):
+                self.ax.update_datalim(col.get_datalim(self.ax.transData).get_points())
 
         if apply_style:
             self.apply_style()
@@ -125,16 +127,21 @@ class MatplotlibGraph(ogdf.GraphObserver):
     def on_background_click(self, event):
         pass
 
-    def update_all(self):
+    def update_all(self, autoscale=True):
         for n in self.GA.constGraph().nodes:
             if n in self.node_styles:
                 self.update_node(n)
         for e in self.GA.constGraph().edges:
             if e in self.edge_styles:
                 self.update_edge(e)
+        if autoscale:
+            for col in chain((s.coll for s in self.style_nodes.values()), (s.coll for s in self.style_edges.values())):
+                self.ax.update_datalim(col.get_datalim(self.ax.transData).get_points())
+            self.ax.autoscale_view()
 
     def apply_style(self):
         self.ax.set_aspect(1, anchor="C", adjustable="datalim")
+        self.ax.update_datalim([(-100, -100), (100, 100)])
         self.ax.autoscale()
         self.ax.invert_yaxis()
         fig = self.ax.figure
@@ -147,7 +154,8 @@ class MatplotlibGraph(ogdf.GraphObserver):
                 self.update_all()
 
             fig.canvas.toolbar.update_ogdf_graph = update
-            fig.canvas.toolbar.toolitems = [*fig.canvas.toolbar.toolitems, ("Update", "Update the Graph", "refresh", "update_ogdf_graph")]
+            fig.canvas.toolbar.toolitems = [*fig.canvas.toolbar.toolitems,
+                                            ("Update", "Update the Graph", "refresh", "update_ogdf_graph")]
             fig.canvas.toolbar_visible = 'visible'
 
     def hide_spines(self):
@@ -214,6 +222,9 @@ class MatplotlibGraph(ogdf.GraphObserver):
         #                self.style_nodes.values(), self.style_edges.values()):
         #     r.remove()
         self.ax.clear()
+        # sensible default
+        self.ax.update_datalim([(-100, -100), (100, 100)])
+        self.ax.autoscale_view()
         self.node_labels.clear()
         self.edge_labels.clear()
         self.node_styles.clear()
