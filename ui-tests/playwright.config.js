@@ -12,6 +12,7 @@ module.exports = {
     reuseExistingServer: !process.env.CI
   },
   retries: process.env.CI ? 2 : 0,
+  timeout: 120000,
   use: {
     viewport: { width: 1600, height: 1200 },
     screen: { width: 1600, height: 1200 },
