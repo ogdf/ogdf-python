@@ -51,19 +51,6 @@ else:
     cppyy.cppdef("#define NDEBUG")
 cppyy.include("cassert")
 
-# inheriting from GraphObserver for the first time causes some weird logging
-# silence that
-import tempfile
-
-cppyy.gbl.gSystem.RedirectOutput(tempfile.mktemp(), "w")
-
-
-class _Inherit(cppyy.gbl.ogdf.GraphObserver):
-    pass
-
-
-cppyy.gbl.gSystem.RedirectOutput(cppyy.ll.cast['char*'](0), "a")
-
 # Load re-exports
 from cppyy import include as cppinclude, cppdef, cppexec, nullptr
 from cppyy.gbl import ogdf
