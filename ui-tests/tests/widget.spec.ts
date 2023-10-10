@@ -3,6 +3,15 @@ import * as path from 'path';
 
 const fileName = 'sugiyama-simple.ipynb';
 
+
+// FIXME double output if graph shown in the cell that loaded ogdf-python
+`from IPython.core.interactiveshell import InteractiveShell
+InteractiveShell.instance().display_formatter.formatters['image/svg+xml'].enabled = False
+
+from ogdf_python import ogdf
+G = ogdf.Graph()
+G`
+
 test.use({tmpPath: 'widget-modes-test'});
 
 test.describe.serial('Widget Display Modes', () => {
@@ -30,13 +39,15 @@ test.describe.serial('Widget Display Modes', () => {
         await page.notebook.activate(fileName);
         await page.getByText('Edit', {exact: true}).click();
         await page.locator('#jp-mainmenu-edit').getByText('Clear Outputs of All Cells', {exact: true}).click();
+        await page.waitForTimeout(500);
 
         await page.notebook.runCellByCell({
             onAfterCellRun: async (idx) => {
+                if (idx == 0) return;
                 await page.notebook.expandCellOutput(idx, true);
-                const cell = await page.notebook.getCellOutput(idx);
-                if (cell)
-                    expect.soft(await cell.screenshot())
+                const cell = await (await page.notebook.getCell(idx)).$(".jp-OutputArea-output");
+                await cell.scrollIntoViewIfNeeded();
+                expect.soft(await cell.screenshot())
                         .toMatchSnapshot(`notebook-cell-${idx}.png`);
             }
         });

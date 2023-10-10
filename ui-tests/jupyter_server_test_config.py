@@ -6,6 +6,8 @@ JavaScript objects through the global window variable.
 """
 from jupyterlab.galata import configure_jupyter_server
 
+c.ServerApp.allow_root = True
+c.ServerApp.ip = "0.0.0.0"
 configure_jupyter_server(c)
 
 # Uncomment to set server log level to debug level
