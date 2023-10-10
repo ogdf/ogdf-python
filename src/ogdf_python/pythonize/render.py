@@ -65,6 +65,7 @@ def wrap_GraphIO(func):
         else:
             return ret
 
+    wrapper.__overload__ = func.__overload__
     return wrapper
 
 
