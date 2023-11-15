@@ -26,6 +26,7 @@ except ImportError:
     pass
 
 cppyy.cppdef("#undef NDEBUG")
+cppyy.cppdef("#define OGDF_INSTALL")
 try:
     cppyy.include("ogdf/basic/internal/config_autogen.h")
     cppyy.include("ogdf/basic/internal/config.h")
