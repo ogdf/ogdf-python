@@ -34,7 +34,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "cppyy>=2,<3",
+    "cppyy",
     "importlib-resources>=1",
 ]
 
