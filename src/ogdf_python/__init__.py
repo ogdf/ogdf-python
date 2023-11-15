@@ -15,7 +15,7 @@ __keep_imports = [
     ogdf_python.jupyter,
 ]
 
-__version__ = "0.3.1"
+__version__ = "0.3.2-dev"
 __all__ = ogdf_python.loader.__all__ + ogdf_python.utils.__all__ + ogdf_python.info.__all__
 
 try:
