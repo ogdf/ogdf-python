@@ -40,11 +40,11 @@ To get a similar Jupyter Notebook with a little more compute power running on yo
 
 .. code-block:: bash
 
-    pip install ogdf-python[quickstart]
+    pip install 'ogdf-python[quickstart]'
     jupyter lab
 
 The optional ``[quickstart]`` pulls in matplotlib and jupyter lab as well as a ready-to-use binary build of the OGDF via `ogdf-wheel <https://github.com/ogdf/ogdf-wheel>`_.
-Please not that downloading and installing all dependencies (especially building ``cppyy``) may take a moment.
+Please note that downloading and installing all dependencies (especially building ``cppyy``) may take a moment.
 Alternatively, see the instructions `below <#manual-installation>`_ for installing ``ogdf-python`` without this if you want to use your own local build of the OGDF.
 
 Usage
