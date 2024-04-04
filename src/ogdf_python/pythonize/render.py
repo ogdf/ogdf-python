@@ -101,9 +101,7 @@ def GraphAttributes_to_svg(self):
         SVGConf.bezierInterpolation(False)
         # SVGConf.curviness(0.1)
     with tempfile.NamedTemporaryFile("w+t", suffix=".svg", prefix="ogdf-python-") as f:
-        os = cppyy.gbl.std.ofstream(f.name)
-        cppyy.gbl.ogdf.GraphIO.drawSVG(self, os, SVGConf)
-        os.close()
+        cppyy.gbl.ogdf.GraphIO.drawSVG(self, f.name, SVGConf)
         return f.read()
 
 

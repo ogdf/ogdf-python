@@ -24,3 +24,5 @@ except ImportError:
     pass
 else:
     from ogdf_python.matplotlib import *
+
+    __all__ += ogdf_python.matplotlib.__all__

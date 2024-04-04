@@ -1,3 +1,4 @@
+import sys
 from dataclasses import dataclass, asdict
 from typing import List, Optional
 
@@ -75,7 +76,12 @@ def dPolylineToPath(poly, closed=False):
         return Path(dPolylineToPathVertices(poly), closed=False)
 
 
-@dataclass(frozen=True, slots=True)
+FROZEN_DATACLASS = dict(frozen=True)
+if sys.version_info >= (3, 10):
+    FROZEN_DATACLASS["slots"] = True
+
+
+@dataclass(**FROZEN_DATACLASS)
 class EdgeStyle:
     edgecolor: str
     linestyle: str
@@ -112,7 +118,7 @@ class EdgeStyle:
         )
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(**FROZEN_DATACLASS)
 class NodeStyle(EdgeStyle):
     facecolor: str
     hatch: str

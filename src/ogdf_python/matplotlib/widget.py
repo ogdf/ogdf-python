@@ -14,6 +14,8 @@ from matplotlib.text import Text
 from ogdf_python.loader import *
 from ogdf_python.matplotlib.util import *
 
+__all__ = ["MatplotlibGraph", "MatplotlibGraphEditor"]
+
 
 def catch_exception(wrapped):
     @functools.wraps(wrapped)

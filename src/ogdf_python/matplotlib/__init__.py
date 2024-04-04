@@ -1,11 +1,19 @@
 from importlib.resources import *
 
 from ogdf_python.loader import *
-from ogdf_python.matplotlib.gui import GraphEditorLayout
 from ogdf_python.matplotlib.util import *
 from ogdf_python.matplotlib.widget import MatplotlibGraph, MatplotlibGraphEditor
 
-__all__ = ["MatplotlibGraph", "MatplotlibGraphEditor", "GraphEditorLayout"]
+__all__ = ["MatplotlibGraph", "MatplotlibGraphEditor"]
+
+try:
+    import ipywidgets
+except ImportError:
+    pass
+else:
+    from ogdf_python.matplotlib.gui import GraphEditorLayout
+
+    __all__ += ["GraphEditorLayout"]
 
 with as_file(files(__package__).joinpath("rendering.h")) as header:
     cppinclude(header)

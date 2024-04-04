@@ -4,6 +4,8 @@ from ogdf_python import ogdf
 from ogdf_python.matplotlib.util import new_figure
 from ogdf_python.matplotlib.widget import MatplotlibGraphEditor
 
+__all__ = ["GraphEditorLayout"]
+
 L = ipywidgets.Label
 
 
