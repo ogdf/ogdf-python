@@ -1,6 +1,11 @@
+import warnings
+
+import numpy as np
 import sys
 from dataclasses import dataclass, asdict
 from typing import List, Optional
+import collections
+import itertools
 
 from matplotlib.collections import PathCollection, Collection
 from matplotlib.figure import Figure
@@ -10,7 +15,8 @@ from matplotlib.transforms import Affine2D
 
 from ogdf_python.loader import *
 
-__all__ = ["color", "fillPattern", "strokeType", "dPolylineToPath", "dPolylineToPathVertices", "EdgeStyle", "NodeStyle", "StyledElementCollection", "get_node_shape", "get_edge_path", "find_closest", "new_figure"]
+__all__ = ["color", "fillPattern", "strokeType", "dPolylineToPath", "dPolylineToPathVertices", "EdgeStyle", "NodeStyle",
+           "StyledElementCollection", "get_node_shape", "get_edge_path", "find_closest", "new_figure"]
 
 
 def color(c):
@@ -18,9 +24,9 @@ def color(c):
 
 
 def fillPattern(fp):
-    if not fp:
-        return ""
-    elif fp == ogdf.FillPattern.Solid:
+    if isinstance(fp, str) and len(fp) == 1:
+        fp = ogdf.FillPattern(ord(fp))
+    if fp == ogdf.FillPattern.Solid:
         return ""
     elif fp == ogdf.FillPattern.Dense1:
         return "O"
@@ -48,21 +54,27 @@ def fillPattern(fp):
         return "/"
     elif fp == ogdf.FillPattern.DiagonalCross:
         return "x"
+    else:
+        warnings.warn(f"Unknown FillPattern {fp!r}")
+        return ""
 
 
 def strokeType(st):
-    if not st:
-        return ""
-    elif st == ogdf.StrokeType.Solid:
-        return "-",
+    if isinstance(st, str) and len(st) == 1:
+        st = ogdf.StrokeType(ord(st))
+    if st == ogdf.StrokeType.Solid:
+        return "solid",
     elif st == ogdf.StrokeType.Dash:
-        return "--",
+        return "dashed",
     elif st == ogdf.StrokeType.Dot:
-        return ":",
+        return "dotted",
     elif st == ogdf.StrokeType.Dashdot:
-        return "-.",
+        return "dashdot",
     elif st == ogdf.StrokeType.Dashdotdot:
         return (0, (3, 5, 1, 5, 1, 5)),
+    else:
+        warnings.warn(f"Unknown StrokeType {st!r}")
+        return ""
 
 
 def dPolylineToPathVertices(poly):
@@ -210,7 +222,8 @@ def get_node_shape(x, y, w, h, s):
              (x - w / 2 + b, y - h / 2),
              (x - w / 2, y - h / 2), (x - w / 2, y - h / 2 + b),
              (0, 0)],
-            [Path.MOVETO, Path.LINETO, Path.CURVE3, Path.CURVE3, Path.LINETO, Path.CURVE3, Path.CURVE3, Path.LINETO, Path.CURVE3, Path.CURVE3, Path.LINETO,
+            [Path.MOVETO, Path.LINETO, Path.CURVE3, Path.CURVE3, Path.LINETO, Path.CURVE3, Path.CURVE3, Path.LINETO,
+             Path.CURVE3, Path.CURVE3, Path.LINETO,
              Path.CURVE3, Path.CURVE3, Path.CLOSEPOLY]
         )
     else:
@@ -219,22 +232,75 @@ def get_node_shape(x, y, w, h, s):
         return dPolylineToPath(poly, closed=True)
 
 
-def get_edge_path(GA, edge, label_pos=ogdf.DPoint(), closed=False):
+def sliding_window(iterable, n):
+    iterator = iter(iterable)
+    window = collections.deque(itertools.islice(iterator, n - 1), maxlen=n)
+    for x in iterator:
+        window.append(x)
+        yield tuple(window)
+
+
+def interpolate_curves(path, curviness):
+    if not 0 <= curviness <= 0.5:
+        raise ValueError(f"invalid curviness {curviness} outside of range [0, 0.5]")
+    out_path = np.zeros((len(path) * 3 - 4, 2))
+    out_path[0, :] = path[0]
+    out_codes = np.full(len(path) * 3 - 4, Path.LINETO)
+
+    for i, (a, b, c) in enumerate(sliding_window(path, 3)):
+        i = i * 3
+        out_codes[i + 1] = Path.LINETO
+        out_path[i + 1, :] = (
+            a[0] + (b[0] - a[0]) * (1 - curviness),
+            a[1] + (b[1] - a[1]) * (1 - curviness)
+        )
+        out_codes[i + 2] = Path.CURVE3
+        out_codes[i + 3] = Path.CURVE3
+        out_path[i + 2, :] = b
+        out_path[i + 3, :] = (
+            b[0] + (c[0] - b[0]) * curviness,
+            b[1] + (c[1] - b[1]) * curviness
+        )
+    out_path[-1, :] = path[-1]
+    out_codes[-1] = Path.LINETO
+    return out_path, out_codes
+
+
+interpolate_curves([(0, 0), (10, 10), (20, 0)], 0)
+
+
+def get_edge_path(GA, edge, label_pos=ogdf.DPoint(), closed=False, curviness=0):
     label_pos.m_x = (GA.x[edge.source()] + GA.x[edge.target()]) / 2
     label_pos.m_y = (GA.y[edge.source()] + GA.y[edge.target()]) / 2
     src_arr = ogdf.DPolygon() if ogdf.python_matplotlib.isArrowEnabled(GA, edge.adjSource()) else nullptr
     tgt_arr = ogdf.DPolygon() if ogdf.python_matplotlib.isArrowEnabled(GA, edge.adjTarget()) else nullptr
     poly = ogdf.python_matplotlib.drawEdge(edge, GA, label_pos, src_arr, tgt_arr)
-    edge_path = dPolylineToPathVertices(poly)
+
+    codes = []
     path = []
     if src_arr:
-        path.extend(dPolylineToPathVertices(src_arr))
-    path.extend(edge_path)
+        src_arr_path = dPolylineToPathVertices(src_arr)
+        path.append(np.array(src_arr_path))
+        codes.append(np.full(len(src_arr_path), Path.LINETO))
+
+    edge_path = np.array(dPolylineToPathVertices(poly))
+    edge_codes = np.full(len(edge_path), Path.LINETO)
+    if curviness > 0:
+        edge_path, edge_codes = interpolate_curves(edge_path, curviness)
+    path.append(edge_path)
+    codes.append(edge_codes)
+
     if tgt_arr:
-        path.extend(dPolylineToPathVertices(tgt_arr))
+        tgt_arr_path = dPolylineToPathVertices(tgt_arr)
+        path.append(np.array(tgt_arr_path))
+        codes.append(np.full(len(tgt_arr_path), Path.LINETO))
+
+    codes[0][0] = Path.MOVETO
     if closed:
-        path.extend(reversed(edge_path))
-    return Path(path, closed=closed)
+        path.append(edge_path[::-1])
+        codes.append(edge_codes)
+
+    return Path(np.concatenate(path), np.concatenate(codes))
 
 
 def find_closest(GA, x, y, edge_dist=10):

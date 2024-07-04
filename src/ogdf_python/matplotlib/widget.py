@@ -32,6 +32,8 @@ def catch_exception(wrapped):
 
 class MatplotlibGraph(ogdf.GraphObserver):
     EDGE_CLICK_WIDTH_PX = 10
+    MAX_AUTO_NODE_LABELS = 100
+    curviness = 0.0
 
     def __init__(self, GA, ax=None, add_nodes=True, add_edges=True,
                  auto_node_labels=None, auto_edge_labels=None, apply_style=True, hide_spines=True):
@@ -43,7 +45,7 @@ class MatplotlibGraph(ogdf.GraphObserver):
         G = GA.constGraph()
 
         if auto_node_labels is None:
-            auto_node_labels = G.numberOfNodes() < 100
+            auto_node_labels = G.numberOfNodes() < self.MAX_AUTO_NODE_LABELS
         if auto_edge_labels is None:
             auto_edge_labels = auto_node_labels
         self.node_labels: Dict[ogdf.node, Text] = dict()
@@ -347,7 +349,7 @@ class MatplotlibGraph(ogdf.GraphObserver):
         else:
             coll = self.style_edges[style]
 
-        path = get_edge_path(GA, e, self.label_pos[e], True)
+        path = get_edge_path(GA, e, self.label_pos[e], True, self.curviness)
         idx = coll.add_elem(e, path)
         self.edge_styles[e] = (style, idx)
         assert coll.elems[idx] == e
@@ -389,7 +391,7 @@ class MatplotlibGraph(ogdf.GraphObserver):
                 label.set_text(GA.label[e])
             coll = self.style_edges[new_style]
             assert coll.elems[idx] == e
-            path = get_edge_path(GA, e, self.label_pos[e], True)
+            path = get_edge_path(GA, e, self.label_pos[e], True, self.curviness)
             if not np.array_equal(coll.paths[idx].vertices, path.vertices):
                 coll.paths[idx] = path
                 coll.set_stale()
