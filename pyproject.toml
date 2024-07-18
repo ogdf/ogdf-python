@@ -1,6 +1,6 @@
 [project]
 name = "ogdf-python"
-version = "0.3.2"
+version = "0.3.3-dev"
 description = "Automagic Python Bindings for the Open Graph Drawing Framework written in C++"
 authors = [
   { name = "Simon D. Fink", email = "finksim@fim.uni-passau.de" },
