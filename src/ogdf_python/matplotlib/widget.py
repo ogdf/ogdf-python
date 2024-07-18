@@ -374,7 +374,7 @@ class MatplotlibGraph(ogdf.GraphObserver):
         coll = self.style_edges[style]
         assert coll.elems[idx] == e
         chgd = coll.remove_elem(idx)
-        if chgd:
+        if chgd is not None:
             self.edge_styles[chgd] = (style, idx)
             assert coll.elems[idx] == chgd
         elif not coll.paths:

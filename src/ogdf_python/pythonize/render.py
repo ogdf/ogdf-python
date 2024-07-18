@@ -70,10 +70,10 @@ def wrap_GraphIO(func):
 
 
 def renderGraph(G):
-    cppyy.include("ogdf/planarity/PlanarizationGridLayout.h")
+    cppyy.include("ogdf/planarity/PlanarizationLayout.h")
     ogdf = cppyy.gbl.ogdf
     GA = ogdf.GraphAttributes(G, ogdf.GraphAttributes.all)
-    ogdf.PlanarizationGridLayout().call(GA)
+    ogdf.PlanarizationLayout().call(GA)
     for n in G.nodes:
         GA.label[n] = str(n.index())
     return GA

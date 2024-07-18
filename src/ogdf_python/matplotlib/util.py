@@ -20,7 +20,10 @@ __all__ = ["color", "fillPattern", "strokeType", "dPolylineToPath", "dPolylineTo
 
 
 def color(c):
-    return str(c.toString())
+    if c.alpha() == 255:
+        return str(c.toString())
+    else:
+        return str(c.toString()), c.alpha() / 255
 
 
 def fillPattern(fp):
@@ -72,6 +75,8 @@ def strokeType(st):
         return "dashdot",
     elif st == ogdf.StrokeType.Dashdotdot:
         return (0, (3, 5, 1, 5, 1, 5)),
+    elif st == getattr(ogdf.StrokeType, "None"):
+        return (0, (0, 10)),
     else:
         warnings.warn(f"Unknown StrokeType {st!r}")
         return ""
