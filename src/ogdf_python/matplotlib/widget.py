@@ -64,9 +64,9 @@ class MatplotlibGraph(ogdf.GraphObserver):
         self.style_edges: Dict[EdgeStyle, StyledElementCollection] = dict()
 
         self.label_pos = ogdf.EdgeArray[ogdf.DPoint](G)
-        self.pending_additions: List[Tuple[str, int]] = []
+        self.pending_actions: List[Tuple[str, int]] = []
         self.addition_timer = ax.figure.canvas.new_timer()
-        self.addition_timer.add_callback(self.process_additions)
+        self.addition_timer.add_callback(self.process_actions)
         self.addition_timer.interval = 100
         self.addition_timer.single_shot = True
 
@@ -87,6 +87,23 @@ class MatplotlibGraph(ogdf.GraphObserver):
 
         self._on_click_cid = self.ax.figure.canvas.mpl_connect('button_press_event', self._on_click)
         self.ax.figure.canvas.mpl_connect('close_event', lambda e: self.addition_timer.stop())
+
+    def set_graph(self, GA, add_nodes=True, add_edges=True, apply_style=True, hide_spines=True):
+        self.reregister(GA.constGraph())
+        self.GA = GA
+        G = GA.constGraph()
+        self.label_pos = ogdf.EdgeArray[ogdf.DPoint](G)
+        self.cleared()
+        if add_nodes:
+            for n in G.nodes:
+                self.add_node(n)
+        if add_edges:
+            for e in G.edges:
+                self.add_edge(e)
+        if apply_style:
+            self.apply_style()
+        if hide_spines:
+            self.hide_spines()
 
     def __del__(self):
         self.addition_timer.stop()
@@ -132,7 +149,7 @@ class MatplotlibGraph(ogdf.GraphObserver):
         pass
 
     def update_all(self, autoscale=True):
-        self.process_additions()
+        self.process_actions()
         for n in self.GA.constGraph().nodes:
             if n in self.node_styles:
                 self.update_node(n)
@@ -155,7 +172,7 @@ class MatplotlibGraph(ogdf.GraphObserver):
         fig.canvas.footer_visible = False
         fig.canvas.capture_scroll = False
 
-        if fig.canvas.toolbar:
+        if fig.canvas.toolbar and not hasattr(fig.canvas.toolbar, "update_ogdf_graph"):
             def update(*args, **kwargs):
                 self.update_all()
 
@@ -195,34 +212,43 @@ class MatplotlibGraph(ogdf.GraphObserver):
 
     #######################################################
 
-    def process_additions(self):
-        if not self.pending_additions:
+    def process_actions(self):
+        if not self.pending_actions:
             return
-        pa, self.pending_additions = self.pending_additions, []
+        pa, self.pending_actions = self.pending_actions, []
 
         for t, i in pa:
-            if t == "node":
-                cont, my_cont, fun = self.GA.constGraph().nodes, self.node_styles, self.add_node
-            else:
-                assert t == "edge"
-                cont, my_cont, fun = self.GA.constGraph().edges, self.edge_styles, self.add_edge
-
-            try:
-                obj = cont.byid(i)
-            except LookupError:
-                continue
-
-            if not obj or obj in my_cont:
-                # no longer exists or already added
-                continue
-
-            try:
-                fun(obj)
-            except Exception as e:
-                print(f"Could not add new {t} {i} ({obj}): {e}", sys.stderr)
-                traceback.print_exc()
+            self.process_action(t, i)
 
         self.ax.figure.canvas.draw_idle()
+
+    def process_action(self, t, i):
+        if t == "update_node":
+            self.update_node(i)
+            return
+        elif t == "update_edge":
+            self.update_edge(i)
+            return
+        elif t == "add_node":
+            cont, my_cont, fun = self.GA.constGraph().nodes, self.node_styles, self.add_node
+        else:
+            assert t == "add_edge"
+            cont, my_cont, fun = self.GA.constGraph().edges, self.edge_styles, self.add_edge
+
+        try:
+            obj = cont.byid(i)
+        except LookupError:
+            return
+
+        if not obj or obj in my_cont:
+            # no longer exists or already added
+            return
+
+        try:
+            fun(obj)
+        except Exception as e:
+            print(f"Could not add new {t} {i} ({obj}): {e}", sys.stderr)
+            traceback.print_exc()
 
     @catch_exception
     def cleared(self):
@@ -254,12 +280,12 @@ class MatplotlibGraph(ogdf.GraphObserver):
 
     @catch_exception
     def nodeAdded(self, node):
-        self.pending_additions.append(("node", node.index()))
+        self.pending_actions.append(("add_node", node.index()))
         self.addition_timer.start()
 
     @catch_exception
     def edgeAdded(self, edge):
-        self.pending_additions.append(("edge", edge.index()))
+        self.pending_actions.append(("add_edge", edge.index()))
         self.addition_timer.start()
 
     @catch_exception
@@ -315,6 +341,8 @@ class MatplotlibGraph(ogdf.GraphObserver):
             del self.style_nodes[style]
 
     def update_node(self, n):
+        if n not in self.node_styles:
+            return  # addition probably not yet processed
         GA = self.GA
         new_style = NodeStyle.from_GA(GA, n)
         old_style, idx = self.node_styles[n]
@@ -382,6 +410,8 @@ class MatplotlibGraph(ogdf.GraphObserver):
             del self.style_edges[style]
 
     def update_edge(self, e):
+        if e not in self.edge_styles:
+            return  # addition probably not yet processed
         GA = self.GA
         new_style = EdgeStyle.from_GA(GA, e)
         old_style, idx = self.edge_styles[e]
@@ -437,7 +467,7 @@ class MatplotlibGraphEditor(MatplotlibGraph):
             self.on_selection_changed()
         self.ax.figure.canvas.draw_idle()
 
-    def select(self, elem):
+    def select(self, elem, notify=True):
         self.unselect(notify=False)
         self.selected = elem
         if isinstance(elem, ogdf.NodeElement):
@@ -453,8 +483,25 @@ class MatplotlibGraphEditor(MatplotlibGraph):
             path_effects=[patheffects.withStroke(linewidth=5, foreground='blue')])
         self.ax.add_artist(self.selected_artist)
 
-        self.on_selection_changed()
-        self.ax.figure.canvas.draw_idle()
+        if notify:
+            self.on_selection_changed()
+            self.ax.figure.canvas.draw_idle()
+
+    def update_edge(self, e):
+        super().update_edge(e)
+        if e == self.selected:
+            self.select(e, notify=False)
+
+    def update_node(self, n):
+        super().update_node(n)
+        if n == self.selected:
+            self.select(n, notify=False)
+
+    def process_action(self, t, i):
+        if t == "select":
+            self.select(i)
+        else:
+            super().process_action(t, i)
 
     def on_background_click(self, event):
         super().on_background_click(event)
@@ -464,8 +511,8 @@ class MatplotlibGraphEditor(MatplotlibGraph):
             self.GA.label[n] = f"N{n.index()}"
             self.GA.x[n] = event.xdata
             self.GA.y[n] = event.ydata
-            self.update_node(n)
-            self.select(n)
+            self.pending_actions.append(("select", n))
+            self.addition_timer.start()
         elif "ctrl" not in event.modifiers:
             self.unselect()
 
@@ -487,6 +534,20 @@ class MatplotlibGraphEditor(MatplotlibGraph):
 
     def on_edge_click(self, edge, event):
         super().on_edge_click(edge, event)
+        if event.dblclick:
+            if "ctrl" in event.modifiers:
+                e2 = self.GA.constGraph().split(edge)
+                n = e2.source()
+                self.GA.label[n] = f"N{n.index()}"
+                self.GA.x[n] = event.xdata
+                self.GA.y[n] = event.ydata
+                self.pending_actions.append(("update_edge", edge))
+                self.pending_actions.append(("select", n))
+                self.addition_timer.start()
+                return
+            else:
+                self.GA.constGraph().reverseEdge(edge)
+                self.update_edge(edge)
         self.dragging = False
         self.select(edge)
 
@@ -506,6 +567,8 @@ class MatplotlibGraphEditor(MatplotlibGraph):
         node = self.selected
         self.GA.x[node] = event.xdata
         self.GA.y[node] = event.ydata
+        self.on_node_moved(node)  # allow callback modifications to node style/position
+
         self.update_node(node)
         for adj in node.adjEntries:
             self.update_edge(adj.theEdge())
@@ -514,5 +577,4 @@ class MatplotlibGraphEditor(MatplotlibGraph):
         path = self.style_nodes[style].paths[idx]
         self.selected_artist.set_path(path)
 
-        self.on_node_moved(node)
         self.ax.figure.canvas.draw_idle()

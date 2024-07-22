@@ -66,17 +66,17 @@ def strokeType(st):
     if isinstance(st, str) and len(st) == 1:
         st = ogdf.StrokeType(ord(st))
     if st == ogdf.StrokeType.Solid:
-        return "solid",
+        return "solid"
     elif st == ogdf.StrokeType.Dash:
-        return "dashed",
+        return "dashed"
     elif st == ogdf.StrokeType.Dot:
-        return "dotted",
+        return "dotted"
     elif st == ogdf.StrokeType.Dashdot:
-        return "dashdot",
+        return "dashdot"
     elif st == ogdf.StrokeType.Dashdotdot:
-        return (0, (3, 5, 1, 5, 1, 5)),
+        return (0, (3, 5, 1, 5, 1, 5))
     elif st == getattr(ogdf.StrokeType, "None"):
-        return (0, (0, 10)),
+        return (0, (0, 10))
     else:
         warnings.warn(f"Unknown StrokeType {st!r}")
         return ""
