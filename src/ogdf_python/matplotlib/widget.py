@@ -88,7 +88,7 @@ class MatplotlibGraph(ogdf.GraphObserver):
         self._on_click_cid = self.ax.figure.canvas.mpl_connect('button_press_event', self._on_click)
         self.ax.figure.canvas.mpl_connect('close_event', lambda e: self.addition_timer.stop())
 
-    def set_graph(self, GA, add_nodes=True, add_edges=True, apply_style=True, hide_spines=True):
+    def set_graph(self, GA, add_nodes=True, add_edges=True):
         self.reregister(GA.constGraph())
         self.GA = GA
         G = GA.constGraph()
@@ -100,10 +100,6 @@ class MatplotlibGraph(ogdf.GraphObserver):
         if add_edges:
             for e in G.edges:
                 self.add_edge(e)
-        if apply_style:
-            self.apply_style()
-        if hide_spines:
-            self.hide_spines()
 
     def __del__(self):
         self.addition_timer.stop()
@@ -255,7 +251,9 @@ class MatplotlibGraph(ogdf.GraphObserver):
         # for r in chain(self.node_labels.values(), self.edge_labels.values(),
         #                self.style_nodes.values(), self.style_edges.values()):
         #     r.remove()
+        inv = self.ax.yaxis.get_inverted()  # manually retain this value, all others from apply_style() aren't overwritten
         self.ax.clear()
+        self.ax.yaxis.set_inverted(inv)
         # sensible default
         self.ax.update_datalim([(0, 0), (100, 100)])
         self.ax.autoscale_view()
