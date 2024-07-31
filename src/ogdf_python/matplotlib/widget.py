@@ -452,16 +452,6 @@ class MatplotlibGraphEditor(MatplotlibGraph):
         self.ax.figure.canvas.mpl_connect('button_release_event', self._on_release)
         self.ax.figure.canvas.mpl_connect('motion_notify_event', self._on_motion)
 
-    def nodeDeleted(self, node):
-        if self.selected == node:
-            self.unselect()
-        super().nodeDeleted(node)
-
-    def edgeDeleted(self, edge):
-        if self.selected == edge:
-            self.unselect()
-        super().edgeDeleted(edge)
-
     def unselect(self, notify=True):
         if self.selected is None:
             return
@@ -492,17 +482,31 @@ class MatplotlibGraphEditor(MatplotlibGraph):
 
         if notify:
             self.on_selection_changed()
-            self.ax.figure.canvas.draw_idle()
+        self.ax.figure.canvas.draw_idle()
 
-    def update_edge(self, e):
-        super().update_edge(e)
-        if e == self.selected:
-            self.select(e, notify=False)
+    def cleared(self):
+        self.unselect()
+        super().cleared()
+
+    def nodeDeleted(self, node):
+        if self.selected == node:
+            self.unselect()
+        super().nodeDeleted(node)
+
+    def edgeDeleted(self, edge):
+        if self.selected == edge:
+            self.unselect()
+        super().edgeDeleted(edge)
 
     def update_node(self, n):
         super().update_node(n)
         if n == self.selected:
             self.select(n, notify=False)
+
+    def update_edge(self, e):
+        super().update_edge(e)
+        if e == self.selected:
+            self.select(e, notify=False)
 
     def process_action(self, t, i):
         if t == "select":
