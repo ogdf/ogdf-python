@@ -153,6 +153,7 @@ class MatplotlibGraph(ogdf.GraphObserver):
             if e in self.edge_styles:
                 self.update_edge(e)
         if autoscale:
+            self.ax.ignore_existing_data_limits = True
             for col in chain((s.coll for s in self.style_nodes.values()), (s.coll for s in self.style_edges.values())):
                 self.ax.update_datalim(col.get_datalim(self.ax.transData).get_points())
             self.ax.autoscale_view()
@@ -161,7 +162,7 @@ class MatplotlibGraph(ogdf.GraphObserver):
     def apply_style(self):
         self.ax.set_aspect(1, anchor="C", adjustable="datalim")
         self.ax.update_datalim([(0, 0), (100, 100)])
-        self.ax.autoscale()
+        self.ax.autoscale(enable=True, axis="both")
         self.ax.invert_yaxis()
         fig = self.ax.figure
         fig.canvas.header_visible = False
@@ -172,9 +173,17 @@ class MatplotlibGraph(ogdf.GraphObserver):
             def update(*args, **kwargs):
                 self.update_all()
 
+            def expand(*args, **kwargs):
+                # autoscale gets disabled by panning
+                self.ax.autoscale(enable=True, axis="both")
+                self.update_all(autoscale=True)
+
             fig.canvas.toolbar.update_ogdf_graph = update
+            fig.canvas.toolbar.expand_ogdf_graph = expand
             fig.canvas.toolbar.toolitems = [*fig.canvas.toolbar.toolitems,
-                                            ("Update", "Update the Graph", "refresh", "update_ogdf_graph")]
+                                            ("Update", "Update the Graph", "refresh", "update_ogdf_graph"),
+                                            ("Fit Graph", "Show the full graph", "expand",
+                                             "expand_ogdf_graph")]  # arrows-alt
             fig.canvas.toolbar_visible = 'visible'
 
     def hide_spines(self):
