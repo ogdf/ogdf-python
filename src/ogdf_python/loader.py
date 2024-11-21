@@ -1,8 +1,30 @@
 import os
+import platform
 
-import cppyy.ll
 import importlib_resources
 import sys
+
+try:
+    import cppyy
+    import cppyy.ll
+except:
+    print(
+        "\n##########\n"
+        "ogdf-python couldn't load cppyy. "
+        "This is not an ogdf-python error, but probably a problem with your cppyy installation or python environment. "
+        "To use ogdf-python, check that you can `import cppyy` in a freshly-started python interpreter.\n",
+        file=sys.stderr
+    )
+    if platform.system() == "Windows":
+        print(
+            "Note that ogdf-python is not officially supported on Windows."
+            "Instead, you should use ogdf-python within the Windows Subsystem for Linux (WSL)."
+            "There, make sure to actually invoke the Linux python(3) binary instead of the Windows python.exe, which"
+            "can be checked with `python -VV`.\n",
+            file=sys.stderr
+        )
+    print("##########\n\n", file=sys.stderr)
+    raise
 
 cppyy.ll.set_signals_as_exception(True)
 cppyy.add_include_path(os.path.dirname(os.path.realpath(__file__)))
@@ -41,7 +63,7 @@ except:
         "If you haven't installed OGDF globally to your system, "
         "please set environment variables OGDF_INSTALL_DIR or OGDF_BUILD_DIR. "
         "The current search path is:\n%s\n"
-        "The current include path is:\n%s" %
+        "The current include path is:\n%s\n" %
         (cppyy.gbl.gSystem.GetDynamicPath(), cppyy.gbl.gInterpreter.GetIncludePath()),
         file=sys.stderr)
     raise
