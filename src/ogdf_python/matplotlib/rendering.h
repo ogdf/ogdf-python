@@ -89,7 +89,7 @@ namespace ogdf {
 			}
 		}
 
-		bool isPointCoveredByNode(const DPoint& point, const DPoint& v, const DPoint& vSize,
+		bool isPointCoveredByNodeOP(const DPoint& point, const DPoint& v, const DPoint& vSize,
 				const Shape& shape) {
 			const double epsilon = 1e-6;
 			const double trapeziumWidthOffset = vSize.m_x * 0.275;
@@ -181,7 +181,7 @@ namespace ogdf {
 			}
 		}
 
-		DPoint contourPointFromAngle(double angle, int n, double rotationOffset, const DPoint& center,
+		DPoint contourPointFromAngleOP(double angle, int n, double rotationOffset, const DPoint& center,
 				const DPoint& vSize) {
 			// math visualised: https://www.desmos.com/calculator/j6iktd7fs4
 			double nOffset = floor((angle - rotationOffset) / (2 * Math::pi / n)) * 2 * Math::pi / n;
@@ -198,7 +198,7 @@ namespace ogdf {
 			return intersectionPoint + center;
 		}
 
-		DPoint contourPointFromAngle(double angle, Shape shape, const DPoint& center, const DPoint& vSize) {
+		DPoint contourPointFromAngleOP(double angle, Shape shape, const DPoint& center, const DPoint& vSize) {
 			angle = std::fmod(angle, 2 * Math::pi);
 			if (angle < 0) {
 				angle += Math::pi * 2;
@@ -206,28 +206,28 @@ namespace ogdf {
 
 			switch (shape) {
 			case Shape::Triangle:
-				return contourPointFromAngle(angle, 3, Math::pi / 2, center, vSize * .5);
+				return contourPointFromAngleOP(angle, 3, Math::pi / 2, center, vSize * .5);
 			case Shape::InvTriangle:
-				return center - contourPointFromAngle(angle + Math::pi, Shape::Triangle, DPoint(), vSize);
+				return center - contourPointFromAngleOP(angle + Math::pi, Shape::Triangle, DPoint(), vSize);
 			case Shape::Image:
 			case Shape::RoundedRect:
 			case Shape::Rect:
-				return contourPointFromAngle(angle, 4, Math::pi / 4, center, vSize / sqrt(2));
+				return contourPointFromAngleOP(angle, 4, Math::pi / 4, center, vSize / sqrt(2));
 			case Shape::Pentagon:
-				return contourPointFromAngle(angle, 5, Math::pi / 2, center, vSize / 2);
+				return contourPointFromAngleOP(angle, 5, Math::pi / 2, center, vSize / 2);
 			case Shape::Hexagon:
-				return contourPointFromAngle(angle, 6, 0, center, vSize / 2);
+				return contourPointFromAngleOP(angle, 6, 0, center, vSize / 2);
 			case Shape::Octagon:
-				return contourPointFromAngle(angle, 8, Math::pi / 8, center, vSize / 2);
+				return contourPointFromAngleOP(angle, 8, Math::pi / 8, center, vSize / 2);
 			case Shape::Rhomb:
-				return contourPointFromAngle(angle, 4, Math::pi / 2, center, vSize / 2);
+				return contourPointFromAngleOP(angle, 4, Math::pi / 2, center, vSize / 2);
 			case Shape::Trapeze:
 				if (angle < atan(2) || angle >= Math::pi * 7 / 4) {
-					DPoint other = contourPointFromAngle(Math::pi - angle, Shape::Trapeze, DPoint(), vSize);
+					DPoint other = contourPointFromAngleOP(Math::pi - angle, Shape::Trapeze, DPoint(), vSize);
 					other.m_x *= -1;
 					return other + center;
 				} else if (angle < Math::pi - atan(2)) {
-					return contourPointFromAngle(angle, Shape::Rect, center, vSize);
+					return contourPointFromAngleOP(angle, Shape::Rect, center, vSize);
 				} else if (angle < Math::pi * 5 / 4) {
 					DLine tLine = DLine(.5, -1, 1, 1);
 					DLine eLine = DLine(0, 0, 2 * cos(angle), 2 * sin(angle));
@@ -236,10 +236,10 @@ namespace ogdf {
 					iPoint = DPoint(iPoint.m_x * vSize.m_x * .5, iPoint.m_y * vSize.m_y * .5);
 					return iPoint + center;
 				} else { // angle < Math::pi * 7 / 4
-					return contourPointFromAngle(angle, Shape::Rect, center, vSize);
+					return contourPointFromAngleOP(angle, Shape::Rect, center, vSize);
 				}
 			case Shape::InvTrapeze:
-				return center - contourPointFromAngle(angle + Math::pi, Shape::Trapeze, DPoint(), vSize);
+				return center - contourPointFromAngleOP(angle + Math::pi, Shape::Trapeze, DPoint(), vSize);
 			case Shape::Parallelogram:
 				if (angle < atan(2) || angle > Math::pi * 7 / 4) {
 					DLine tLine = DLine(-.5, -1, -1, 1);
@@ -249,7 +249,7 @@ namespace ogdf {
 					iPoint = DPoint(iPoint.m_x * vSize.m_x * .5, iPoint.m_y * vSize.m_y * .5);
 					return iPoint + center;
 				} else if (angle < Math::pi * 3 / 4) {
-					return contourPointFromAngle(angle, Shape::Rect, center, vSize);
+					return contourPointFromAngleOP(angle, Shape::Rect, center, vSize);
 				} else if (angle < Math::pi + atan(2)) {
 					DLine tLine = DLine(.5, 1, 1, -1);
 					DLine eLine = DLine(0, 0, 2 * cos(angle), 2 * sin(angle));
@@ -258,10 +258,10 @@ namespace ogdf {
 					iPoint = DPoint(iPoint.m_x * vSize.m_x * .5, iPoint.m_y * vSize.m_y * .5);
 					return iPoint + center;
 				} else { // angle < Math::pi * 7 / 4
-					return contourPointFromAngle(angle, Shape::Rect, center, vSize);
+					return contourPointFromAngleOP(angle, Shape::Rect, center, vSize);
 				}
 			case Shape::InvParallelogram: {
-				DPoint p = contourPointFromAngle(Math::pi - angle, Shape::Parallelogram, DPoint(), vSize);
+				DPoint p = contourPointFromAngleOP(Math::pi - angle, Shape::Parallelogram, DPoint(), vSize);
 				p.m_x *= -1;
 				return p + center;
 			}
@@ -272,29 +272,23 @@ namespace ogdf {
 		}
 
 		bool isArrowEnabled(GraphAttributes &m_attr, adjEntry adj) {
-			bool result = false;
-
-			if (m_attr.has(GraphAttributes::edgeArrow)) {
+		    if (m_attr.has(GraphAttributes::edgeArrow)) {
 				switch (m_attr.arrowType(*adj)) {
 					case EdgeArrow::Undefined:
-						result = !adj->isSource() && m_attr.directed();
-						break;
+						return !adj->isSource() && m_attr.directed();
 					case EdgeArrow::First:
-						result = adj->isSource();
-						break;
+						return adj->isSource();
 					case EdgeArrow::Last:
-						result = !adj->isSource();
-						break;
+						return !adj->isSource();
 					case EdgeArrow::Both:
-						result = true;
-						break;
-					case EdgeArrow::None:;
+						return true;
+					case EdgeArrow::None:
+					default:
+					    return false;
 				}
 			} else {
-				result = !adj->isSource() && m_attr.directed();
+				return !adj->isSource() && m_attr.directed();
 			}
-
-			return result;
 		}
 
 		double getArrowSize(GraphAttributes &m_attr, adjEntry adj) {
@@ -315,7 +309,7 @@ namespace ogdf {
 		bool isCoveredBy(GraphAttributes &m_attr, const DPoint &point, adjEntry adj) {
 			node v = adj->theNode();
 			DPoint vSize = DPoint(m_attr.width(v), m_attr.height(v));
-			return isPointCoveredByNode(point, m_attr.point(v), vSize, m_attr.shape(v));
+			return isPointCoveredByNodeOP(point, m_attr.point(v), vSize, m_attr.shape(v));
 		}
 
 		DPolyline drawArrowHead(const DPoint &start, DPoint &end, adjEntry adj, GraphAttributes &m_attr) {
