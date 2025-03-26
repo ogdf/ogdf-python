@@ -66,5 +66,6 @@ def pythonize_ogdf(klass, name):
 
 cppyy.py.add_pythonization(pythonize_ogdf, "ogdf")
 cppyy.py.add_pythonization(pythonize_ogdf, "ogdf::internal")
+cppyy.gbl.ogdf.LayoutStandards.setDefaultEdgeArrow(cppyy.gbl.ogdf.EdgeArrow.Undefined)
 generate_GA_setters()
 wrap_getattribute(cppyy.gbl.ogdf)

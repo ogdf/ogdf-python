@@ -442,11 +442,11 @@ class MatplotlibGraph(ogdf.GraphObserver):
 
 class MatplotlibGraphEditor(MatplotlibGraph):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
         self.selected = None
         self.selected_artist = None
         self.dragging = False
+
+        super().__init__(*args, **kwargs)
 
         self.ax.figure.canvas.mpl_connect('key_press_event', self._on_key)
         self.ax.figure.canvas.mpl_connect('button_release_event', self._on_release)
