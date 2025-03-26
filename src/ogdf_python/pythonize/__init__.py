@@ -35,6 +35,7 @@ def pythonize_ogdf(klass, name):
         klass.__repr__ = lambda self: "%s([%s])" % (type(self).__name__, ", ".join(repr(i) for i in self))
     elif re.fullmatch("List(Const)?(Reverse)?Iterator(Base)?(<.+>)?", name):
         klass.__next__ = advance_iterator
+        klass.__iter__ = lambda self: self
     elif re.fullmatch("(Node|Edge|AdjEntry|Cluster|Face)Array(<.+>)?", name):
         klass.__iter__ = cpp_iterator
         klass.keys = ArrayKeys[name.partition("Array")[0]]
