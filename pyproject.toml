@@ -1,6 +1,6 @@
 [project]
 name = "ogdf-python"
-version = "0.3.4"
+version = "0.3.5-dev"
 description = "Automagic Python Bindings for the Open Graph Drawing Framework written in C++"
 authors = [
   { name = "Simon D. Fink", email = "finksim@fim.uni-passau.de" },
@@ -52,7 +52,7 @@ build-backend = "hatchling.build"
 
 
 [tool.bumpversion]
-current_version = "0.3.4"
+current_version = "0.3.5-dev"
 commit = "True"
 tag = "True"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)-?(?P<release>dev)?"
