@@ -50,6 +50,8 @@ except ImportError:
 cppyy.cppdef("#undef NDEBUG")
 cppyy.cppdef("#define OGDF_INSTALL")
 try:
+    cppyy.load_library("OGDF")
+
     cppyy.include("ogdf/basic/internal/config_autogen.h")
     cppyy.include("ogdf/basic/internal/config.h")
     cppyy.include("ogdf/basic/Graph.h")
@@ -59,8 +61,6 @@ try:
         pass # gone in newer versions
     cppyy.include("ogdf/fileformats/GraphIO.h")
     cppyy.include("ogdf/basic/LayoutStandards.h")
-
-    cppyy.load_library("OGDF")
 except:
     print(  # TODO check if the issue is really that the file couldn't be found
         "ogdf-python couldn't load OGDF. "
