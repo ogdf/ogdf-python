@@ -33,7 +33,7 @@ def pythonize_ogdf(klass, name):
         klass.__getitem__ = iterable_getitem
         klass.__str__ = lambda self: "[%s]" % ", ".join(str(i) for i in self)
         klass.__repr__ = lambda self: "%s([%s])" % (type(self).__name__, ", ".join(repr(i) for i in self))
-    elif re.fullmatch("List(Const)?(Reverse)?Iterator(Base)?(<.+>)?", name):
+    elif re.fullmatch("S?List(Const)?(Reverse)?Iterator(Base)?(<.+>)?", name):
         klass.__next__ = advance_iterator
         klass.__iter__ = lambda self: self
     elif re.fullmatch("(Node|Edge|AdjEntry|Cluster|Face)Array(<.+>)?", name):
