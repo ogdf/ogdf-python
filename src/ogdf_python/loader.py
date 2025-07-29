@@ -53,8 +53,12 @@ try:
     cppyy.include("ogdf/basic/internal/config_autogen.h")
     cppyy.include("ogdf/basic/internal/config.h")
     cppyy.include("ogdf/basic/Graph.h")
-    cppyy.include("ogdf/cluster/ClusterGraphObserver.h")  # otherwise only pre-declared
+    try:
+        cppyy.include("ogdf/cluster/ClusterGraphObserver.h")  # otherwise only pre-declared
+    except ImportError:
+        pass # gone in newer versions
     cppyy.include("ogdf/fileformats/GraphIO.h")
+    cppyy.include("ogdf/basic/LayoutStandards.h")
 
     cppyy.load_library("OGDF")
 except:
