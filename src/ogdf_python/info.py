@@ -1,22 +1,6 @@
 from ogdf_python.loader import *
 
-__all__ = ["get_ogdf_info", "get_macro"]
-
-
-def get_macro(m):
-    cppdef("""
-#define STR(str) #str
-#define STRING(str) STR(str)
-namespace get_macro {{
-#ifdef {m}  
-    std::string var_{m} = STRING({m});
-#endif
-}};
-""".format(m=m))
-    val = getattr(cppyy.gbl.get_macro, "var_%s" % m, None)
-    if val is not None:
-        val = val.decode("ascii")
-    return val
+__all__ = ["get_ogdf_info"]
 
 
 def conf_which(n):
@@ -33,6 +17,7 @@ namespace conf_which {{
 
 def get_ogdf_info():
     from ogdf_python import __version__
+    from ogdf_python.loader import CONFIG
     cppinclude("ogdf/basic/System.h")
     data = {
         "ogdf_path": get_loaded_library_path() or "unknown",
@@ -40,6 +25,7 @@ def get_ogdf_info():
         "ogdf_config_include_path": get_base_include_path("ogdf/basic/internal/config_autogen.h") or "unknown",
         "ogdf_version": get_macro("OGDF_VERSION").strip('"'),
         "ogdf_python_version": __version__,
+        "ogdf_python_config": CONFIG,
         "ogdf_debug": get_macro("OGDF_DEBUG") is not None,
         "ogdf_build_debug": ogdf.debugMode,
         "debug": get_macro("NDEBUG") is None,

@@ -30,18 +30,18 @@ except:
 
 cppyy.ll.set_signals_as_exception(True)
 CONFIG = os.getenv("OGDF_PYTHON_MODE", "release")
-if CONFIG not in ("release", "debug"):
-    warnings.warn(f"Environment variable OGDF_PYTHON_MODE set to '{CONFIG}' instead of 'debug' or 'release'.")
+IS_DEBUG = CONFIG.lower() == "debug"
+CONFIG_RD = "debug" if IS_DEBUG else "release"
 
 
 ## Search Utils
 
 def get_library_path(name=None):
     if name is None:
-        if CONFIG == "release":
-            return get_library_path("OGDF") or get_library_path("libOGDF")
+        if IS_DEBUG:
+            return get_library_path("OGDF-debug") or get_library_path("libOGDF-debug")
         else:
-            return get_library_path(f"OGDF-{CONFIG}") or get_library_path(f"libOGDF-{CONFIG}")
+            return get_library_path("OGDF") or get_library_path("libOGDF")
     return cppyy.gbl.gSystem.FindDynamicLibrary(cppyy.gbl.CppyyLegacy.TString(name), True)
 
 
@@ -73,6 +73,24 @@ def call_if_exists(func, path):
     return False
 
 
+def get_macro(m):
+    var_name = "var_%s" % m
+    if not hasattr(cppyy.gbl, "get_macro") or not hasattr(cppyy.gbl.get_macro, var_name):
+        cppyy.cppdef("""
+#define STR(str) #str
+#define STRING(str) STR(str)
+namespace get_macro {{
+#ifdef {m}  
+    std::string var_{m} = STRING({m});
+#endif
+}};
+""".format(m=m))
+    val = getattr(cppyy.gbl.get_macro, var_name, None)
+    if val is not None:
+        val = val.decode("ascii")
+    return val
+
+
 ## Setup Search Paths
 
 if "OGDF_INSTALL_DIR" in os.environ:
@@ -84,16 +102,36 @@ if "OGDF_INSTALL_DIR" in os.environ:
     cppyy.add_include_path(str(INSTALL_DIR / "include"))
 
 if "OGDF_BUILD_DIR" in os.environ:
-    BUILD_DIR = Path(os.getenv("OGDF_BUILD_DIR")).absolute()
-    cppyy.add_library_path(str(BUILD_DIR))
-    call_if_exists(cppyy.add_library_path, BUILD_DIR / "Debug")
-    call_if_exists(cppyy.add_library_path, BUILD_DIR / "Release")
-    cppyy.add_include_path(str(BUILD_DIR / "include"))
-    for line in open(BUILD_DIR / "CMakeCache.txt"):
-        line = line.strip()
-        if line.startswith("OGDF-PROJECT_SOURCE_DIR"):
-            key, _, val = line.partition("=")
-            cppyy.add_include_path(str(Path(val) / "include"))
+    BUILD_TARGETS = Path(os.getenv("OGDF_BUILD_DIR")) / "OgdfTargets.cmake"
+    if BUILD_TARGETS.is_file():
+        values = {}
+        active = False
+        for line in BUILD_TARGETS.open():
+            line = line.strip()
+            if active:
+                if line == ")":
+                    active = False
+                else:
+                    pref, _, suff = line.partition(" ")
+                    values[pref] = suff.strip('"')
+            elif line == "set_target_properties(OGDF PROPERTIES":
+                active = True
+
+        includes =values.get("INTERFACE_INCLUDE_DIRECTORIES",None)
+        if includes:
+            includes = includes.replace(r"\$<IF:\$<CONFIG:Debug>,debug,release>", CONFIG_RD)
+            for s in includes.split(";"):
+                cppyy.add_include_path(s)
+        else:
+            warnings.warn("$OGDF_BUILD_DIR/OgdfTargets.cmake does not specify INTERFACE_INCLUDE_DIRECTORIES for OGDF.")
+        location = values.get("IMPORTED_LOCATION_" + CONFIG.upper(), None)
+        if location:
+            cppyy.add_library_path(str(Path(location).parent))
+        else:
+            warnings.warn("$OGDF_BUILD_DIR/OgdfTargets.cmake does not specify IMPORTED_LOCATION_${OGDF_PYTHON_MODE}"
+                          f" for mode {CONFIG.upper()}.")
+    else:
+        warnings.warn("Environment variable OGDF_BUILD_DIR set, but $OGDF_BUILD_DIR/OgdfTargets.cmake not found.")
 
 try:
     wheel_inst_dir = importlib_resources.files("ogdf_wheel") / "install"
@@ -106,23 +144,23 @@ except ImportError:
 ## Now do the actual loading
 
 cppyy.cppdef("#undef NDEBUG")
-if CONFIG == "release":
+if not IS_DEBUG:
     cppyy.cppdef("#define NDEBUG")
 cppyy.include("cassert")
 cppyy.cppdef("#define OGDF_INSTALL")
 
 try:
-    if CONFIG == "release":
+    if IS_DEBUG:
+        cppyy.load_library("COIN-debug")
+        cppyy.load_library("OGDF-debug")
+    else:
         cppyy.load_library("COIN")
         cppyy.load_library("OGDF")
-    else:
-        cppyy.load_library(f"COIN-{CONFIG}")
-        cppyy.load_library(f"OGDF-{CONFIG}")
 
     config_autogen_h = "ogdf/basic/internal/config_autogen.h"
     if not get_include_path(config_autogen_h):
         # try to find the config-dependent header include path if it isn't correctly configured yet
-        config_include = get_include_path(f"ogdf-{CONFIG}/{config_autogen_h}")
+        config_include = get_include_path(f"ogdf-{CONFIG_RD}/{config_autogen_h}")
         if config_include:
             config_include = config_include.removesuffix(config_autogen_h)
             cppyy.add_include_path(config_include)
@@ -143,17 +181,22 @@ except (RuntimeError, ImportError) as e:
         f"The current include path is:\n{cppyy.gbl.gInterpreter.GetIncludePath()}\n"
     ) from e
 
-if CONFIG == "release":
-    if cppyy.gbl.ogdf.debugMode:
-        warnings.warn("Attempted to load OGDF release build, but the found library was built in debug mode.")
-else:
+if IS_DEBUG:
     if not cppyy.gbl.ogdf.debugMode:
         warnings.warn("Attempted to load OGDF debug build, but the found library was built in release mode.")
+    if get_macro("OGDF_DEBUG") is None:
+        warnings.warn("Attempted to load OGDF debug build, but the found headers are for release mode.")
+else:
+    if cppyy.gbl.ogdf.debugMode:
+        warnings.warn("Attempted to load OGDF release build, but the found library was built in debug mode.")
+    if get_macro("OGDF_DEBUG") is not None:
+        warnings.warn("Attempted to load OGDF release build, but the found headers are for debug mode.")
 
 ## Load re-exports
 from cppyy import include as cppinclude, cppdef, cppexec, nullptr
 from cppyy.gbl import ogdf
 
 __all__ = ["cppyy", "cppinclude", "cppdef", "cppexec", "nullptr", "ogdf",
-           "get_library_path", "get_loaded_library_path", "get_include_path", "get_base_include_path"]
+           "get_library_path", "get_loaded_library_path", "get_include_path", "get_base_include_path",
+           "get_macro"]
 __keep_imports = [cppyy, cppinclude, cppdef, cppexec, nullptr, ogdf]
