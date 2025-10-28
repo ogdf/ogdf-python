@@ -152,10 +152,12 @@ cppyy.cppdef("#define OGDF_INSTALL")
 
 try:
     if IS_DEBUG:
-        cppyy.load_library("COIN-debug")
+        if platform.system() != "Windows": # Windows dll includes COIN
+            cppyy.load_library("COIN-debug")
         cppyy.load_library("OGDF-debug")
     else:
-        cppyy.load_library("COIN")
+        if platform.system() != "Windows": # Windows dll includes COIN
+            cppyy.load_library("COIN")
         cppyy.load_library("OGDF")
 
     config_autogen_h = "ogdf/basic/internal/config_autogen.h"
@@ -173,7 +175,7 @@ try:
     cppyy.include("ogdf/basic/LayoutStandards.h")
 except (RuntimeError, ImportError) as e:
     raise ImportError(
-        f"ogdf-python couldn't load OGDF in mode '{CONFIG}'.\n"
+        f"ogdf-python couldn't load OGDF (or one of its dependencies like COIN) in mode '{CONFIG}'.\n"
         "Please check the above underlying error and check that the below search paths contain "
         "OGDF headers and shared libraries in the correct release/debug configuration.\n"
         "If you haven't installed OGDF globally to your system, "
