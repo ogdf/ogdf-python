@@ -136,6 +136,7 @@ if "OGDF_BUILD_DIR" in os.environ:
 try:
     wheel_inst_dir = importlib_resources.files("ogdf_wheel") / "install"
     if wheel_inst_dir.is_dir():
+        cppyy.add_library_path(str(wheel_inst_dir / "bin"))
         cppyy.add_library_path(str(wheel_inst_dir / "lib"))
         cppyy.add_include_path(str(wheel_inst_dir / "include"))
 except ImportError:
