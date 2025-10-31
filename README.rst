@@ -33,9 +33,9 @@ Useful Links
 Quickstart
 ----------
 
-Click here to start an interactive online Jupyter Notebook with an example OGDF graph where you can try out ``ogdf-python``: |binder|
+| Click here to start an interactive online Jupyter Notebook with an example OGDF graph where you can try out ``ogdf-python``: |binder|
+| Simply re-run the code cell to see the graph. You can also find further examples next to that Notebook (i.e. via the folder icon on the left).
 
-Simply re-run the code cell to see the graph. You can also find further examples next to that Notebook (i.e. via the folder icon on the left).
 To get a similar Jupyter Notebook with a little more compute power running on your local machine, use the following install command and open the link to ``localhost``/``127.0.0.1`` that will be printed in your browser:
 
 .. code-block:: bash
@@ -45,7 +45,11 @@ To get a similar Jupyter Notebook with a little more compute power running on yo
 
 The optional ``[quickstart]`` pulls in matplotlib and jupyter lab as well as a ready-to-use binary build of the OGDF via `ogdf-wheel <https://github.com/ogdf/ogdf-wheel>`_.
 Please note that downloading and installing all dependencies (especially building ``cppyy``) may take a moment.
-Alternatively, see the instructions `below <#manual-installation>`_ for installing ``ogdf-python`` without this if you want to use your own local build of the OGDF.
+If you want to use your own local build of the OGDF, see the instructions `below <#manual-installation>`_ for installing ``ogdf-python`` without ``ogdf-wheel``.
+
+.. note:: We currently support Linux, MacOS on Intel and Apple Silicon, and the Windows Subsytem for Linux.
+    Directly running on **Windows is not supported**, see `issue 4 <https://github.com/ogdf/ogdf-python/issues/8#issuecomment-2820925482>`_.
+    When using WSL, make sure that you are using the Linux python(3) and not the Windows python.exe, i.e. the `startup message <https://docs.python.org/3/tutorial/interpreter.html#interactive-mode>`_ of the python interpreter should end with ``on linux`` instead of ``on win32``.
 
 Usage
 -----
@@ -91,12 +95,25 @@ Furthermore, you will need a local shared library build (``-DBUILD_SHARED_LIBS=O
 If you didn't install the OGDF globally on your system,
 either set the ``OGDF_INSTALL_DIR`` to the prefix you configured in ``cmake``,
 or set ``OGDF_BUILD_DIR`` to the subdirectory of your copy of the OGDF repo where your
-`out-of-source build <https://ogdf.github.io/doc/ogdf/md_doc_build.html#autotoc_md4>`_ lives.
+`out-of-source build <https://ogdf.github.io/doc/ogdf/md_doc_build.html#autotoc_md4>`_ (and especially the generated ``OgdfTargets.cmake`` file) lives.
 
 .. code-block:: bash
 
     $ pip install ogdf-python
-    $ OGDF_BUILD_DIR=~/ogdf/build-debug python3
+    $ OGDF_BUILD_DIR=~/ogdf/build-release python3
+
+Debug and Release Mode
+^^^^^^^^^^^^^^^^^^^^^^
+Starting with OGDF 2025.10 (Foxglove), your chosen build mode (debug or release) also affects
+the name of the built shared libraries (e.g. ``libOGDF-debug.so`` instead of ``libOGDF.so``) as well as
+the location of the header file containing configuration information (``ogdf-{debug,release}/ogdf/basic/internal/config_autogen.h``).
+By default, ogdf-python will attempt to load the release versions, even if you only have the debug version built/installed.
+To load the debug versions instead, set the environment variable ``OGDF_PYTHON_MODE=debug``.
+
+.. code-block:: bash
+
+    $ OGDF_BUILD_DIR=~/ogdf/build-debug OGDF_PYTHON_MODE=debug python3
+    $ OGDF_PYTHON_MODE=debug python3 # also works if you have both versions installed next to each other
 
 Pitfalls
 --------
