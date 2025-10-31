@@ -60,6 +60,7 @@ def get_base_include_path(include="ogdf/basic/Graph.h"):
 def get_include_path(name="ogdf/basic/Graph.h"):
     import ctypes
     s = ctypes.c_char_p()
+    # FIXME IsFileInIncludePath uses some string splitting that doesn't work on Windows
     if cppyy.gbl.gSystem.IsFileInIncludePath(name, s):
         return s.value.decode()
     else:
@@ -117,7 +118,7 @@ if "OGDF_BUILD_DIR" in os.environ:
             elif line == "set_target_properties(OGDF PROPERTIES":
                 active = True
 
-        includes =values.get("INTERFACE_INCLUDE_DIRECTORIES",None)
+        includes = values.get("INTERFACE_INCLUDE_DIRECTORIES", None)
         if includes:
             includes = includes.replace(r"\$<IF:\$<CONFIG:Debug>,debug,release>", CONFIG_RD)
             for s in includes.split(";"):
@@ -136,9 +137,11 @@ if "OGDF_BUILD_DIR" in os.environ:
 try:
     wheel_inst_dir = importlib_resources.files("ogdf_wheel") / "install"
     if wheel_inst_dir.is_dir():
+        # see https://cmake.org/cmake/help/latest/command/install.html#targets
         cppyy.add_library_path(str(wheel_inst_dir / "bin"))
         cppyy.add_library_path(str(wheel_inst_dir / "lib"))
         cppyy.add_include_path(str(wheel_inst_dir / "include"))
+        cppyy.add_include_path(str(wheel_inst_dir / "include" / f"ogdf-{CONFIG_RD}"))
 except ImportError:
     pass
 
@@ -152,11 +155,11 @@ cppyy.cppdef("#define OGDF_INSTALL")
 
 try:
     if IS_DEBUG:
-        if platform.system() != "Windows": # Windows dll includes COIN
+        if platform.system() != "Windows":  # Windows dll includes COIN
             cppyy.load_library("COIN-debug")
         cppyy.load_library("OGDF-debug")
     else:
-        if platform.system() != "Windows": # Windows dll includes COIN
+        if platform.system() != "Windows":  # Windows dll includes COIN
             cppyy.load_library("COIN")
         cppyy.load_library("OGDF")
 
