@@ -7,7 +7,7 @@ authors = [
 ]
 requires-python = ">=3.7"
 license = "Apache-2.0"
-readme = "README.rst"
+readme = "README.md"
 homepage = "https://ogdf.github.io"
 repository = "https://github.com/N-Coder/ogdf-python"
 documentation = "https://ogdf-python.readthedocs.io"

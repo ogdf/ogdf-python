@@ -53,7 +53,7 @@ jobs:
 
     - name: Upload playwright test report
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v5
       with:
         name: playwright-tests
         path: |
