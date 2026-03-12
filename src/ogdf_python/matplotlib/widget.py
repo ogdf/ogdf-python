@@ -1,10 +1,10 @@
 import functools
+import sys
 import traceback
+from itertools import chain
 from typing import Dict, Tuple, List
 
 import numpy as np
-import sys
-from itertools import chain
 from matplotlib import patheffects
 from matplotlib.axes import Axes
 from matplotlib.backend_bases import MouseButton
@@ -200,17 +200,24 @@ class MatplotlibGraph(ogdf.GraphObserver):
         if not InteractiveShell.initialized():
             return {"text/plain": repr(self)}, {}
 
+        # larger graphs (see eg `tutorial/4 layouts.ipynb`) sometimes render blank
+        # ensure they are drawn first and spinning the event loop for some time makes that less likely
+        self.ax.figure.canvas.draw()
+        self.ax.figure.canvas.start_event_loop(0.1)
+
         fmt = InteractiveShell.instance().display_formatter
+        # if ipython_display_formatter is enabled, format(figure.canvas) immediately displays and returns None
         display_en = fmt.ipython_display_formatter.enabled
         fmt.ipython_display_formatter.enabled = False
         try:
+            # for interactive backends, we want to render the interactive figure.canvas widget
             data, meta = fmt.format(self.ax.figure.canvas, *args, **kwargs)
-            # print("canvas", list(data.keys()) if data else "none")
+            # for non-interactive backends, this only renders the text/plain repr()
             if list(data.keys()) != ["text/plain"] and data:
                 return data, meta
             else:
+                # so we render the figure instead, which gives a static image
                 data, meta = fmt.format(self.ax.figure, *args, **kwargs)
-                # print("figure", list(data.keys()) if data else "none")
                 return data, meta
         finally:
             fmt.ipython_display_formatter.enabled = display_en

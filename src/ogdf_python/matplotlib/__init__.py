@@ -20,10 +20,7 @@ with as_file(files(__package__).joinpath("rendering.h")) as header:
 
 
 def repr_mimebundle_GraphAttributes(self, *args, **kwargs):
-    fig = new_figure()
-    ax = fig.subplots()
-    fig.graph = MatplotlibGraph(self, ax)
-    return fig.graph._repr_mimebundle_(*args, **kwargs)
+    return MatplotlibGraph(self)._repr_mimebundle_(*args, **kwargs)
 
 
 def repr_mimebundle_Graph(self, *args, **kwargs):
@@ -40,3 +37,9 @@ ogdf.GraphAttributes._repr_mimebundle_ = repr_mimebundle_GraphAttributes
 ogdf.Graph._repr_mimebundle_ = repr_mimebundle_Graph
 ogdf.ClusterGraphAttributes._repr_mimebundle_ = repr_mimebundle_GraphAttributes
 ogdf.ClusterGraph._repr_mimebundle_ = repr_mimebundle_ClusterGraph
+
+# ensure that backend is loaded and doesn't reset any configs (esp. is_interactive)
+# when being loaded for the first time
+import matplotlib.pyplot as plt
+
+plt.close(new_figure())

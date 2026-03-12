@@ -326,24 +326,20 @@ def find_closest(GA, x, y, edge_dist=10):
     return None, None, None
 
 
-def new_figure(num=None) -> Figure:
+def new_figure(*args, **kwargs) -> Figure:
+    """ Create a new figure without changing the currently active figure of pyplot """
     import matplotlib.pyplot as plt
     from matplotlib import _pylab_helpers
-    with plt.ioff():
+    plt._get_backend_mod() # make sure backend is loaded before ioff call
+    with plt.ioff(): # disable immediate display of created figures
         old_fig = None
+        # like plt.gcf(), but does not create one if none is active
         manager = _pylab_helpers.Gcf.get_active()
         if manager is not None:
             old_fig = manager.canvas.figure
 
-        fig = plt.figure(num)
+        fig = plt.figure(*args, **kwargs)
 
         if old_fig is not None:
-            plt.figure(old_fig)
+            plt.figure(old_fig) # reactivate the old figure
     return fig
-
-
-# ensure that backend is loaded and doesn't reset any configs (esp. is_interactive)
-# when being loaded for the first time
-import matplotlib.pyplot as plt
-
-plt.close(new_figure())
