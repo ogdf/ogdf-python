@@ -1,12 +1,11 @@
-import warnings
-
-import numpy as np
-import sys
-from dataclasses import dataclass, asdict
-from typing import List, Optional
 import collections
 import itertools
+import sys
+import warnings
+from dataclasses import dataclass, asdict
+from typing import List, Optional
 
+import numpy as np
 from matplotlib.collections import PathCollection, Collection
 from matplotlib.figure import Figure
 from matplotlib.path import Path
@@ -300,12 +299,14 @@ def get_edge_path(GA, edge, label_pos=ogdf.DPoint(), closed=False, curviness=0):
         path.append(np.array(tgt_arr_path))
         codes.append(np.full(len(tgt_arr_path), Path.LINETO))
 
-    codes[0][0] = Path.MOVETO
     if closed:
         path.append(edge_path[::-1])
         codes.append(edge_codes)
 
-    return Path(np.concatenate(path), np.concatenate(codes))
+    path_flat = np.concatenate(path)
+    codes_flat = np.concatenate(codes)
+    codes_flat[0] = Path.MOVETO
+    return Path(path_flat, codes_flat)
 
 
 def find_closest(GA, x, y, edge_dist=10):
@@ -330,8 +331,8 @@ def new_figure(*args, **kwargs) -> Figure:
     """ Create a new figure without changing the currently active figure of pyplot """
     import matplotlib.pyplot as plt
     from matplotlib import _pylab_helpers
-    plt._get_backend_mod() # make sure backend is loaded before ioff call
-    with plt.ioff(): # disable immediate display of created figures
+    plt._get_backend_mod()  # make sure backend is loaded before ioff call
+    with plt.ioff():  # disable immediate display of created figures
         old_fig = None
         # like plt.gcf(), but does not create one if none is active
         manager = _pylab_helpers.Gcf.get_active()
@@ -341,5 +342,5 @@ def new_figure(*args, **kwargs) -> Figure:
         fig = plt.figure(*args, **kwargs)
 
         if old_fig is not None:
-            plt.figure(old_fig) # reactivate the old figure
+            plt.figure(old_fig)  # reactivate the old figure
     return fig
