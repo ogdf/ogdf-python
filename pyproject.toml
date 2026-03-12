@@ -68,7 +68,7 @@ filename = "pyproject.toml"
 filename = "src/ogdf_python/__init__.py"
 
 [[tool.bumpversion.files]]
-filename = "README.rst"
+filename = "README.md"
 
 [tool.bumpversion.parts.release]
 values = [
