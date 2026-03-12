@@ -66,7 +66,7 @@ SL.call(GA)
 GA
 ```
 
-[![SugiyamaLayouted Graph](docs/examples/sugiyama-simple.svg){height="300px"}](docs/examples/sugiyama-simple.ipynb)
+[<img src="./docs/examples/sugiyama-simple.svg" title="SugiyamaLayouted Graph" height="300px" />](docs/examples/sugiyama-simple.ipynb)
 
 Read the [pitfalls section](#pitfalls) and check out [docs/examples/pitfalls.ipynb](docs/examples/pitfalls.ipynb)
 for the more advanced Sugiyama example from the OGDF docs.
