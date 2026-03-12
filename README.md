@@ -1,4 +1,4 @@
-# ogdf-python 0.3.5-dev: Automagic Python Bindings for the Open Graph Drawing Framework
+# ogdf-python 0.3.5: Automagic Python Bindings for the Open Graph Drawing Framework
 
 `ogdf-python` uses the [black magic](http://www.camillescott.org/2019/04/11/cmake-cppyy/)
 of the awesome [cppyy](https://bitbucket.org/wlav/cppyy/src/master/) library to automagically generate python bindings
