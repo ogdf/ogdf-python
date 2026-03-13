@@ -2,7 +2,6 @@
 # In this notebook, we'll show how to gradually migrate Python code to more efficient C++ code, while keeping the interactivity of Jupyter's notebooks. We'll use the "iterative DFS" from the Python tutorial as example for the migration, so make sure to have that notebook open for comparison! First, we'll create our example graph (in plain Python for simplicity):
 
 # %%
-# %matplotlib widget
 from ogdf_python import ogdf, cppinclude
 
 cppinclude("ogdf/basic/graph_generators/randomized.h")
@@ -140,7 +139,7 @@ bool find_next(ogdf::Graph& G) { // pass the graph from Python as function argum
 # The [`%%writefile` cell magic](https://ipython.readthedocs.io/en/stable/interactive/magics.html#cellmagic-writefile) below will create the file for you, which we can `cppinclude` in the cell after.
 
 # %%
-# %%writefile dfs_step.h
+%%writefile dfs_step.h
 
 using namespace ogdf; // stop prefixing everything with ogdf::
 
@@ -212,7 +211,7 @@ dump()
 # The widget works as before!
 
 # enable the interactive widget
-# # %matplotlib widget
+%matplotlib widget
 import ipywidgets
 from ogdf_python.matplotlib import MatplotlibGraph
 

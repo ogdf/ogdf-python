@@ -69,6 +69,7 @@ SL.call(GA)
 # GA
 
 # %%
+import threading
 import ipywidgets as ipyw
 import textwrap
 
@@ -76,12 +77,7 @@ select = ipyw.Dropdown(options=layouts.keys(), value="SugiyamaLayout")
 widget = MatplotlibGraph(GA)
 info = ipyw.HTML()
 
-
-def set_layout(_):
-    info.value = f"Computing..."
-    l = select.value
-    print(l, layouts[l])
-    print(cppinclude(layouts[l]))
+def run_layout(l):
     L = getattr(ogdf, l)()
     GA.clearAllBends()
     try:
@@ -101,6 +97,8 @@ def set_layout(_):
                 f"Failed ({textwrap.shorten(str(e), width=100, placeholder='...')})"
             )
             raise
+    finally:
+        select.disabled = False
     info.value = f"Success <a href='{L.__doc__}' target='_blank'>(Docs)</a>"
     widget.update_all(GA)
     widget.ax.relim()
@@ -108,12 +106,20 @@ def set_layout(_):
     widget.ax.figure.canvas.draw_idle()
 
 
+def set_layout(_):
+    info.value = f"Computing..."
+    select.disabled = True
+    l = select.value
+    print(l, layouts[l])
+    print(cppinclude(layouts[l]))
+    threading.Thread(target=run_layout, args=(l,)).start()
+
+
 select.observe(set_layout, names="value")
 
 display(ipyw.VBox([ipyw.HBox([select, info]), widget.ax.figure.canvas]))
 
 # %%
-
 # TutteLayout requires the graph to be triconnected
 cppinclude("ogdf/energybased/TutteLayout.h")
 cppinclude("ogdf/basic/simple_graph_alg.h")
