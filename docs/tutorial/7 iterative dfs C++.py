@@ -109,7 +109,7 @@ ogdf::NodeArray<int> dfs_index;
 g.dfs_index.init(G, -1)
 
 # %%
-# # %%cpp
+# %%cpp
 
 // As we were using the `todo` list as stack, it can also be easily translated to a `vector`:
 
@@ -119,7 +119,7 @@ std::vector<std::pair<ogdf::node, ogdf::edge>> todo;
 # Now let's translate the first part of our actual DFS code.
 
 # %%
-# # %%cppdef
+# %%cppdef
 
 bool find_next(ogdf::Graph& G) { // pass the graph from Python as function argument (by reference!)
     for (ogdf::node n : G.nodes) { // foreach needs types or at least `auto` as type
@@ -135,7 +135,7 @@ bool find_next(ogdf::Graph& G) { // pass the graph from Python as function argum
 # The final mode for including C++ code is by writing it to an external file and including it with `cppinclude`. Note that similar to `cppdef`, this mode doesn't allow redifinitions and thus should only be used for code that doesn't need frequent changes. Still, this is especially useful if you also want to directly re-use the code in a pure C++ environment. The [`%%writefile` cell magic](https://ipython.readthedocs.io/en/stable/interactive/magics.html#cellmagic-writefile) below will create the file for you, which we can `cppinclude` in the cell after.
 
 # %%
-# # %%writefile dfs_step.h
+# %%writefile dfs_step.h
 
 using namespace ogdf; // stop prefixing everything with ogdf::
 
