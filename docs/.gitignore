@@ -1,3 +1,4 @@
+__pycache__/
 .cache/
 .venv/
 archive/
@@ -8,3 +9,4 @@ tutorial.zip
 *.gml
 *.svg
 tutorial/dfs_step.h
+examples/more

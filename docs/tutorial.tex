@@ -139,13 +139,13 @@ cp -r ogdf/doc/examples/special/* example-project/
 cd example-project/
 mkdir build-debug build-release
 
-# we need to tell cmake where our matching ogdf build is located via OGDF_DIR
+# we need to tell cmake the absolute path where our matching ogdf build is located via OGDF_DIR
 cmake -B build-debug -S . \
-  -DCMAKE_BUILD_TYPE=Debug -DOGDF_DIR=../../ogdf/build-debug
+  -DCMAKE_BUILD_TYPE=Debug -DOGDF_DIR=$(realpath $../../ogdf/build-debug)
 cmake --build build-debug --parallel
 
 cmake -B build-release -S . \
-  -DCMAKE_BUILD_TYPE=Release -DOGDF_DIR=../../ogdf/build-release
+  -DCMAKE_BUILD_TYPE=Release -DOGDF_DIR=$(realpath $../../ogdf/build-release)
   # [plus some release optimization flags]
 cmake --build build-release --parallel
 \end{lstlisting}
