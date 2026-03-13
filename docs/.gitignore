@@ -1,0 +1,12 @@
+__pycache__/
+.cache/
+.venv/
+archive/
+.ipynb_checkpoints/
+tutorial.pdf
+tutorial.zip
+*.ipynb
+*.gml
+*.svg
+tutorial/dfs_step.h
+examples/more

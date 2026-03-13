@@ -1,0 +1,189 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+\usepackage[english,german]{babel}
+\usepackage[autostyle=true]{csquotes}
+
+\usepackage[shortlabels]{enumitem}
+\usepackage{graphicx}
+\usepackage{todonotes}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{xcolor,xspace,xstring}
+
+\usepackage[onelanguage,noend]{algorithm2e}
+\usepackage[headsep=1cm]{geometry}
+\usepackage{listings}
+\lstset{basicstyle=\ttfamily,columns=fullflexible}
+
+\usepackage{hyperref}
+
+\parindent0em
+\parskip1em
+
+\begin{document}
+
+\section{Installing ogdf-python}
+We will start with the easier-to-use ogdf-python bindings before slowly switching to the C++ interface.
+For this, you need a PC running Linux, MacOS, or Windows plus the Windows Subsystem for Linux (WSL).
+Additionally, you need to have Python with version at least 3.8 installed.
+Please run \texttt{python -V} (or \texttt{python3 -V}) to check this.
+On WSL, additionally run \texttt{which python} (or \texttt{which python3}) to ensure that you are not using your Windows (\texttt{.exe}) installation of Python.
+In any case, if you are not running the right python version, this should be fixable by running \texttt{apt install python3-dev} (or \texttt{dnf install python3-devel}), or on MacOS, by \href{https://www.python.org/downloads/macos/}{downloading the latest installer from the website}.
+
+Then, use your (Linux/MacOS/WSL) bash terminal to set up a folder for ogdf-python code and install all required dependencies there:
+\begin{lstlisting}
+cd && mkdir ogdf-python && cd ogdf-python
+python -m venv venv
+source venv/bin/activate
+export OGDF_PYTHON_MODE=debug
+python -m pip install ogdf-python[quickstart]
+python -m jupyter lab
+\end{lstlisting}
+If you get an error during installation stating that ``'Python.h' file not found'', see the above paragraph for installing the required \texttt{python3-dev(el)} package.
+If your browser doesn't open automatically after the last command, copy one of the links printed to the terminal into a new browser window.
+You should now see the Jupyter file browser.
+Copy the unzipped supplementary folder into the \texttt{\textasciitilde/ogdf-python/} directory using your file manager.
+Note that opening \texttt{.ipynb} files through your file manager may not work, please open them through the Jupyter file browser in the webinterface.
+To start Jupyter again the next time, run the following:
+\begin{lstlisting}
+cd ogdf-python
+source venv/bin/activate
+export OGDF_PYTHON_MODE=debug
+python -m jupyter lab
+\end{lstlisting}
+This ensures that your bash prompt is prefixed with \texttt{venv} (indicating that it is active) when starting Jupyter.
+
+For more information on Python, see for example the \href{https://jakevdp.github.io/WhirlwindTourOfPython/}{Whirlwind Tour Of Python} by Jake VanderPlas.
+For information on OGDF, see the corresponding \href{https://ogdf.github.io/doc/ogdf/}{API docs}, the \href{https://github.com/ogdf/ogdf/}{OGDF GitHub repo} and the \href{https://github.com/ogdf/ogdf-python}{ogdf-python GitHub repo}.
+
+The remainder of this document will guide you through some tutorials accompanied by simple implementation tasks that should give you a good feeling for most of the basic functionality of OGDF.
+Starting in Section \ref{sec:compile}, we will start transitioning from the Python interface of the OGDF to the native C++ API.
+
+
+\section{Tree Layout}
+Before solving this task, work through notebooks 1 to 3 in the tutorial folder to understand how to work with Graphs and Drawings (i.e. \texttt{GraphAttributes}).
+The recommended way to do so is to read through the python code and comments, run the code cell-by-cell and maybe even try making small tweaks to the code and see how the resulting behaviour changes.
+
+Adapt the code in \texttt{exercises/1 tree layout.ipynb} so that it generates a tree layout (i.e. drawing) where the
+y-coordinate corresponds to the depth of the node (i.e. its distance from the root) and the
+x-coordinate corresponds to the position of the node in a post-order tree traversal.
+
+\section{TopSort}
+Before solving this and the following exercises, work through the remaining tutorial notebooks up to (including) number 6 ``summary''.
+
+Adapt the code in \texttt{exercises/2 topsort.ipynb} so that it computes a linear order of the nodes in a directed acyclic graph using topological sort.
+If the graph is not acyclic, the algorithm should terminate (instead of running forever) and report this situation.
+\begin{enumerate}[a)]
+\item For a first version of your code, start by actually deleting processed vertices from the graph.
+  Note that in this case, vertices cannot be stored (e.g. in a list) after deletion.
+  Instead, only store their indices for now.
+\item Modify your implementation so that it works without making modifications to the underlying graph, allowing you to store processed vertices.
+\item Implement a validator function that checks for a given linear order whether it satisfies the ordering induced by the edges of the graph.
+\item Include a code cell that automatically runs your algorithm plus the validator on at least 5 different graphs.
+\end{enumerate}
+
+\section{Single-Source Shortest Paths}
+In this exercise, we want to implement Dijkstra's algorithm to find all undirected shortest paths from a single source.
+This algorithm can be seen as a more involved breadth-first search, which we will implement first.
+\begin{enumerate}[a)]
+\item Adapt the code in \texttt{exercises/3 dijkstra.ipynb} to assign labels to all vertices according to an undirected breadth-first search.
+\item For each non-root vertex, mark the parent edge of the BFS tree in red and also store the corresponding information in a \texttt{NodeArray}.
+\item Change the search order by using a priority queue that yields the vertex with the highest index first. See the notebook for an example how \texttt{ogdf.PriorityQueue} can be used.
+\item Update your code to actually use Dijkstra's algorithm to find all undirected shortest paths from a single vertex.
+\item Validate your results by comparing them with the results obtained from one of the OGDF \href{https://ogdf.github.io/doc/ogdf/group__ga-sp.html}{algorithms}.
+\item Again, include a code cell that automatically runs your algorithm plus the validator on at least 5 different graphs.
+\end{enumerate}
+
+\section{Contraction Sequences$^\ast$}
+In this task, we implement the contraction operation needed for determining the twin-width of a graph in \texttt{exercises/4 contraction.ipynb}.
+\begin{enumerate}[a)]
+\item Implement a function that contracts two given nodes and marks edges red according to the description in the \href{https://en.wikipedia.org/wiki/Twin-width}{Wikipedia article}.
+\item Add a function that counts the number of red edges per node.
+\item Update your contraction function to maintain a count of red edges per node without processing the whole graph again.
+\item After each step, validate the maintained red degree by also computing it anew.
+\item Again, include a code cell that automatically executes 5 random contraction sequences and validates the degrees.
+\end{enumerate}
+\emph{Hint:} There is an example contraction sequence plus details on the right degrees at the bottom of the notebook.
+
+\emph{$^\ast$ Tasks marked with a star can be considered optional.}
+
+
+\section{Compiling the OGDF}\label{sec:compile}
+A C++ compiler and CMake are required for building the OGDF.
+You can install both by running \texttt{apt install g++ cmake} (or \texttt{dnf install gcc-c++ cmake}), or on MacOS by installing the \href{https://developer.apple.com/xcode/resources/}{Xcode command line developer tools}.
+For more in-depth information, see the \href{https://ogdf.github.io/doc/ogdf/md_doc_2build.html#build}{ogdf build guide}.
+Compiling the OGDF roughly works in the following steps:
+\begin{lstlisting}
+git clone https://github.com/ogdf/ogdf.git ogdf
+cd ogdf
+git checkout foxglove-202510 # latest release
+mkdir build-debug build-release
+
+cmake -B build-debug -S . \
+  -DCMAKE_BUILD_TYPE=Debug # [plus some flags to help you with debugging]
+cmake --build build-debug --parallel
+
+# the performance-oriented version of the above configuration
+cmake -B build-release -S . \
+  -DCMAKE_BUILD_TYPE=Release # [plus some release optimization flags]
+cmake --build build-release --parallel
+\end{lstlisting}
+See the accompanying \texttt{build-ogdf.sh} script for the full production-grade configuration.
+To test your configuration, build the example project found in \texttt{ogdf/doc/examples/special}:
+\begin{lstlisting}
+cd .. # to the folder containing the `./ogdf' repo
+mkdir example-project
+cp -r ogdf/doc/examples/special/* example-project/
+cd example-project/
+mkdir build-debug build-release
+
+# we need to tell cmake the absolute path where our matching ogdf build is located via OGDF_DIR
+cmake -B build-debug -S . \
+  -DCMAKE_BUILD_TYPE=Debug -DOGDF_DIR=$(realpath $../../ogdf/build-debug)
+cmake --build build-debug --parallel
+
+cmake -B build-release -S . \
+  -DCMAKE_BUILD_TYPE=Release -DOGDF_DIR=$(realpath $../../ogdf/build-release)
+  # [plus some release optimization flags]
+cmake --build build-release --parallel
+\end{lstlisting}
+You can alternatively open the example project (i.e. the folder \texttt{example-project/}) with \href{https://www.jetbrains.com/help/clion/clion-quick-start-guide.html}{CLion}, where you need to specify the \texttt{-DOGDF\_DIR} CMake option using an absolute path in the \href{https://www.jetbrains.com/help/clion/cmake-profile.html#cmake-options}{CMake config dialogue}.
+Running either the debug or release build via \texttt{./check-build-mode} (in \texttt{build-debug/} or \texttt{build-release/}) or the Play button in CLion (where you can switch between debug and release mode using a dropdown next to the Play button) configuration should report ``everything is fine''.
+
+
+
+\section{Dijkstra with Arcflags}
+Solve the following tasks using Jupyter Notebooks. See the accompanying \texttt{7 iterative dfs C++.ipynb} tutorial notebook on how to use C++ within notebooks.
+
+\href{https://de.wikipedia.org/wiki/Arcflag}{Arcflags} are a simple approach for speeding up Dijkstra's Algorithm that is especially effective on realistic road networks where weights relate to travel times.
+In this approach, the graph is divided into multiple regions and shortest paths between regions are precomputed, marking each edge that is part of any shortest path into a given region.
+Now, when seeking a shortest path to a given destination, only edges that are part of any shortest path into the destination region need to be considered.
+
+The files \texttt{Passau-\{big/small\}-arcflags.gml} contain the road network of a small and large section of Passau, together with estimated travel times as \texttt{doubleWeight} and arcflags using the \texttt{inSubGraph} / \texttt{subGraphBits} annotations to the edges (using the flags \texttt{GraphAttributes::edgeDoubleWeight} and \texttt{edgeSubGraphs}). The $5*5=25$ regions were computed using the following function:
+\vspace{-.3cm}
+\begin{quote}
+\lstinputlisting[language=Python,columns=fullflexible]{get_cell.py}
+\end{quote}
+\vspace{-.5cm}
+
+\begin{enumerate}[a)]
+\item Update your implementation of Dijkstra's Algorithm to respect the edge directions and weights given in the input graph and translate the resulting algorithm to C++.
+\item Shortly compare the running time of the Python and C++ implementations using the \href{https://ipython.readthedocs.io/en/stable/interactive/magics.html\#magic-timeit}{\texttt{\%\%timeit} magic} and validate that they return the same results (ignoring floating point precision differences).
+\item Update your Python and afterwards also your C++ implementation to optionally respect the arcflags given in the input graph. See the Wikipedia article for details on the implementation.
+\item Now add the arcflags versions to your timing comparison, also checking that the computed results are valid. What's your first impression how the the four different versions compare?
+\end{enumerate}
+
+
+\section{Precomputing Arcflags$^\ast$}
+\begin{enumerate}[a)]
+\item The \texttt{subGraphBits} used by OGDF can only store up to 32 bits. Modify your C++ implementation to work on an (appropriately sized) \texttt{vector<bool>} or \texttt{bitset<N>}. As this information is now no longer stored in \texttt{GraphAttributes}, you need to implement a custom way of serializing and loading this information to / from a file.
+\item Implement the arcflag precomputation by iterating all edges and checking the regions of the respective endpoints. If the endpoints are in the same region, the arcflag for the respective region needs to be set. Otherwise, the endpoints are added to ``boundary'' sets of their respective regions. For each node in a boundary set, compute all shortest paths to this node (e.g. by reversing all edges and starting Dijkstra at said node) and mark all edges in the shortest path tree with the respective region.
+\item Recompute the arcflags with $7*7$, $5*5$ and $3*3$ cells and store the results in separate files. Validate that your flags are correct by comparing the shortest paths found by using the arcflags with the paths found without them.
+\item Write a standalone executable in C++ that takes as input a .gml file, a file containing respective arcflags and the indices of two nodes in the respective graph. After computing the shortest path from the first to the second point, the executable should print the weight of the found path and how long the computation (excluding parsing the graph etc.) took.
+\item Use your executable compiled in Release mode to compare the three different arcflags resolutions on at least 5 pairs of points in the bigger Passau graph.
+\end{enumerate}
+
+
+\end{document}
