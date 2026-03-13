@@ -46,11 +46,13 @@ def make_graph():
 
 
 # %%
-def contract(a, b): ...
+def contract(a, b):
+    ...
 
 
 # %%
-def check_degs(): ...
+def check_degs():
+    ...
 
 
 # %%

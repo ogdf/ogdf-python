@@ -17,7 +17,8 @@ depth = ogdf.NodeArray[int](G, -1)
 
 
 # TODO fill in the dots, possibly making changes to the surrounding code
-def postorder(n, level=0): ...
+def postorder(n, level=0):
+    ...
 
 
 postorder(root)

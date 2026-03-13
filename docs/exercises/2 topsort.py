@@ -1,7 +1,7 @@
 # %%
 # This cell generates a random graph for the topological sort to run on.
 
-# %matplotlib widget
+%matplotlib widget
 from ogdf_python import ogdf, cppinclude
 import cppyy
 
@@ -52,7 +52,8 @@ outdeg = ogdf.NodeArray[int](G, 0)  # outdegree after node deletion
 # %%
 # TODO implement the algorithm in this reusable function
 # this should work similar to the DFS example
-def topo_step(): ...
+def topo_step():
+    ...
 
 
 # %%

@@ -43,7 +43,8 @@ handles = ogdf.NodeArray["ogdf::PairingHeapNode<ogdf::node>*"](G, null_pqnode)
 
 
 # %%
-def step(): ...
+def step():
+    ...
 
 
 # %%
@@ -55,7 +56,8 @@ w_todo = ipywidgets.Label()
 b_step = ipywidgets.Button(description="Step")
 
 
-def b_step_click(*args): ...
+def b_step_click(*args):
+    ...
 
 
 b_step.on_click(b_step_click)
