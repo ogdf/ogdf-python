@@ -103,7 +103,7 @@ $ OGDF_PYTHON_MODE=debug python3 # also works if you have both versions installe
 
 ## Pitfalls
 
-See also [docs/examples/pitfalls.ipynb](docs/examples/pitfalls.ipynb) for full examples.
+See also [docs/examples/pitfalls.py](docs/examples/pitfalls.py) for full examples.
 
 OGDF sometimes takes ownership of objects (usually when they are passed as modules),
 which may conflict with the automatic cppyy garbage collection.
