@@ -40,7 +40,7 @@ for u in G.nodes:
 # likewise, reordering nodes and edges in the interactive preview doesn't change the order
 
 # %% [markdown]
-# ![adjList.png](attachment:adjList.png)
+# ![img/adjList.png](attachment:img/adjList.png)
 
 
 # %%
@@ -103,7 +103,7 @@ print("next: ", adj.twin(), adj.twin().cyclicPred(), adj.clockwiseFaceSucc())
 # try to locate this face in your drawing!
 
 # %% [markdown]
-# ![faceOrder.png](attachment:faceOrder.png)
+# ![img/faceOrder.png](attachment:img/faceOrder.png)
 
 # %%
 # instead of manually trying to find a planar embedding, OGDF can do that for us!

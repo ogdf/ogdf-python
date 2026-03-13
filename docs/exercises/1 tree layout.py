@@ -1,5 +1,5 @@
 # %%
-# %matplotlib widget
+%matplotlib widget
 from ogdf_python import ogdf, cppinclude
 
 cppinclude("ogdf/basic/graph_generators/randomized.h")
