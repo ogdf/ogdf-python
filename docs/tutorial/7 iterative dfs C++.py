@@ -82,18 +82,20 @@ print("Is there something left?", bool(g.order))
 
 # %% [markdown]
 # If you write a lot of C++ code (as we will do in the following), it might be more comfortable to no longer need to wrap everything in strings and function calls and write whole cells with C++ code.
-# You can do that by putting `%%cpp` (for `cppexec(...)`) or `%%cppdef` (for `cppdef(...)`) in the first line of your cell. Note that these non-standard [cell magics](https://ipython.readthedocs.io/en/stable/interactive/magics.html) only work after ogdf-python has been imported.
+# You can do that by putting `%%cpp` (for `cppexec(...)`) or `%%cppdef` (for `cppdef(...)`) in the first line of your cell.
+# Note that these non-standard [cell magics](https://ipython.readthedocs.io/en/stable/interactive/magics.html) only work after ogdf-python has been imported.
 #
 # But now back to the problem at hand and the `cppdef` in the previous cell.
 # The `<ogdf::node>` after the class name of `order` is called "template parameter".
-# We've actually already seen that kind of thing when we told the C++ `ogdf.NodeArray` used for the indices assigned by the DFS that it will store values of type `int`. So the Python statement `index = ogdf.NodeArray[int](G, -1)` becomes `ogdf.NodeArray<int> dfs_index(G, -1);` in C++:
+# We've actually already seen that kind of thing when we told the C++ `ogdf.NodeArray` used for the indices assigned by the DFS that it will store values of type `int`.
+# So the Python statement `index = ogdf.NodeArray[int](G, -1)` becomes `ogdf.NodeArray<int> dfs_index(G, -1);` in C++:
 
 # %%
-# # %%cpp
+%%cpp
 
 // the whole cell contains C++ code (which will be passed to `cppexec`)
 
-ogdf::NodeArray<int> dfs_index(G, -1); // index in order
+ogdf::NodeArray<int> broken(G, -1); // but this doesn't work, see below
 
 # %% [markdown]
 # Dang! `error: use of undeclared identifier 'G'` tells us that C++ can't find the variable `G`.
@@ -109,7 +111,7 @@ ogdf::NodeArray<int> dfs_index;
 g.dfs_index.init(G, -1)
 
 # %%
-# %%cpp
+%%cpp
 
 // As we were using the `todo` list as stack, it can also be easily translated to a `vector`:
 
@@ -119,7 +121,7 @@ std::vector<std::pair<ogdf::node, ogdf::edge>> todo;
 # Now let's translate the first part of our actual DFS code.
 
 # %%
-# %%cppdef
+%%cppdef
 
 bool find_next(ogdf::Graph& G) { // pass the graph from Python as function argument (by reference!)
     for (ogdf::node n : G.nodes) { // foreach needs types or at least `auto` as type
@@ -132,7 +134,10 @@ bool find_next(ogdf::Graph& G) { // pass the graph from Python as function argum
 }
 
 # %% [markdown]
-# The final mode for including C++ code is by writing it to an external file and including it with `cppinclude`. Note that similar to `cppdef`, this mode doesn't allow redifinitions and thus should only be used for code that doesn't need frequent changes. Still, this is especially useful if you also want to directly re-use the code in a pure C++ environment. The [`%%writefile` cell magic](https://ipython.readthedocs.io/en/stable/interactive/magics.html#cellmagic-writefile) below will create the file for you, which we can `cppinclude` in the cell after.
+# The final mode for including C++ code is by writing it to an external file and including it with `cppinclude`.
+# Note that similar to `cppdef`, this mode doesn't allow redifinitions and thus should only be used for code that doesn't need frequent changes.
+# Still, this is especially useful if you also want to directly re-use the code in a pure C++ environment.
+# The [`%%writefile` cell magic](https://ipython.readthedocs.io/en/stable/interactive/magics.html#cellmagic-writefile) below will create the file for you, which we can `cppinclude` in the cell after.
 
 # %%
 # %%writefile dfs_step.h
